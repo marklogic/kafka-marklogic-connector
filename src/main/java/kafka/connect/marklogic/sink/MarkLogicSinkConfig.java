@@ -43,8 +43,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
     private static final int RETRY_BACKOFF_MS_DEFAULT = 10000;
 	private static final String RETRY_BACKOFF_MS_DOC = "The time in milliseconds to wait following an error/exception before a retry attempt is made.";
 
-	public static final String EXTENSION = "extension";
-	private static final String EXTENSION_DOC = "extension";
+	public static final String EXTENSION = "ml.url.extension";
+	private static final String EXTENSION_DOC = "ml url extension";
 
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 			.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, CONNECTION_HOST_DOC)
@@ -58,7 +58,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 
 	public MarkLogicSinkConfig(final Map<?, ?> originals) {
 		super(CONFIG_DEF, originals, false);
-		logger.info("Original Configs {}", originals);
+		logger.debug("Original Configs {}", originals);
 	}
 
 }

@@ -4,9 +4,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
-import com.marklogic.client.document.DocumentManager;
 import com.marklogic.client.io.InputStreamHandle;
-import com.marklogic.client.io.StringHandle;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -28,41 +26,37 @@ import java.util.*;
  */
 public class MarkLogicSinkTask extends SinkTask {
 
-    private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);
-
-    private int timeout;
     private Map<String, String> config;
+    private int timeout;
     private int maxRetires;
+    private int batchSize;
     private int remainingRetries;
 
-    protected DatabaseClient client;
-    DocumentManager documentManager;
-
-    private int batchSize;
     private BufferedRecords bufferedRecords;
     private DataMovementManager dataMovementManager;
 
+    private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);
+
     @Override
     public void start(final Map<String, String> config) {
-        logger.info("start called!");
+        logger.debug("MarkLogicSinkTask start called!");
         this.config = config;
         this.timeout = Integer.valueOf(config.get(MarkLogicSinkConfig.RETRY_BACKOFF_MS));
         this.maxRetires = Integer.valueOf(config.get(MarkLogicSinkConfig.MAX_RETRIES));
         this.remainingRetries = maxRetires;
+        bufferedRecords = new BufferedRecords();
 
-        client = DatabaseClientFactory.newClient(config.get(MarkLogicSinkConfig.CONNECTION_HOST),
+        DatabaseClient client = DatabaseClientFactory.newClient(config.get(MarkLogicSinkConfig.CONNECTION_HOST),
                 Integer.valueOf(config.get(MarkLogicSinkConfig.CONNECTION_PORT)),
                 new DatabaseClientFactory.DigestAuthContext(config.get(MarkLogicSinkConfig.CONNECTION_USER),
                         config.get(MarkLogicSinkConfig.CONNECTION_PASSWORD)));
-        documentManager = client.newDocumentManager();
-        bufferedRecords = new BufferedRecords();
         dataMovementManager = client.newDataMovementManager();
         batchSize = Integer.valueOf(config.get(MarkLogicSinkConfig.BATCH_SIZE));
     }
 
     @Override
     public void stop() {
-        logger.info("stop called!");
+        logger.debug("MarkLogicSinkTask stop called!");
     }
 
     @Override
@@ -78,7 +72,7 @@ public class MarkLogicSinkTask extends SinkTask {
                         recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset());
 
         try {
-            records.forEach(r -> bufferedRecords.buffer(r));
+            records.forEach(record -> bufferedRecords.buffer(record));
             flush();
         } catch (final RetriableException e) {
             if (maxRetires > 0 && remainingRetries == 0) {
@@ -95,31 +89,25 @@ public class MarkLogicSinkTask extends SinkTask {
 
     @Override
     public void flush(final Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
-        currentOffsets.forEach((k, v) -> logger.debug("Flush - Topic {}, Partition {}, Offset {}, Metadata {}",
-                k.topic(), k.partition(), v.offset(), v.metadata()));
-    }
-
-    public String version() {
-        return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
-    }
-
-    protected String url(){
-        return UUID.randomUUID().toString() + "." + config.get(MarkLogicSinkConfig.EXTENSION);
+        currentOffsets.forEach((key, value) ->
+                logger.debug("Flush - Topic {}, Partition {}, Offset {}, Metadata {}", key.topic(),
+                        key.partition(), value.offset(), value.metadata())
+        );
     }
 
     private void flush() {
         final WriteBatcher batcher = dataMovementManager.newWriteBatcher();
 
-        batcher.withBatchSize(batchSize).withThreadCount(8).onBatchFailure((b, t) -> {
-            logger.error("batch write failed {}", t);
-            throw new RetriableException(t.getMessage());
+        batcher.withBatchSize(batchSize).withThreadCount(8).onBatchFailure((batch, throwable) -> {
+            logger.error("batch write failed {}", throwable);
+            throw new RetriableException(throwable.getMessage());
         });
 
         dataMovementManager.startJob(batcher);
-        this.bufferedRecords.forEach(r -> {
-            String value = r.toString();
-            logger.info("received value {}, and collection {}", value, r.topic());
-            batcher.add(url(), new StringHandle((String) r.value()));
+        bufferedRecords.forEach(record -> {
+            String value = record.toString();
+            logger.info("received value {}, and collection {}", value, record.topic());
+            batcher.add(url(), handle((String) record.value()));
         });
 
         batcher.flushAndWait();
@@ -127,7 +115,15 @@ public class MarkLogicSinkTask extends SinkTask {
         bufferedRecords.clear();
     }
 
-    protected InputStreamHandle handle(String value){
+    public String version() {
+        return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
+    }
+
+    private String url(){
+        return UUID.randomUUID().toString() + "." + config.get(MarkLogicSinkConfig.EXTENSION);
+    }
+
+    private InputStreamHandle handle(String value){
         return new InputStreamHandle(new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8)));
     }
 
@@ -140,8 +136,8 @@ public class MarkLogicSinkTask extends SinkTask {
 
         private static final long serialVersionUID = 1L;
 
-        void buffer(final SinkRecord r){
-            add(r);
+        void buffer(final SinkRecord record){
+            add(record);
             if(batchSize <= size()){
                 logger.debug("buffer size is {}", batchSize);
                 flush();
