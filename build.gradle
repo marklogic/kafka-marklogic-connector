@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'net.saliman.properties' version '1.4.6'
 }
 
 group 'com.marklogic'
@@ -13,13 +14,37 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'org.apache.kafka', name: 'connect-api', version: '0.10.2.0'
-    compile group: 'com.marklogic', name: 'marklogic-client-api', version: '4.1.1'
+    compileOnly "org.apache.kafka:connect-api:0.10.2.0"
+    compile "com.marklogic:ml-javaclient-util:3.10.0"
+
+    testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
+
+    // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.0"
+}
+
+// Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
+test {
+    useJUnitPlatform()
 }
 
 task customFatJar(type: Jar) {
     baseName = 'kafka-marklogic-connector'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
+}
+
+task copyJarToKafka(type: Copy) {
+    from "build/libs"
+    into "${kafkaHome}/libs"
+}
+copyJarToKafka.mustRunAfter(customFatJar)
+
+task copyPropertyFilesToKafka(type: Copy) {
+    from "config"
+    into "${kafkaHome}/config"
+}
+
+task deploy {
+    dependsOn = ["customFatJar", "copyJarToKafka", "copyPropertyFilesToKafka"]
 }
