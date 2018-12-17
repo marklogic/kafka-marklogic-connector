@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.marklogic'
-version '0.0.1'
+version '0.9.0'
 
 sourceCompatibility = 1.8
 
@@ -14,13 +14,23 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.apache.kafka:connect-api:0.10.2.0"
-    compile "com.marklogic:ml-javaclient-util:3.10.0"
+    compileOnly "org.apache.kafka:connect-api:2.1.0"
+    compile ("com.marklogic:ml-javaclient-util:3.10.0") {
+        exclude module: "jdom2"
+        exclude module: "marklogic-xcc"
+        exclude module: "spring-context"
+    }
 
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
+    testCompile "org.apache.kafka:connect-api:2.1.0"
 
     // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.0"
+
+    // Forcing logback to be used for test logging
+    testRuntime "ch.qos.logback:logback-classic:1.1.8"
+    testRuntime group: "org.slf4j", name: "jcl-over-slf4j", version: "1.7.22"
+    testRuntime group: "org.slf4j", name: "slf4j-api", version: "1.7.22"
 }
 
 // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
@@ -28,17 +38,16 @@ test {
     useJUnitPlatform()
 }
 
-task customFatJar(type: Jar) {
-    baseName = 'kafka-marklogic-connector'
+// Customize the Java plugin's jar task to produce a "fat" jar with all dependencies included
+jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
 }
 
 task copyJarToKafka(type: Copy) {
     from "build/libs"
     into "${kafkaHome}/libs"
 }
-copyJarToKafka.mustRunAfter(customFatJar)
+copyJarToKafka.mustRunAfter(jar)
 
 task copyPropertyFilesToKafka(type: Copy) {
     from "config"
@@ -46,5 +55,5 @@ task copyPropertyFilesToKafka(type: Copy) {
 }
 
 task deploy {
-    dependsOn = ["customFatJar", "copyJarToKafka", "copyPropertyFilesToKafka"]
+    dependsOn = ["jar", "copyJarToKafka", "copyPropertyFilesToKafka"]
 }

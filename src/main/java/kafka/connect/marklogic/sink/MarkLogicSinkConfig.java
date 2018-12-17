@@ -24,7 +24,12 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static final String DMSDK_BATCH_SIZE = "ml.dmsdk.batchSize";
 	public static final String DMSDK_THREAD_COUNT = "ml.dmsdk.threadCount";
 
-	public static final String URI_SUFFIX = "ml.uri.suffix";
+	public static final String DOCUMENT_COLLECTIONS = "ml.document.collections";
+	public static final String DOCUMENT_PERMISSIONS = "ml.document.permissions";
+	public static final String DOCUMENT_FORMAT = "ml.document.format";
+	public static final String DOCUMENT_MIMETYPE = "ml.document.mimeType";
+	public static final String DOCUMENT_URI_PREFIX = "ml.document.uriPrefix";
+	public static final String DOCUMENT_URI_SUFFIX = "ml.document.uriSuffix";
 
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 		.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, "MarkLogic server hostname")
@@ -40,7 +45,12 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(CONNECTION_EXTERNAL_NAME, Type.STRING, Importance.LOW, "External name for Kerberos authentication")
 		.define(DMSDK_BATCH_SIZE, Type.INT, 100, Importance.HIGH, "Number of documents to write in each batch")
 		.define(DMSDK_THREAD_COUNT, Type.INT, 8, Importance.HIGH, "Number of threads for DMSDK to use")
-		.define(URI_SUFFIX, Type.STRING, Importance.HIGH, "Suffix to append to each generated URI");
+		.define(DOCUMENT_COLLECTIONS, Type.STRING, Importance.MEDIUM, "String-delimited collections to add each document to")
+		.define(DOCUMENT_FORMAT, Type.STRING, Importance.LOW, "Defines format of each document; can be one of json, xml, text, binary, or unknown")
+		.define(DOCUMENT_MIMETYPE, Type.STRING, Importance.LOW, "Defines the mime type of each document; optional, and typically the format is set instead of the mime type")
+		.define(DOCUMENT_PERMISSIONS, Type.STRING, Importance.MEDIUM, "String-delimited permissions to add to each document; role1,capability1,role2,capability2,etc")
+		.define(DOCUMENT_URI_PREFIX, Type.STRING, Importance.MEDIUM, "Prefix to prepend to each generated URI")
+		.define(DOCUMENT_URI_SUFFIX, Type.STRING, Importance.MEDIUM, "Suffix to append to each generated URI");
 
 	public MarkLogicSinkConfig(final Map<?, ?> originals) {
 		super(CONFIG_DEF, originals, false);
