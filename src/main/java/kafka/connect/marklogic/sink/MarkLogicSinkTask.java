@@ -1,149 +1,101 @@
 package kafka.connect.marklogic.sink;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
-import com.marklogic.client.io.InputStreamHandle;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.connect.errors.ConnectException;
-import org.apache.kafka.connect.errors.RetriableException;
+import com.marklogic.client.io.StringHandle;
+import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
 
-/**
- * 
- * @author Sanju Thomas
- * @author pbarber
- *
- */
 public class MarkLogicSinkTask extends SinkTask {
 
-    private Map<String, String> config;
-    private int timeout;
-    private int maxRetires;
-    private int batchSize;
-    private int remainingRetries;
+	private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);
 
-    private BufferedRecords bufferedRecords;
-    private DataMovementManager dataMovementManager;
+	private DatabaseClient databaseClient;
+	private DataMovementManager dataMovementManager;
+	private WriteBatcher writeBatcher;
 
-    private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);
+	private String uriSuffix;
 
-    @Override
-    public void start(final Map<String, String> config) {
-        logger.debug("MarkLogicSinkTask start called!");
-        this.config = config;
-        this.timeout = Integer.valueOf(config.get(MarkLogicSinkConfig.RETRY_BACKOFF_MS));
-        this.maxRetires = Integer.valueOf(config.get(MarkLogicSinkConfig.MAX_RETRIES));
-        this.remainingRetries = maxRetires;
-        bufferedRecords = new BufferedRecords();
+	@Override
+	public void start(final Map<String, String> config) {
+		logger.info("Starting");
 
-        DatabaseClient client = DatabaseClientFactory.newClient(config.get(MarkLogicSinkConfig.CONNECTION_HOST),
-                Integer.valueOf(config.get(MarkLogicSinkConfig.CONNECTION_PORT)),
-                new DatabaseClientFactory.DigestAuthContext(config.get(MarkLogicSinkConfig.CONNECTION_USER),
-                        config.get(MarkLogicSinkConfig.CONNECTION_PASSWORD)));
-        dataMovementManager = client.newDataMovementManager();
-        batchSize = Integer.valueOf(config.get(MarkLogicSinkConfig.BATCH_SIZE));
-    }
+		databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
+		dataMovementManager = databaseClient.newDataMovementManager();
+		writeBatcher = dataMovementManager.newWriteBatcher()
+			.withBatchSize(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
+			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
 
-    @Override
-    public void stop() {
-        logger.debug("MarkLogicSinkTask stop called!");
-    }
+		dataMovementManager.startJob(writeBatcher);
 
-    @Override
-    public void put(final Collection<SinkRecord> records) {
-        if (records.isEmpty()) {
-            logger.debug("Empty record collection to process");
-            return;
-        }
+		uriSuffix = config.get(MarkLogicSinkConfig.URI_SUFFIX);
 
-        final SinkRecord first = records.iterator().next();
-        final int recordsCount = records.size();
-        logger.debug("Received {} records. kafka coordinates from record: Topic - {}, Partition - {}, Offset - {}",
-                        recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset());
+		logger.info("Started");
+	}
 
-        try {
-            records.forEach(record -> bufferedRecords.buffer(record));
-            flush();
-        } catch (final RetriableException e) {
-            if (maxRetires > 0 && remainingRetries == 0) {
-                throw new ConnectException("Retries exhausted, ending the task. Manual restart is required.");
-            }else{
-                logger.warn("Setting the task timeout to {} ms upon RetriableException", timeout);
-                context.timeout(timeout);
-                remainingRetries--;
-                throw e;
-            }
-        }
-        this.remainingRetries = maxRetires;
-    }
+	/**
+	 * Creates a new DatabaseClient based on the configuration properties found in the given map.
+	 *
+	 * @param config
+	 * @return
+	 */
+	@Override
+	public void stop() {
+		logger.info("Stopping");
+		if (writeBatcher != null) {
+			writeBatcher.flushAndWait();
+			dataMovementManager.stopJob(writeBatcher);
+		}
+		if (databaseClient != null) {
+			databaseClient.release();
+		}
+		logger.info("Stopped");
+	}
 
-    @Override
-    public void flush(final Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
-        currentOffsets.forEach((key, value) ->
-                logger.debug("Flush - Topic {}, Partition {}, Offset {}, Metadata {}", key.topic(),
-                        key.partition(), value.offset(), value.metadata())
-        );
-    }
+	/**
+	 * This is doing all the work of writing to MarkLogic, which includes calling flushAsync on the WriteBatcher.
+	 * Alternatively, could move the flushAsync call to an overridden flush() method. Kafka defaults to flushing every
+	 * 60000ms - this can be configured via the offset.flush.interval.ms property.
+	 * <p>
+	 * Because this is calling flushAsync, the batch size won't come into play unless the incoming collection has a
+	 * size equal to or greater than the batch size.
+	 *
+	 * @param records
+	 */
+	@Override
+	public void put(final Collection<SinkRecord> records) {
+		if (records.isEmpty()) {
+			return;
+		}
 
-    private void flush() {
-        final WriteBatcher batcher = dataMovementManager.newWriteBatcher();
+		records.forEach(record -> {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
+			}
+			writeBatcher.add(url(), new StringHandle((String) record.value()));
+		});
 
-        batcher.withBatchSize(batchSize).withThreadCount(8).onBatchFailure((batch, throwable) -> {
-            logger.error("batch write failed {}", throwable);
-            throw new RetriableException(throwable.getMessage());
-        });
+		writeBatcher.flushAsync();
+	}
 
-        dataMovementManager.startJob(batcher);
-        bufferedRecords.forEach(record -> {
-            String value = record.toString();
-            logger.info("received value {}, and collection {}", value, record.topic());
-            batcher.add(url(), handle((String) record.value()));
-        });
+	public String version() {
+		return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
+	}
 
-        batcher.flushAndWait();
-        dataMovementManager.stopJob(batcher);
-        bufferedRecords.clear();
-    }
-
-    public String version() {
-        return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
-    }
-
-    private String url(){
-        return UUID.randomUUID().toString() + "." + config.get(MarkLogicSinkConfig.EXTENSION);
-    }
-
-    private InputStreamHandle handle(String value){
-        return new InputStreamHandle(new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    /**
-     *
-     * Buffer the Records until the batch size reached.
-     *
-     */
-    class BufferedRecords extends ArrayList<SinkRecord> {
-
-        private static final long serialVersionUID = 1L;
-
-        void buffer(final SinkRecord record){
-            add(record);
-            if(batchSize <= size()){
-                logger.debug("buffer size is {}", batchSize);
-                flush();
-                logger.debug("flushed the buffer");
-            }
-        }
-    }
-
+	/**
+	 * TODO Will expand this to support mlcp-style URI generation.
+	 *
+	 * @return
+	 */
+	private String url() {
+		return UUID.randomUUID().toString() + "." + uriSuffix;
+	}
 }
