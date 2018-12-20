@@ -3,8 +3,9 @@ package kafka.connect.marklogic.sink;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
-import com.marklogic.client.io.StringHandle;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
+import com.marklogic.kafka.connect.sink.DefaultSinkRecordConverter;
+import com.marklogic.kafka.connect.sink.SinkRecordConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.UUID;
 
 public class MarkLogicSinkTask extends SinkTask {
 
@@ -21,12 +21,13 @@ public class MarkLogicSinkTask extends SinkTask {
 	private DatabaseClient databaseClient;
 	private DataMovementManager dataMovementManager;
 	private WriteBatcher writeBatcher;
-
-	private String uriSuffix;
+	private SinkRecordConverter sinkRecordConverter;
 
 	@Override
 	public void start(final Map<String, String> config) {
 		logger.info("Starting");
+
+		sinkRecordConverter = new DefaultSinkRecordConverter(config);
 
 		databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
 		dataMovementManager = databaseClient.newDataMovementManager();
@@ -35,8 +36,6 @@ public class MarkLogicSinkTask extends SinkTask {
 			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
 
 		dataMovementManager.startJob(writeBatcher);
-
-		uriSuffix = config.get(MarkLogicSinkConfig.URI_SUFFIX);
 
 		logger.info("Started");
 	}
@@ -80,7 +79,7 @@ public class MarkLogicSinkTask extends SinkTask {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
 			}
-			writeBatcher.add(url(), new StringHandle((String) record.value()));
+			writeBatcher.add(sinkRecordConverter.convert(record));
 		});
 
 		writeBatcher.flushAsync();
@@ -88,14 +87,5 @@ public class MarkLogicSinkTask extends SinkTask {
 
 	public String version() {
 		return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
-	}
-
-	/**
-	 * TODO Will expand this to support mlcp-style URI generation.
-	 *
-	 * @return
-	 */
-	private String url() {
-		return UUID.randomUUID().toString() + "." + uriSuffix;
 	}
 }
