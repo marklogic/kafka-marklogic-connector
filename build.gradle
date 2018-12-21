@@ -3,9 +3,6 @@ plugins {
     id 'net.saliman.properties' version '1.4.6'
 }
 
-group 'com.marklogic'
-version '0.9.0'
-
 sourceCompatibility = 1.8
 
 repositories {
@@ -44,16 +41,19 @@ jar {
 }
 
 task copyJarToKafka(type: Copy) {
+    description = "Used for local development and testing; copies the jar to your local Kafka install"
     from "build/libs"
     into "${kafkaHome}/libs"
 }
 copyJarToKafka.mustRunAfter(jar)
 
 task copyPropertyFilesToKafka(type: Copy) {
+    description = "Used for local development and testing; copies the properties files to your local Kafka install"
     from "config"
     into "${kafkaHome}/config"
 }
 
 task deploy {
+    description = "Used for local development and testing; builds the jar and copies it and the properties files to your local Kafka install"
     dependsOn = ["jar", "copyJarToKafka", "copyPropertyFilesToKafka"]
 }

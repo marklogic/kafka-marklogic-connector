@@ -1,4 +1,4 @@
-package kafka.connect.marklogic.sink;
+package com.marklogic.kafka.connect.sink;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -7,6 +7,9 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 
 import java.util.Map;
 
+/**
+ * Defines configuration properties for the MarkLogic sink connector.
+ */
 public class MarkLogicSinkConfig extends AbstractConfig {
 
 	public static final String CONNECTION_HOST = "ml.connection.host";

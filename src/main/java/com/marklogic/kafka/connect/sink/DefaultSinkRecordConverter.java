@@ -6,7 +6,6 @@ import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
-import kafka.connect.marklogic.sink.MarkLogicSinkConfig;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import java.util.Map;

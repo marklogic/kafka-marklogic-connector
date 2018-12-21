@@ -1,4 +1,4 @@
-package kafka.connect.marklogic.sink;
+package com.marklogic.kafka.connect.sink;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
