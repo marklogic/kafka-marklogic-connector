@@ -1,11 +1,9 @@
-package kafka.connect.marklogic.sink;
+package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
-import com.marklogic.kafka.connect.sink.DefaultSinkRecordConverter;
-import com.marklogic.kafka.connect.sink.SinkRecordConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
@@ -14,6 +12,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * Performs the actual work associated with ingesting new documents into MarkLogic based on data received via the
+ * "put" method.
+ */
 public class MarkLogicSinkTask extends SinkTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);

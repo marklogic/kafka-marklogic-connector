@@ -5,7 +5,7 @@ import com.marklogic.client.ext.ConfiguredDatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
 import com.marklogic.client.ext.SecurityContextType;
-import kafka.connect.marklogic.sink.MarkLogicSinkConfig;
+import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;

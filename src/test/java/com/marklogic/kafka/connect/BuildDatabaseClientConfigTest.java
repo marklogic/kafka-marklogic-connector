@@ -3,7 +3,7 @@ package com.marklogic.kafka.connect;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
-import kafka.connect.marklogic.sink.MarkLogicSinkConfig;
+import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
