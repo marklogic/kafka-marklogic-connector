@@ -1,4 +1,4 @@
-# kafka-marklogic-connector
+# kafka-connect-marklogic
 
 This is a connector for subscribing to Kafka queues and pushing messages to MarkLogic
 
