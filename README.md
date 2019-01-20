@@ -46,4 +46,4 @@ When a document is received and written by the connector, you'll see logging lik
 Connector-specific properties are defined in config/marklogic-sink.properties. Please see that file for a list
 of all of the properties along with a description of each one.
 
-[Descriptions of the available properties](Properties.md)
+[Descriptions of the available properties](Properties.html)
