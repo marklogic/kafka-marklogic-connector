@@ -5,7 +5,7 @@ The three servers are the Kafka/Zookeeper server, the MarkLogic server, and a se
 _This is not intended to be a description of setting up a production environment._
 
 _All the resource files have been configure and compiled specifically for this example.
-In particular, IP addresses are in the config files (even in the Jar (sorry)_).
+In particular, IP addresses are in the config files._
 
 ## Requirements
 * You just need to have an AWS account.
@@ -37,9 +37,10 @@ In particular, IP addresses are in the config files (even in the Jar (sorry)_).
 `sudo /opt/bitnami/kafka/bin/connect-standalone.sh /opt/bitnami/kafka/config/marklogic-connect-standalone.properties /opt/bitnami/kafka/config/marklogic-sink.properties`
 
 ## Generate some Messages
+This step uses the JAR file from a small project for producing test messages. It can be found in [my GitHub account](https://github.com/BillFarber/KafkaProducer)
 1. On the list of you AWS Instances, click on the instance named, "TemplateBased-Kafka-Worker-A".
 1. Copy the Public DNS (IPv4).
 1. Ssh to the TemplateBased-Kafka-Worker-A server.
 `ssh -i kafka.pem bitnami@<Public DNS>`
 1. Send some messages to the Kafka topic
-`java -jar /home/bitnami/kafka-producer-1.0-SNAPSHOT.jar -t 1 -m 1`
+`java -jar /home/bitnami/kafka-producer-1.0-SNAPSHOT.jar -c 4 -m 5 -h ip-172-31-48-44.ec2.internal:9092 -t marklogic`
