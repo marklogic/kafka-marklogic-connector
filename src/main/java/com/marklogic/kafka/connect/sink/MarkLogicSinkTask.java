@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.sink;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
+import com.marklogic.client.document.ServerTransform;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -37,9 +38,47 @@ public class MarkLogicSinkTask extends SinkTask {
 			.withBatchSize(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
 			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
 
+		ServerTransform transform = buildServerTransform(config);
+		if (transform != null) {
+			writeBatcher.withTransform(transform);
+		}
+
 		dataMovementManager.startJob(writeBatcher);
 
 		logger.info("Started");
+	}
+
+	/**
+	 * Builds a REST ServerTransform object based on the DMSDK parameters in the given config. If no transform name
+	 * is configured, then null will be returned.
+	 *
+	 * @param config
+	 * @return
+	 */
+	protected ServerTransform buildServerTransform(final Map<String, String> config) {
+		String transform = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
+		if (transform != null && transform.trim().length() > 0) {
+			ServerTransform t = new ServerTransform(transform);
+			String params = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
+			if (params != null && params.trim().length() > 0) {
+				String delimiter = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
+				if (delimiter != null && delimiter.trim().length() > 0) {
+					String[] tokens = params.split(delimiter);
+					for (int i = 0; i < tokens.length; i += 2) {
+						if (i + 1 >= tokens.length) {
+							throw new IllegalArgumentException(String.format("The value of the %s property does not have an even number of " +
+								"parameter names and values; property value: %s", MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, params));
+						}
+						t.addParameter(tokens[i], tokens[i + 1]);
+					}
+				} else {
+					logger.warn(String.format("Unable to apply transform parameters to transform: %s; please set the " +
+						"delimiter via the %s property", transform, MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER));
+				}
+			}
+			return t;
+		}
+		return null;
 	}
 
 	/**
