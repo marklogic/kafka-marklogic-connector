@@ -26,6 +26,9 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 
 	public static final String DMSDK_BATCH_SIZE = "ml.dmsdk.batchSize";
 	public static final String DMSDK_THREAD_COUNT = "ml.dmsdk.threadCount";
+	public static final String DMSDK_TRANSFORM = "ml.dmsdk.transform";
+	public static final String DMSDK_TRANSFORM_PARAMS = "ml.dmsdk.transformParams";
+	public static final String DMSDK_TRANSFORM_PARAMS_DELIMITER = "ml.dmsdk.transformParamsDelimiter";
 
 	public static final String DOCUMENT_COLLECTIONS = "ml.document.collections";
 	public static final String DOCUMENT_PERMISSIONS = "ml.document.permissions";
@@ -48,6 +51,9 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(CONNECTION_EXTERNAL_NAME, Type.STRING, Importance.LOW, "External name for Kerberos authentication")
 		.define(DMSDK_BATCH_SIZE, Type.INT, 100, Importance.HIGH, "Number of documents to write in each batch")
 		.define(DMSDK_THREAD_COUNT, Type.INT, 8, Importance.HIGH, "Number of threads for DMSDK to use")
+		.define(DMSDK_TRANSFORM, Type.STRING, Importance.MEDIUM, "Name of a REST transform to use when writing documents")
+		.define(DMSDK_TRANSFORM_PARAMS, Type.STRING, Importance.MEDIUM, "Delimited set of transform names and values")
+		.define(DMSDK_TRANSFORM_PARAMS_DELIMITER, Type.STRING, ",", Importance.LOW, "Delimiter for transform parameter names and values; defaults to a comma")
 		.define(DOCUMENT_COLLECTIONS, Type.STRING, Importance.MEDIUM, "String-delimited collections to add each document to")
 		.define(DOCUMENT_FORMAT, Type.STRING, Importance.LOW, "Defines format of each document; can be one of json, xml, text, binary, or unknown")
 		.define(DOCUMENT_MIMETYPE, Type.STRING, Importance.LOW, "Defines the mime type of each document; optional, and typically the format is set instead of the mime type")
