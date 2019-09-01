@@ -1,0 +1,1 @@
+curl --anyauth --user admin:admin -X PUT -i --data-binary @"./trans-ex.sjs" -H "Content-type: application/vnd.marklogic-javascript" 'http://ec2-54-173-231-36.compute-1.amazonaws.com:8000/LATEST/config/transforms/js-example'
