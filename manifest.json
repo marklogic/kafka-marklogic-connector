@@ -1,0 +1,57 @@
+{
+  "component_types": [
+    "sink"
+  ],
+
+  "description": "This is a connector for getting data out of Apache Kafka into MarkLogic.\nIt is built off of the Kafka Connect framework, and therefore automatically supports pluggable encoding converters, single message transforms, and other useful features.\nMarkLogic 8+ is required.",
+
+  "documentation_url": "https://github.com/BillFarber/kafka-marklogic-connector",
+
+  "features": {
+    "confluent_control_center_integration": true,
+    "delivery_guarantee": [],
+    "kafka_connect_api": true,
+    "single_message_transforms": true,
+    "supported_encodings": ["any"]
+  },
+
+  "license": [
+    {
+      "name": "Apache License, Version 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0",
+      "logo": "assets/apache_logo.png"
+    }
+  ],
+
+  "logo": "assets/MarkLogic_logo.png",
+
+  "name": "kafka-marklogic-connector",
+
+  "owner": {
+    "logo": "assets/MarkLogic_logo.jpg",
+    "name": "MarkLogic Corporation",
+    "type": "organization",
+    "url": "https://www.marklogic.com/",
+    "username": "XXXXXX"
+  },
+
+  "requirements": [
+    "MarkLogic 9.x"
+  ],
+
+  "support": {
+    "logo": "assets/MarkLogic_logo.jpg",
+    "provider_name": "MarkLogic Corporation",
+    "summary": "This connector is provided 'as-is'. Support may be available from community members who contribute to it as an open-source project.",
+    "url": "https://www.marklogic.com/"
+  },
+
+  "tags": [
+    "analytics",
+    "marklogic"
+  ],
+
+  "title": "Kafka MarkLogic Connector",
+
+  "version": "1.0.0"
+}

@@ -11,6 +11,11 @@ repositories {
     jcenter()
 }
 
+configurations {
+    documentation
+    assets
+}
+
 dependencies {
     compileOnly "org.apache.kafka:connect-api:2.1.0"
     compile ("com.marklogic:ml-javaclient-util:3.10.0") {
@@ -29,6 +34,13 @@ dependencies {
     testRuntime "ch.qos.logback:logback-classic:1.1.8"
     testRuntime group: "org.slf4j", name: "jcl-over-slf4j", version: "1.7.22"
     testRuntime group: "org.slf4j", name: "slf4j-api", version: "1.7.22"
+
+    documentation files('LICENSE.txt')
+    documentation files('NOTICE.txt')
+    documentation files('README.md')
+
+    assets files('MarkLogic_logo.png')
+    assets files('apache_logo.png')
 }
 
 // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
@@ -57,4 +69,70 @@ task copyPropertyFilesToKafka(type: Copy) {
 task deploy {
     description = "Used for local development and testing; builds the jar and copies it and the properties files to your local Kafka install"
     dependsOn = ["jar", "copyJarToKafka", "copyPropertyFilesToKafka"]
+}
+
+// Tasks for building the archive required for submitting to the Confluence Connector Hub
+task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
+    description = "Copy the project manifest into the root folder"
+    group = 'connector archive'
+
+    from '.'
+    include 'manifest.json'
+    into 'build/connectorArchive'
+}
+
+task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
+    description = "Copy the project assets into the assets folder"
+    group = 'connector archive'
+
+    from configurations.assets
+    into 'build/connectorArchive/assets'
+}
+
+task connectorArchive_CopyEtcToBuildDirectory(type: Copy) {
+    description = "Copy the project support files into the etc folder"
+    group = 'connector archive'
+
+    from 'config'
+    include '*'
+    into 'build/connectorArchive/etc'
+}
+
+task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy) {
+    description = "Copy the project documentation into the doc folder"
+    group = 'connector archive'
+
+    from configurations.documentation
+    into 'build/connectorArchive/doc'
+}
+
+task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy) {
+    description = "Copy the dependency jars into the lib folder"
+    group = 'connector archive'
+    dependsOn = [jar]
+
+    from jar
+    from configurations.compile
+    into 'build/connectorArchive/lib'
+}
+
+task connectorArchive_BuildDirectory() {
+    description = "Build the directory that will be used to create the Kafka Connector Archive"
+    dependsOn = [connectorArchive_CopyManifestToBuildDirectory,
+                 connectorArchive_CopyDependenciesToBuildDirectory,
+                 connectorArchive_CopyDocumentationToBuildDirectory,
+                 connectorArchive_CopyEtcToBuildDirectory,
+                 connectorArchive_CopyAssetsToBuildDirectory]
+    group = 'connector archive'
+}
+
+task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
+    description = 'Build a Connector Hub for the Confluent Connector Hub'
+    group = 'connector archive'
+
+    from 'build/connectorArchive'
+    include '*'
+    include '*/*'
+    archiveName 'confluentinc-kafka-marklogic-connector-0.1.0.zip'
+    destinationDir(file('build/distro'))
 }
