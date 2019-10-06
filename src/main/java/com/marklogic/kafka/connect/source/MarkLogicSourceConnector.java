@@ -1,6 +1,5 @@
 package com.marklogic.kafka.connect.source;
 
-import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
@@ -39,7 +38,7 @@ public class MarkLogicSourceConnector extends SourceConnector {
 
     @Override
     public ConfigDef config() {
-        return MarkLogicSinkConfig.CONFIG_DEF;
+        return MarkLogicSourceConfig.CONFIG_DEF;
     }
 
     @Override

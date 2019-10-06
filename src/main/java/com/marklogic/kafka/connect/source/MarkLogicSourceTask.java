@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.ExportListener;
+import com.marklogic.client.datamovement.JobTicket;
 import com.marklogic.client.datamovement.QueryBatcher;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.StringQueryDefinition;
@@ -31,7 +32,7 @@ public class MarkLogicSourceTask extends SourceTask {
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
     private QueryBatcher queryBatcher;
-    private Boolean jobStarted = false;
+    JobTicket ticket;
 
     private ArrayList<SourceRecord> records = new ArrayList<>();
 
@@ -77,11 +78,9 @@ public class MarkLogicSourceTask extends SourceTask {
         sleep();
         records = new ArrayList<>();
         logger.info("Querying for MarkLogic records");
-        if (!jobStarted) {
-            dataMovementManager.startJob(queryBatcher);
-            jobStarted = true;
-        }
+        ticket = dataMovementManager.startJob(queryBatcher);
         queryBatcher.awaitCompletion();
+        dataMovementManager.stopJob(ticket);
         logger.info(String.format("Finished querying MarkLogic (%d records found)", records.size()));
         return records;
     }
