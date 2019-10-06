@@ -4,7 +4,6 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.ExportListener;
 import com.marklogic.client.datamovement.QueryBatcher;
-import com.marklogic.client.impl.StringQueryDefinitionImpl;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.StringQueryDefinition;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
@@ -21,6 +20,8 @@ import java.util.Map;
 
 public class MarkLogicSourceTask extends SourceTask {
 
+    static final Integer MARKLOGIC_POLL_INTERVAL = 1000;
+
     private static final Logger logger = LoggerFactory.getLogger(MarkLogicSourceTask.class);
 
     private Map<String, String> config;
@@ -30,6 +31,7 @@ public class MarkLogicSourceTask extends SourceTask {
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
     private QueryBatcher queryBatcher;
+    private Boolean jobStarted = false;
 
     private ArrayList<SourceRecord> records = new ArrayList<>();
 
@@ -51,6 +53,7 @@ public class MarkLogicSourceTask extends SourceTask {
         final StringQueryDefinition stringQueryDefinition = databaseClient.newQueryManager().newStringDefinition();
         stringQueryDefinition.setCriteria(query);
         queryBatcher = dataMovementManager.newQueryBatcher(stringQueryDefinition)
+                .withThreadCount(Integer.parseInt(config.get(MarkLogicSourceConfig.THREAD_COUNT)))
                 .onUrisReady(getExportListener())
                 .onQueryFailure(Throwable::printStackTrace);
 
@@ -60,6 +63,7 @@ public class MarkLogicSourceTask extends SourceTask {
     private ExportListener getExportListener() {
         return new ExportListener()
                 .onDocumentReady(doc -> {
+                    logger.info("Exporting document from MarkLogic: " + doc.getUri());
                     String documentContent = doc.getContent(new StringHandle()).get();
                     Map<String, String> sourcePartition = Collections.singletonMap("filename", doc.getUri());
                     Map<String, Integer> sourceOffset = Collections.singletonMap("position", 1);
@@ -70,10 +74,20 @@ public class MarkLogicSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
+        sleep();
         records = new ArrayList<>();
-        dataMovementManager.startJob(queryBatcher);
+        logger.info("Querying for MarkLogic records");
+        if (!jobStarted) {
+            dataMovementManager.startJob(queryBatcher);
+            jobStarted = true;
+        }
         queryBatcher.awaitCompletion();
+        logger.info(String.format("Finished querying MarkLogic (%d records found)", records.size()));
         return records;
+    }
+
+    private void sleep() throws InterruptedException {
+        Thread.sleep(MARKLOGIC_POLL_INTERVAL);
     }
 
     @Override
