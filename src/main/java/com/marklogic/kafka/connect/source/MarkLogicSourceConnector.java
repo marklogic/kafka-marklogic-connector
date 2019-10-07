@@ -21,7 +21,7 @@ public class MarkLogicSourceConnector extends SourceConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        return MarkLogicSourceTask.class;
+        return MarkLogicClientSourceTask.class;
     }
 
     @Override

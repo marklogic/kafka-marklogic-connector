@@ -19,11 +19,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class MarkLogicSourceTask extends SourceTask {
+public class MarkLogicDmsdkSourceTask extends SourceTask {
 
     static final Integer MARKLOGIC_POLL_INTERVAL = 1000;
 
-    private static final Logger logger = LoggerFactory.getLogger(MarkLogicSourceTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(MarkLogicDmsdkSourceTask.class);
 
     private Map<String, String> config;
     private String topic;
