@@ -5,8 +5,11 @@ import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.ExportListener;
 import com.marklogic.client.datamovement.JobTicket;
 import com.marklogic.client.datamovement.QueryBatcher;
+import com.marklogic.client.document.DocumentPatchBuilder;
 import com.marklogic.client.document.GenericDocumentManager;
 import com.marklogic.client.document.TextDocumentManager;
+import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.MatchDocumentSummary;
@@ -33,6 +36,8 @@ public class MarkLogicClientSourceTask extends SourceTask {
     private Map<String, String> config;
     private String topic;
     private String query;
+    String rawCollections;
+    String[] collections = null;
 
     private DatabaseClient databaseClient;
     private QueryManager queryMgr;
@@ -50,11 +55,21 @@ public class MarkLogicClientSourceTask extends SourceTask {
         config = props;
         topic = config.get(MarkLogicSourceConfig.KAFKA_TOPIC);
         query = config.get(MarkLogicSourceConfig.QUERY);
+        rawCollections = config.get(MarkLogicSourceConfig.QUERY_COLLECTIONS);
 
         databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
         queryMgr = databaseClient.newQueryManager();
         stringQueryDefinition = queryMgr.newStringDefinition();
         stringQueryDefinition.setCriteria(query);
+        logger.info("Query: " + query);
+
+        if (rawCollections != null) {
+            collections = rawCollections.split(",");
+            for (String collection : collections ) {
+                logger.info("Query Collection: " + collection);
+            }
+            stringQueryDefinition.setCollections(collections);
+        }
 
         logger.info("MarkLogicSourceTask Started");
     }
@@ -74,17 +89,28 @@ public class MarkLogicClientSourceTask extends SourceTask {
         return records;
     }
 
+    public void commitRecord​(SourceRecord record) throws java.lang.InterruptedException {
+        String docUri = (String) record.sourcePartition().get("filename");
+        TextDocumentManager textDocumentManager = databaseClient.newTextDocumentManager();
+        textDocumentManager.delete(docUri);
+        logger.info(docUri + " committed.");
+    }
+
     private ArrayList<SourceRecord> getRecordsFromMatches(SearchHandle results) {
         TextDocumentManager textDocumentManager = databaseClient.newTextDocumentManager();
         ArrayList<SourceRecord> records = new ArrayList<>();
         MatchDocumentSummary[] summaries = results.getMatchResults();
+        Integer offsetCounter = 1;
         for (MatchDocumentSummary summary : summaries ) {
-            String documentContent = textDocumentManager.read(summary.getUri(), new StringHandle()).get();
-            Map<String, String> sourcePartition = Collections.singletonMap("filename", summary.getUri());
-            Map<String, Integer> sourceOffset = Collections.singletonMap("position", 1);
+            String docUri = summary.getUri();
+            DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
+            StringHandle stringHandle = new StringHandle();
+            String documentContent = textDocumentManager.read(docUri, metadataHandle, stringHandle).get();
+            Map<String, String> sourcePartition = Collections.singletonMap("filename", docUri);
+            Map<String, Integer> sourceOffset = Collections.singletonMap("position", offsetCounter++);
             records.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, documentContent));
 
-            logger.info("Exporting document from MarkLogic: " + summary.getUri());
+            logger.info("Exporting document from MarkLogic: " + docUri);
         }
         return records;
     }
