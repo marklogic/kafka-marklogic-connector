@@ -133,6 +133,6 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
     from 'build/connectorArchive'
     include '*'
     include '*/*'
-    archiveName 'confluentinc-kafka-marklogic-connector-0.1.0.zip'
+    archiveName "${componentOwner}-${componentName}-${version}.zip"
     destinationDir(file('build/distro'))
 }

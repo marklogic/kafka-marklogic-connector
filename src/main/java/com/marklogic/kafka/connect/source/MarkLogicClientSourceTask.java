@@ -92,7 +92,12 @@ public class MarkLogicClientSourceTask extends SourceTask {
     public void commitRecord​(SourceRecord record) throws java.lang.InterruptedException {
         String docUri = (String) record.sourcePartition().get("filename");
         TextDocumentManager textDocumentManager = databaseClient.newTextDocumentManager();
-        textDocumentManager.delete(docUri);
+        DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
+        StringHandle stringHandle = new StringHandle();
+        String documentContent = textDocumentManager.read(docUri, metadataHandle, stringHandle).get();
+        metadataHandle.getCollections().remove(rawCollections.split(",")[0]);
+        metadataHandle.getCollections().add("delivered-to-kafka");
+        textDocumentManager.writeMetadata(docUri, metadataHandle);
         logger.info(docUri + " committed.");
     }
 
