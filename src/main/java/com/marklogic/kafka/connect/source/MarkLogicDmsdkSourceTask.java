@@ -19,6 +19,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+
+/* ATTENTION - DO NOT USE
+    THIS IS NOT READY
+
+    This is an attempt to prototype the SourceTask using DMSDK. However, I don't think I understand the DMSDK well
+    enough to do it correctly.
+
+    I am only saving it so that DMSDK experts can look at it and laugh. And maybe eventually I can fix it.
+ */
 public class MarkLogicDmsdkSourceTask extends SourceTask {
 
     static final Integer MARKLOGIC_POLL_INTERVAL = 1000;
@@ -28,6 +37,8 @@ public class MarkLogicDmsdkSourceTask extends SourceTask {
     private Map<String, String> config;
     private String topic;
     private String query;
+    String queryCollection;
+    String processedCollection;
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
@@ -48,11 +59,17 @@ public class MarkLogicDmsdkSourceTask extends SourceTask {
         config = props;
         topic = config.get(MarkLogicSourceConfig.KAFKA_TOPIC);
         query = config.get(MarkLogicSourceConfig.QUERY);
+        queryCollection = config.get(MarkLogicSourceConfig.QUERY_COLLECTION);
+        processedCollection = config.get(MarkLogicSourceConfig.QUERY_PROCESSED_COLLECTION);
 
         databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
         dataMovementManager = databaseClient.newDataMovementManager();
         final StringQueryDefinition stringQueryDefinition = databaseClient.newQueryManager().newStringDefinition();
         stringQueryDefinition.setCriteria(query);
+        stringQueryDefinition.setCollections(queryCollection);
+        logger.info("Query: " + query);
+        logger.info("Query Collection: " + queryCollection);
+
         queryBatcher = dataMovementManager.newQueryBatcher(stringQueryDefinition)
                 .withThreadCount(Integer.parseInt(config.get(MarkLogicSourceConfig.THREAD_COUNT)))
                 .onUrisReady(getExportListener())

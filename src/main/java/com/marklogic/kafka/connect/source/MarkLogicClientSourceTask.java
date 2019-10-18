@@ -1,15 +1,8 @@
 package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.DataMovementManager;
-import com.marklogic.client.datamovement.ExportListener;
-import com.marklogic.client.datamovement.JobTicket;
-import com.marklogic.client.datamovement.QueryBatcher;
-import com.marklogic.client.document.DocumentPatchBuilder;
-import com.marklogic.client.document.GenericDocumentManager;
 import com.marklogic.client.document.TextDocumentManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
-import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.query.MatchDocumentSummary;
@@ -36,8 +29,8 @@ public class MarkLogicClientSourceTask extends SourceTask {
     private Map<String, String> config;
     private String topic;
     private String query;
-    String rawCollections;
-    String[] collections = null;
+    String queryCollection;
+    String processedCollection;
 
     private DatabaseClient databaseClient;
     private QueryManager queryMgr;
@@ -55,21 +48,16 @@ public class MarkLogicClientSourceTask extends SourceTask {
         config = props;
         topic = config.get(MarkLogicSourceConfig.KAFKA_TOPIC);
         query = config.get(MarkLogicSourceConfig.QUERY);
-        rawCollections = config.get(MarkLogicSourceConfig.QUERY_COLLECTIONS);
+        queryCollection = config.get(MarkLogicSourceConfig.QUERY_COLLECTION);
+        processedCollection = config.get(MarkLogicSourceConfig.QUERY_PROCESSED_COLLECTION);
 
         databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
         queryMgr = databaseClient.newQueryManager();
         stringQueryDefinition = queryMgr.newStringDefinition();
         stringQueryDefinition.setCriteria(query);
+        stringQueryDefinition.setCollections(queryCollection);
         logger.info("Query: " + query);
-
-        if (rawCollections != null) {
-            collections = rawCollections.split(",");
-            for (String collection : collections ) {
-                logger.info("Query Collection: " + collection);
-            }
-            stringQueryDefinition.setCollections(collections);
-        }
+        logger.info("Query Collection: " + queryCollection);
 
         logger.info("MarkLogicSourceTask Started");
     }
@@ -89,14 +77,14 @@ public class MarkLogicClientSourceTask extends SourceTask {
         return records;
     }
 
-    public void commitRecord​(SourceRecord record) throws java.lang.InterruptedException {
+    @Override
+    public void commitRecord(SourceRecord record) {
         String docUri = (String) record.sourcePartition().get("filename");
         TextDocumentManager textDocumentManager = databaseClient.newTextDocumentManager();
         DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
-        StringHandle stringHandle = new StringHandle();
-        String documentContent = textDocumentManager.read(docUri, metadataHandle, stringHandle).get();
-        metadataHandle.getCollections().remove(rawCollections.split(",")[0]);
-        metadataHandle.getCollections().add("delivered-to-kafka");
+        textDocumentManager.read(docUri, metadataHandle, new StringHandle()).get();
+        metadataHandle.getCollections().remove(queryCollection);
+        metadataHandle.getCollections().add(processedCollection);
         textDocumentManager.writeMetadata(docUri, metadataHandle);
         logger.info(docUri + " committed.");
     }
