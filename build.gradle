@@ -72,6 +72,7 @@ task deploy {
 }
 
 // Tasks for building the archive required for submitting to the Confluence Connector Hub
+import org.apache.tools.ant.filters.*
 task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
     description = "Copy the project manifest into the root folder"
     group = 'connector archive'
@@ -79,6 +80,7 @@ task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
     from '.'
     include 'manifest.json'
     into 'build/connectorArchive'
+    filter(ReplaceTokens, tokens:[CONFLUENT_USER:componentOwner, VERSION:version])
 }
 
 task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
@@ -133,6 +135,6 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
     from 'build/connectorArchive'
     include '*'
     include '*/*'
-    archiveName 'confluentinc-kafka-marklogic-connector-0.1.0.zip'
+    archiveName "${componentOwner}-${componentName}-${version}.zip"
     destinationDir(file('build/distro'))
 }
