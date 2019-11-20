@@ -7,8 +7,6 @@ import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
