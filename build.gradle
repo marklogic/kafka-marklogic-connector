@@ -17,7 +17,7 @@ configurations {
 }
 
 dependencies {
-    compileOnly "org.apache.kafka:connect-api:2.1.0"
+    compileOnly "org.apache.kafka:connect-api:2.3.0"
     compile ("com.marklogic:ml-javaclient-util:3.10.0") {
         exclude module: "jdom2"
         exclude module: "marklogic-xcc"
@@ -25,7 +25,13 @@ dependencies {
     }
 
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
-    testCompile "org.apache.kafka:connect-api:2.1.0"
+    testCompile "org.apache.kafka:connect-api:2.3.0"
+    testCompile 'org.testcontainers:testcontainers:1.11.4'
+    // https://mvnrepository.com/artifact/org.testcontainers/kafka
+    testCompile group: 'org.testcontainers', name: 'kafka', version: '1.12.2'
+    testCompile("org.assertj:assertj-core:3.11.1")
+// https://mvnrepository.com/artifact/org.apache.kafka/connect-runtime
+    testCompile group: 'org.apache.kafka', name: 'connect-runtime', version: '2.3.1'
 
     // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.0"
@@ -72,6 +78,7 @@ task deploy {
 }
 
 // Tasks for building the archive required for submitting to the Confluence Connector Hub
+import org.apache.tools.ant.filters.*
 task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
     description = "Copy the project manifest into the root folder"
     group = 'connector archive'
@@ -79,6 +86,7 @@ task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
     from '.'
     include 'manifest.json'
     into 'build/connectorArchive'
+    filter(ReplaceTokens, tokens:[CONFLUENT_USER:componentOwner, VERSION:version])
 }
 
 task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
