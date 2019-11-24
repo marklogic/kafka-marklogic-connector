@@ -77,6 +77,24 @@ public class ConvertSinkRecordTest {
 		assertEquals("hello world".getBytes().length, content.get().length);
 	}
 
+	@Test
+	public void emptyContent() {
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+
+		DocumentWriteOperation op = converter.convert(newSinkRecord("".getBytes()));
+
+		BytesHandle content = (BytesHandle)op.getContent();
+		assertEquals("".getBytes().length, content.get().length);
+	}
+
+	@Test
+	public void nullContent() {
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+
+		DocumentWriteOperation op = converter.convert(null);
+		assertEquals(null, op);
+	}
+
 	private SinkRecord newSinkRecord(Object value) {
 		return new SinkRecord("test-topic", 1, null, null, null, value, 0);
 	}
