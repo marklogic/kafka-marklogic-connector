@@ -114,7 +114,11 @@ public class MarkLogicSinkTask extends SinkTask {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
 			}
-			writeBatcher.add(sinkRecordConverter.convert(record));
+			if (record.value() != null) {
+				writeBatcher.add(sinkRecordConverter.convert(record));
+			} else {
+				logger.info("Skipping record with null value");
+			}
 		});
 
 		writeBatcher.flushAsync();

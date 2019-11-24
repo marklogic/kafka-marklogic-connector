@@ -17,6 +17,10 @@ public class DocumentWriteOperationBuilder {
 	private ContentIdExtractor contentIdExtractor = new DefaultContentIdExtractor();
 
 	public DocumentWriteOperation build(AbstractWriteHandle content, DocumentMetadataHandle metadata ) {
+		if (content == null) {
+			return null;
+		}
+
 		if (hasText(collections)) {
 			metadata.getCollections().addAll(collections.trim().split(","));
 		}
