@@ -4,13 +4,3 @@
 build
 out
 gradle-local.properties
-
-bin/test/logback.xml
-
-*.class
-
-.classpath
-
-*.prefs
-
-.project
