@@ -50,6 +50,9 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	 * @return
 	 */
 	protected AbstractWriteHandle toContent(SinkRecord record) {
+		if ((record == null) || (record.value() == null)) {
+			return null;
+		}
 		Object value = record.value();
 		if (value instanceof byte[]) {
 			BytesHandle content = new BytesHandle((byte[]) value);
