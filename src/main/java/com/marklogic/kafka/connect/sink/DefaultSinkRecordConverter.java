@@ -17,13 +17,11 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	private DocumentWriteOperationBuilder documentWriteOperationBuilder;
 	private Format format;
 	private String mimeType;
-	private Boolean addTopicIndicated = true ; 
-	private String  mlcollection; 
+	private Boolean addTopicToCollections = true; 
 	
 	public DefaultSinkRecordConverter(Map<String, String> kafkaConfig) {
 		
-		addTopicIndicated = Boolean.parseBoolean((kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC)).trim());
-		mlcollection = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS).toString();
+		addTopicToCollections = Boolean.parseBoolean((kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC)).trim());
 		
 		documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
 			.withCollections(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
@@ -41,24 +39,10 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 		}
 	}
 	
-	/*
-	* method to check if the uses want the topic names to set as MarkLogic collections 
-	* @param SinkRecord 
-	* @return collections comma seperated collections string
-	*/
-	public String setCollection (SinkRecord sinkRecord){
-		if (addTopicIndicated) {
-			return  sinkRecord.topic() + ","+ mlcollection;
-	}
-	else {
-			return mlcollection;
-	}
-}
+	
 	@Override
 	public DocumentWriteOperation convert(SinkRecord sinkRecord) {
-		return documentWriteOperationBuilder
-		.withCollections(setCollection(sinkRecord))
-		.build(toContent(sinkRecord));
+		return documentWriteOperationBuilder.build(toContent(sinkRecord), sinkRecord.topic(), addTopicToCollections);
 	}
 
 	/**
