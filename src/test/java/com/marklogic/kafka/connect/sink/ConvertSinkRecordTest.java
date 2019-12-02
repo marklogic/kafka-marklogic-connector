@@ -31,7 +31,7 @@ public class ConvertSinkRecordTest {
 		config.put("ml.document.permissions", "manage-user,read,manage-admin,update");
 		config.put("ml.document.uriPrefix", "/example/");
 		config.put("ml.document.uriSuffix", ".json");
-		config.put("addTopicToCollections", "false");
+		config.put("addTopicToCollections", "true");
 		converter = new DefaultSinkRecordConverter(config);
 
 		DocumentWriteOperation op = converter.convert(newSinkRecord("test"));
