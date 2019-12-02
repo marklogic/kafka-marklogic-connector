@@ -16,10 +16,18 @@ public class DocumentWriteOperationBuilder {
 
 	private ContentIdExtractor contentIdExtractor = new DefaultContentIdExtractor();
 
-	public DocumentWriteOperation build(AbstractWriteHandle content) {
+	public DocumentWriteOperation build(AbstractWriteHandle content, String topic, Boolean addTopicToCollections ) {
 		DocumentMetadataHandle metadata = new DocumentMetadataHandle();
 		if (hasText(collections)) {
-			metadata.getCollections().addAll(collections.trim().split(","));
+			if (addTopicToCollections) {
+			metadata.getCollections().addAll((collections+ ","+ topic).trim().split(","));
+			}else {
+				metadata.getCollections().addAll(collections.trim().split(","));
+			}
+		}else{
+			if (addTopicToCollections) {
+				metadata.getCollections().addAll(topic);
+			}
 		}
 		if (hasText(permissions)) {
 			new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());
