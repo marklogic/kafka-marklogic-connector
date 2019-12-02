@@ -3,10 +3,8 @@ package com.marklogic.kafka.connect.sink;
 import com.marklogic.client.document.DocumentWriteOperation;
 import com.marklogic.client.ext.document.DocumentWriteOperationBuilder;
 import com.marklogic.client.io.BytesHandle;
-import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.io.DocumentMetadataHandle.DocumentCollections;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import org.apache.kafka.connect.sink.SinkRecord;
 import java.util.Map;
@@ -19,7 +17,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	private DocumentWriteOperationBuilder documentWriteOperationBuilder;
 	private Format format;
 	private String mimeType;
-	private Boolean addTopicToCollections = false ; 
+	private Boolean addTopicToCollections = true; 
 	
 	public DefaultSinkRecordConverter(Map<String, String> kafkaConfig) {
 		
@@ -41,18 +39,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 		}
 	}
 	
-	/*
-	 * method to check if the uses want the topic names to set as MarkLogic
-	 * collections
-	 * 
-	 * @param SinkRecord
-	 * 
-	 * @return collections comma seperated collections string
-	 * 
-	 * public String setCollection (SinkRecord sinkRecord){ if
-	 * (addTopicToCollections) { return sinkRecord.topic() + ","+ mlcollection; }
-	 * else { return mlcollection; } }
-	 */
+	
 	@Override
 	public DocumentWriteOperation convert(SinkRecord sinkRecord) {
 		return documentWriteOperationBuilder.build(toContent(sinkRecord), sinkRecord.topic(), addTopicToCollections);

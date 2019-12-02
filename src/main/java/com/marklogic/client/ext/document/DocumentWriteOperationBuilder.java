@@ -24,6 +24,10 @@ public class DocumentWriteOperationBuilder {
 			}else {
 				metadata.getCollections().addAll(collections.trim().split(","));
 			}
+		}else{
+			if (addTopicToCollections) {
+				metadata.getCollections().addAll(topic);
+			}
 		}
 		if (hasText(permissions)) {
 			new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());

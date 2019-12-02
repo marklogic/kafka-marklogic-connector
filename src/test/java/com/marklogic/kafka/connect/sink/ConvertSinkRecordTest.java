@@ -31,14 +31,14 @@ public class ConvertSinkRecordTest {
 		config.put("ml.document.permissions", "manage-user,read,manage-admin,update");
 		config.put("ml.document.uriPrefix", "/example/");
 		config.put("ml.document.uriSuffix", ".json");
-		config.put("addTopicToCollections", "true");
-		config.put("addTopicToCollections", "true");
+		config.put("addTopicToCollections", "false");
 		converter = new DefaultSinkRecordConverter(config);
 
 		DocumentWriteOperation op = converter.convert(newSinkRecord("test"));
 
 		assertTrue(op.getUri().startsWith("/example/"));
 		assertTrue(op.getUri().endsWith(".json"));
+		
 
 		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
 		Iterator<String> collections = metadata.getCollections().iterator();
