@@ -78,6 +78,7 @@ When a document is received and written by the connector, you'll see logging lik
 | ml.dmsdk.batchSize | 100 | Sets the number of documents to be written in a batch to MarkLogic. This may not have any impact depending on the connector receives data from Kafka, as the connector calls flushAsync on the DMSDK WriteBatcher after processing every collection of records. Thus, if the connector never receives at one time more than the value of this property, then the value of this property will have no impact. |
 | ml.dmsdk.threadCount | 8 | Sets the number of threads used by the Data Movement SDK for parallelizing writes to MarkLogic. Similar to the batch size property above, this may never come into play depending on how many records the connector receives at once. |
 | ml.document.collections | kafka-data | Optional - a comma-separated list of collections that each document should be written to |
+|ml.document.addTopicToCollections | False | Optional - set this to true so that the name of the topic that the connector reads from is added as a collection to each document inserted by the connector
 | ml.document.format | JSON | Optional - specify the format of each document; either JSON, XML, BINARY, TEXT, or UNKNOWN |
 | ml.document.mimeType | (empty) | Optional - specify a mime type for each document; typically the format property above will be used instead of this |
 | ml.document.permissions | rest-reader,read,rest-writer,update | Optional - a comma-separated list of roles and capabilities that define the permissions for each document written to MarkLogic |
