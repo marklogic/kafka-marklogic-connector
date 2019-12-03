@@ -5,7 +5,7 @@ build
 out
 gradle-local.properties
 
-bin/test/logback.xml
+bin
 
 *.class
 
