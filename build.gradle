@@ -18,7 +18,9 @@ configurations {
 
 dependencies {
     compileOnly "org.apache.kafka:connect-api:2.1.0"
-    compile ("com.marklogic:ml-javaclient-util:3.10.0") {
+
+    compile ("com.marklogic:ml-javaclient-util:3.13.4") {
+        // These are excluded simply to reduce the size of the connector; if included, they do not cause any issues
         exclude module: "jdom2"
         exclude module: "marklogic-xcc"
         exclude module: "spring-context"
