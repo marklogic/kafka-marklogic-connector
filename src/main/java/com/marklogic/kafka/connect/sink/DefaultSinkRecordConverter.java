@@ -18,11 +18,14 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	private DocumentWriteOperationBuilder documentWriteOperationBuilder;
 	private Format format;
 	private String mimeType;
-	private Boolean addTopicToCollections = true; 
+	private Boolean addTopicToCollections = false; 
 	
 	public DefaultSinkRecordConverter(Map<String, String> kafkaConfig) {
-		
-		addTopicToCollections = Boolean.parseBoolean((kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC)).trim());
+	
+		String val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
+		if (val != null && val.trim().length() > 0) {
+			addTopicToCollections = Boolean.parseBoolean(val.trim());
+		}
 		
 		documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
 			.withCollections(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
@@ -30,7 +33,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 			.withUriPrefix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
 			.withUriSuffix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
 
-		String val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
+		 val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
 		if (val != null && val.trim().length() > 0) {
 			format = Format.valueOf(val.toUpperCase());
 		}
@@ -51,13 +54,11 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	 * @param topic, addTopicToCollections
 	 * @return  metadata 
 	 */
-	public DocumentMetadataHandle addTopicToCollections (String topic, Boolean addTopicToCollections) {
+	protected DocumentMetadataHandle addTopicToCollections (String topic, Boolean addTopicToCollections) {
 		DocumentMetadataHandle metadata = new DocumentMetadataHandle();
 			if (addTopicToCollections) {
-				metadata.getCollections().addAll(topic);
-			} else {
-				metadata.getCollections().addAll();
-			}
+				metadata.getCollections().add(topic);
+			} 
 		return metadata ;
 	}
 	
