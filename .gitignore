@@ -6,7 +6,7 @@ out
 gradle-local.properties
 
 bin
-
+.vscode  
 *.class
 
 .classpath

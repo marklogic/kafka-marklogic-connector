@@ -55,7 +55,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(DMSDK_TRANSFORM, Type.STRING, Importance.MEDIUM, "Name of a REST transform to use when writing documents")
 		.define(DMSDK_TRANSFORM_PARAMS, Type.STRING, Importance.MEDIUM, "Delimited set of transform names and values")
 		.define(DMSDK_TRANSFORM_PARAMS_DELIMITER, Type.STRING, ",", Importance.LOW, "Delimiter for transform parameter names and values; defaults to a comma")
-		.define(DOCUMENT_COLLECTIONS_ADD_TOPIC, Type.BOOLEAN, false,Importance.LOW, "Boolean that indicate if topics should be add to documents collections ")
+		.define(DOCUMENT_COLLECTIONS_ADD_TOPIC, Type.BOOLEAN, false,Importance.LOW, "Indicates if the topic name should be added to the set of collections for a document")
 		.define(DOCUMENT_COLLECTIONS, Type.STRING, Importance.MEDIUM, "String-delimited collections to add each document to")
 		.define(DOCUMENT_FORMAT, Type.STRING, Importance.LOW, "Defines format of each document; can be one of json, xml, text, binary, or unknown")
 		.define(DOCUMENT_MIMETYPE, Type.STRING, Importance.LOW, "Defines the mime type of each document; optional, and typically the format is set instead of the mime type")
