@@ -111,17 +111,25 @@ public class MarkLogicSinkTask extends SinkTask {
 		}
 
 		records.forEach(record -> {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
-			}
-			if (record.value() != null) {
-				writeBatcher.add(sinkRecordConverter.convert(record));
+			if (record == null) {
+				logger.warn("Skipping null record object.");
 			} else {
-				logger.info("Skipping record with null value");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
+				}
+				if (record.value() != null) {
+					writeBatcher.add(sinkRecordConverter.convert(record));
+				} else {
+					logger.warn("Skipping record with null value - possibly a 'tombstone' message.");
+				}
 			}
 		});
 
-		writeBatcher.flushAsync();
+		if (writeBatcher != null) {
+			writeBatcher.flushAsync();
+		} else {
+			logger.warn("writeBatcher is null - ignore this is you are running unit tests, otherwise this is a problem.");
+		}
 	}
 
 	public String version() {

@@ -18,7 +18,7 @@ public class DocumentWriteOperationBuilder {
 
 	public DocumentWriteOperation build(AbstractWriteHandle content, DocumentMetadataHandle metadata ) {
 		if (content == null) {
-			return null;
+			throw new NullPointerException("'content' must not be null");
 		}
 
 		if (hasText(collections)) {

@@ -8,9 +8,7 @@ import com.marklogic.client.io.StringHandle;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ConvertSinkRecordTest {
 
 	DefaultSinkRecordConverter converter;
+	MarkLogicSinkTask markLogicSinkTask = new MarkLogicSinkTask();
 
 	@Test
 	public void allPropertiesSet() {
@@ -80,20 +79,16 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void emptyContent() {
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-
-		DocumentWriteOperation op = converter.convert(newSinkRecord("".getBytes()));
-
-		BytesHandle content = (BytesHandle)op.getContent();
-		assertEquals("".getBytes().length, content.get().length);
+		final Collection<SinkRecord> records = new ArrayList<>();
+		records.add(newSinkRecord(null));
+		markLogicSinkTask.put(records);
 	}
 
 	@Test
 	public void nullContent() {
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-
-		DocumentWriteOperation op = converter.convert(null);
-		assertEquals(null, op);
+		final Collection<SinkRecord> records = new ArrayList<>();
+		records.add(null);
+		markLogicSinkTask.put(records);
 	}
 
 	private SinkRecord newSinkRecord(Object value) {
