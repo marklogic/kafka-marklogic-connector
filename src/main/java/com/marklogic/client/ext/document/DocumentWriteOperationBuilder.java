@@ -18,7 +18,7 @@ public class DocumentWriteOperationBuilder {
 
 	public DocumentWriteOperation build(AbstractWriteHandle content) {
 		if (content == null) {
-			return null;
+			throw new NullPointerException("'content' must not be null");
 		}
 
 		DocumentMetadataHandle metadata = new DocumentMetadataHandle();
