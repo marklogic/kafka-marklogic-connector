@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MarkLogicSinkConnector extends SinkConnector {
 
-	public static final String MARKLOGIC_CONNECTOR_VERSION = "0.9.0";
+	static final String MARKLOGIC_SINK_CONNECTOR_VERSION = "0.9.0";
 
 	private Map<String, String> config;
 
@@ -44,7 +44,7 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
 	@Override
 	public String version() {
-		return MARKLOGIC_CONNECTOR_VERSION;
+		return MARKLOGIC_SINK_CONNECTOR_VERSION;
 	}
 
 }

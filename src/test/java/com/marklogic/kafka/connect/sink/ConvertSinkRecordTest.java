@@ -37,6 +37,7 @@ public class ConvertSinkRecordTest {
 
 		assertTrue(op.getUri().startsWith("/example/"));
 		assertTrue(op.getUri().endsWith(".json"));
+		
 
 		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
 		Iterator<String> collections = metadata.getCollections().iterator();

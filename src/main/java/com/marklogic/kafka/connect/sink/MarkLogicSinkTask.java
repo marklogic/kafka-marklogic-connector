@@ -35,8 +35,8 @@ public class MarkLogicSinkTask extends SinkTask {
 		databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher()
-			.withBatchSize(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
-			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
+			.withBatchSize(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
+			.withThreadCount(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
 
 		ServerTransform transform = buildServerTransform(config);
 		if (transform != null) {
@@ -52,8 +52,8 @@ public class MarkLogicSinkTask extends SinkTask {
 	 * Builds a REST ServerTransform object based on the DMSDK parameters in the given config. If no transform name
 	 * is configured, then null will be returned.
 	 *
-	 * @param config
-	 * @return
+	 * @param config - The complete configuration object including any transform parameters.
+	 * @return - The ServerTransform that will operate on each record, or null
 	 */
 	protected ServerTransform buildServerTransform(final Map<String, String> config) {
 		String transform = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
@@ -81,12 +81,6 @@ public class MarkLogicSinkTask extends SinkTask {
 		return null;
 	}
 
-	/**
-	 * Creates a new DatabaseClient based on the configuration properties found in the given map.
-	 *
-	 * @param config
-	 * @return
-	 */
 	@Override
 	public void stop() {
 		logger.info("Stopping");
@@ -108,7 +102,7 @@ public class MarkLogicSinkTask extends SinkTask {
 	 * Because this is calling flushAsync, the batch size won't come into play unless the incoming collection has a
 	 * size equal to or greater than the batch size.
 	 *
-	 * @param records
+	 * @param records - The records retrieved from Kafka
 	 */
 	@Override
 	public void put(final Collection<SinkRecord> records) {
@@ -127,6 +121,6 @@ public class MarkLogicSinkTask extends SinkTask {
 	}
 
 	public String version() {
-		return MarkLogicSinkConnector.MARKLOGIC_CONNECTOR_VERSION;
+		return MarkLogicSinkConnector.MARKLOGIC_SINK_CONNECTOR_VERSION;
 	}
 }
