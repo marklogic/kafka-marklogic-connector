@@ -26,6 +26,7 @@ for (server in remoteKafkaBrokers.split(',')) {
         host = server
         user = 'bitnami'
         identity = file('kafka.pem')
+        knownHosts = allowAnyHosts
     }
 }
 for (server in remoteConnectorServers.split(',')) {
@@ -34,6 +35,7 @@ for (server in remoteConnectorServers.split(',')) {
         host = server
         user = 'bitnami'
         identity = file('kafka.pem')
+        knownHosts = allowAnyHosts
     }
 }
 remotes.create('remoteWorkerServer') {
@@ -41,6 +43,7 @@ remotes.create('remoteWorkerServer') {
     host = remoteWorkerServer
     user = 'bitnami'
     identity = file('kafka.pem')
+    knownHosts = allowAnyHosts
 }
 
 
@@ -115,11 +118,33 @@ task kafkaShowLast200LinesRemoteServerLogs {
     }
 }
 
+task kafkaTailRemoteServerLogs {
+    doLast {
+        ssh.run {
+            session(remotes.role('kafkaBroker')) {
+                def logResult = execute 'tail -n 200 -f /opt/bitnami/kafka/logs/server.log'
+                println logResult
+            }
+        }
+    }
+}
+
 task kafkaRunMessageProducer {
     doLast {
         ssh.run {
             session(remotes.remoteWorkerServer) {
                 def logResult = execute "java -jar /home/bitnami/kafka-producer-1.0-SNAPSHOT.jar -t ${producerTopic} -m ${producerMessagePerThread} -c ${producerThreadCount} -h ${producerZookeeperHost}:${producerZookeeperPort} -n ${producerNullMessages}"
+                println logResult
+            }
+        }
+    }
+}
+
+task kafkaRunConnector {
+    doLast {
+        ssh.run {
+            session(remotes.remoteWorkerServer) {
+                def logResult = execute "/opt/bitnami/kafka/bin/connect-standalone.sh /opt/bitnami/kafka/config/marklogic-connect-standalone.properties /opt/bitnami/kafka/config/marklogic-sink.properties"
                 println logResult
             }
         }
