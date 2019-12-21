@@ -61,7 +61,7 @@ When a document is received and written by the connector, you'll see logging lik
 | Property | Default Value | Description |
 |:-------- |:--------------|:------------|
 | name | marklogic-sink | The name of the connector |
-| connector.class | com.marklogic.kafka.connect.sink.MarkLogicSinkConnector | The FQ name of the connector class |
+| connector.class | <div>com.marklogic.kafka.connect.</div>sink.MarkLogicSinkConnector | The FQ name of the connector class |
 | tasks.max | 1 | The maximum number of concurrent tasks |
 | topics | marklogic | The name of the topic(s) to subscribe to |
 | ml.connection.host | localhost | A MarkLogic host to connect to. The connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster. |
