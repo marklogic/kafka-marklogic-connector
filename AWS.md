@@ -53,14 +53,20 @@ This is not intended to be a description of setting up a production environment.
 * See https://docs.bitnami.com/aws/faq/#how-to-find-application-credentials for more information
 
 ## Initializing Kafka
-* ssh -i kafka.pem bitnami@<Kafka instance Public DNS>
-* /opt/bitnami/kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic marklogic
+* SSH to the Kafka instance
+<pre>ssh -i kafka.pem bitnami@&lt;Kafka instance Public DNS&gt;</pre>
+* Turn off SASL authentication (on lines 28, 36, and 142, change “SASL_PLAINTEXT” to “PLAINTEXT”):
+<pre>sudo vi /opt/bitnami/kafka/conf/server.properties</pre>
+* Restart the Kafka service
+<pre>sudo /opt/bitnami/ctlscript.sh restart kafka</pre>
+* Create a topic called, "marklogic". (Note - this won't work until the Kafka service has restarted)
+<pre>/opt/bitnami/kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic marklogic</pre>
 
 ## Test Kafka
 * In one terminal, /opt/bitnami/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic marklogic --consumer.config /opt/bitnami/kafka/config/consumer.properties --from-beginning
 * In a second terminal, /opt/bitnami/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --producer.config /opt/bitnami/kafka/config/producer.properties --topic marklogic
 * In the producer console, enter a message. For example,
-    {"A" : "a"}
+    { "Foo" : "bar" }
 * The terminal with the consumer should spit out the message you entered in the producer
 
 ## Configure & Build the MarkLogic Consumer
@@ -74,14 +80,14 @@ This is not intended to be a description of setting up a production environment.
 
 ## Deploy the MarkLogic Consumer
 * scp -i kafka.pem config/marklogic-* bitnami@<Kafka instance Public DNS>:/tmp
-* scp -i kafka.pem build/libs/kafka-connect-marklogic-0.9.0.jar bitnami@<Kafka instance Public DNS>:/tmp
+* scp -i kafka.pem build/libs/kafka-connect-marklogic-<version>.jar bitnami@<Kafka instance Public DNS>:/tmp
 * ssh -i kafka.pem bitnami@<Kafka instance Public DNS>
     sudo mv /tmp/marklogic-* /opt/bitnami/kafka/config
     sudo chmod 644 /opt/bitnami/kafka/config/marklogic-*
     sudo chown root:root /opt/bitnami/kafka/config/marklogic-*
-    sudo mv /tmp/kafka-connect-marklogic-0.9.0.jar /opt/bitnami/kafka/libs
-    sudo chmod 644 /opt/bitnami/kafka/libs/kafka-connect-marklogic-0.9.0.jar 
-    sudo chown root:root /opt/bitnami/kafka/libs/kafka-connect-marklogic-0.9.0.jar 
+    sudo mv /tmp/kafka-connect-marklogic-<version>.jar /opt/bitnami/kafka/libs
+    sudo chmod 644 /opt/bitnami/kafka/libs/kafka-connect-marklogic-<version>.jar 
+    sudo chown root:root /opt/bitnami/kafka/libs/kafka-connect-marklogic-<version>.jar 
 
 ## Start the MarkLogic Consumer
 * While still connected to the Kafka server
