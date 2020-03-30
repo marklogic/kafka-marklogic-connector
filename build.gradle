@@ -18,11 +18,16 @@ configurations {
 
 dependencies {
     compileOnly "org.apache.kafka:connect-api:2.3.0"
-    compile ("com.marklogic:ml-javaclient-util:3.13.4") {
-        // These are excluded simply to reduce the size of the connector; if included, they do not cause any issues
-        exclude module: "jdom2"
-        exclude module: "marklogic-xcc"
-        exclude module: "spring-context"
+
+    compile ("com.marklogic:marklogic-data-hub:5.2.0") {
+        // Excluding these because there's no need for them
+        exclude module: "spring-boot-autoconfigure"
+        exclude module: "spring-integration-http"
+        exclude module: "jaeger-core"
+        exclude module: "jaeger-thrift"
+
+        // Excluding because it causes Kafka Connect to complain mightily if included
+        exclude module: "logback-classic"
     }
 
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
