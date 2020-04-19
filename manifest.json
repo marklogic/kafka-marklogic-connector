@@ -3,9 +3,9 @@
     "sink"
   ],
 
-  "description": "This is a Kafka connector for subscribing to Apache Kafka topics, receiving message from the topics, and loading the messages into MarkLogic.\nIt is built off of the Kafka Connect framework, and therefore automatically supports pluggable encoding converters, single message transforms, and other useful features.\nMarkLogic 9+ is required.",
+  "description": "This is a Kafka connector for subscribing to Apache Kafka topics, receiving messages from the topics, and loading the messages into MarkLogic.\nIt is built off of the Kafka Connect framework, and therefore automatically supports pluggable encoding converters, single message transforms, and other useful features.\nMarkLogic 9+ is required.",
 
-  "documentation_url": "https://github.com/BillFarber/kafka-marklogic-connector",
+  "documentation_url": "https://github.com/marklogic-community/kafka-marklogic-connector",
 
   "features": {
     "confluent_control_center_integration": true,
