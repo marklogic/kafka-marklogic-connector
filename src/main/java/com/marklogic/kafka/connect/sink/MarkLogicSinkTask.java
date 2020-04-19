@@ -4,13 +4,17 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
-import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
+import com.marklogic.client.ext.DatabaseClientConfig;
+import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
+import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +36,9 @@ public class MarkLogicSinkTask extends SinkTask {
 
 		sinkRecordConverter = new DefaultSinkRecordConverter(config);
 
-		databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
+		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(config);
+		databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
+
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher()
 			.withBatchSize(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
@@ -43,9 +49,39 @@ public class MarkLogicSinkTask extends SinkTask {
 			writeBatcher.withTransform(transform);
 		}
 
+		final String flowName = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
+		if (flowName != null && flowName.trim().length() > 0) {
+			writeBatcher.onBatchSuccess(buildSuccessListener(flowName, config, databaseClientConfig));
+		}
+
 		dataMovementManager.startJob(writeBatcher);
 
 		logger.info("Started");
+	}
+
+	/**
+	 * This is all specific to Kafka, as it involves reading inputs from the Kafka config map and then using them to
+	 * construct the reusable RunFlowWriteBatchListener.
+	 *
+	 * @param flowName
+	 * @param kafkaConfig
+	 * @param databaseClientConfig
+	 */
+	protected RunFlowWriteBatchListener buildSuccessListener(String flowName, Map<String, String> kafkaConfig, DatabaseClientConfig databaseClientConfig) {
+		String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
+		final String flowSteps = kafkaConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
+		List<String> steps = null;
+		if (flowSteps != null && flowSteps.trim().length() > 0) {
+			steps = Arrays.asList(flowSteps.split(","));
+			logMessage += String.format(" with steps '%s' constrained to the URIs in that batch", steps.toString());
+		}
+		logger.info(logMessage);
+
+		RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(flowName, steps, databaseClientConfig);
+		if (kafkaConfig.containsKey(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)) {
+			listener.setLogResponse(Boolean.parseBoolean(kafkaConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)));
+		}
+		return listener;
 	}
 
 	/**

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BuildDatabaseClientConfigTest {
 
-	DefaultDatabaseClientCreator creator = new DefaultDatabaseClientCreator();
+	DefaultDatabaseClientConfigBuilder builder = new DefaultDatabaseClientConfigBuilder();
 	Map<String, String> config = new HashMap<>();
 
 	@BeforeEach
@@ -30,7 +30,7 @@ public class BuildDatabaseClientConfigTest {
 		config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "some-user");
 		config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "some-password");
 
-		DatabaseClientConfig clientConfig = creator.buildDatabaseClientConfig(config);
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals("some-host", clientConfig.getHost());
 		assertEquals(8123, clientConfig.getPort());
 		assertEquals("some-database", clientConfig.getDatabase());
@@ -45,7 +45,7 @@ public class BuildDatabaseClientConfigTest {
 		config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, "/path/to/file");
 		config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "cert-password");
 
-		DatabaseClientConfig clientConfig = creator.buildDatabaseClientConfig(config);
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals(SecurityContextType.CERTIFICATE, clientConfig.getSecurityContextType());
 		assertEquals("/path/to/file", clientConfig.getCertFile());
 		assertEquals("cert-password", clientConfig.getCertPassword());
@@ -56,7 +56,7 @@ public class BuildDatabaseClientConfigTest {
 		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "kerberos");
 		config.put(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME, "some-name");
 
-		DatabaseClientConfig clientConfig = creator.buildDatabaseClientConfig(config);
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals(SecurityContextType.KERBEROS, clientConfig.getSecurityContextType());
 		assertEquals("some-name", clientConfig.getExternalName());
 	}
@@ -66,7 +66,7 @@ public class BuildDatabaseClientConfigTest {
 		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
 		config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, "true");
 
-		DatabaseClientConfig clientConfig = creator.buildDatabaseClientConfig(config);
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals(SecurityContextType.DIGEST, clientConfig.getSecurityContextType());
 		assertNotNull(clientConfig.getSslContext());
 		assertNotNull(clientConfig.getSslHostnameVerifier());
@@ -79,7 +79,7 @@ public class BuildDatabaseClientConfigTest {
 		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
 		config.put(MarkLogicSinkConfig.CONNECTION_TYPE, "gateway");
 
-		DatabaseClientConfig clientConfig = creator.buildDatabaseClientConfig(config);
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals(DatabaseClient.ConnectionType.GATEWAY, clientConfig.getConnectionType());
 	}
 }
