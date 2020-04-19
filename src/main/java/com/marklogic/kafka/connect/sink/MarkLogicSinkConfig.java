@@ -24,6 +24,10 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static final String CONNECTION_CERT_PASSWORD = "ml.connection.certPassword";
 	public static final String CONNECTION_EXTERNAL_NAME = "ml.connection.externalName";
 
+	public static final String DATAHUB_FLOW_NAME = "ml.datahub.flow.name";
+	public static final String DATAHUB_FLOW_STEPS = "ml.datahub.flow.steps";
+	public static final String DATAHUB_FLOW_LOG_RESPONSE = "ml.datahub.flow.logResponse";
+
 	public static final String DMSDK_BATCH_SIZE = "ml.dmsdk.batchSize";
 	public static final String DMSDK_THREAD_COUNT = "ml.dmsdk.threadCount";
 	public static final String DMSDK_TRANSFORM = "ml.dmsdk.transform";
@@ -50,6 +54,9 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(CONNECTION_CERT_FILE, Type.STRING, Importance.LOW, "Path to a certificate file")
 		.define(CONNECTION_CERT_PASSWORD, Type.STRING, Importance.LOW, "Password for the certificate file")
 		.define(CONNECTION_EXTERNAL_NAME, Type.STRING, Importance.LOW, "External name for Kerberos authentication")
+		.define(DATAHUB_FLOW_NAME, Type.STRING, null, Importance.MEDIUM, "Name of a Data Hub flow to run")
+		.define(DATAHUB_FLOW_STEPS, Type.STRING, null, Importance.MEDIUM, "Comma-delimited names of steps to run")
+		.define(DATAHUB_FLOW_LOG_RESPONSE, Type.BOOLEAN, false, Importance.LOW, "If set to true, the response from running a flow on each ingested batch will be logged at the info level")
 		.define(DMSDK_BATCH_SIZE, Type.INT, 100, Importance.HIGH, "Number of documents to write in each batch")
 		.define(DMSDK_THREAD_COUNT, Type.INT, 8, Importance.HIGH, "Number of threads for DMSDK to use")
 		.define(DMSDK_TRANSFORM, Type.STRING, Importance.MEDIUM, "Name of a REST transform to use when writing documents")

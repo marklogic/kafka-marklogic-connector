@@ -10,10 +10,10 @@ This is a connector for subscribing to Kafka queues and pushing messages to Mark
 #### To try this out locally:
 
 1. Configure kafkaHome in gradle-local.properties - e.g. kafkaHome=/Users/myusername/tools/kafka_2.11-2.1.0
-1. Run "./gradlew deploy" to build a jar and copy it and the below property files into the appropriate Kafka directories
+1. Run "./gradlew clean deploy" to build a jar and copy it and the below property files into the appropriate Kafka directories
 
 #### To try this out on a remote Kafka server
-1. Run "./gradlew jar" to build the jar.
+1. Run "./gradlew clean jar" to build the jar.
 1. Copy the jar to the <kafkaHome>/libs on the remote server.
 1. Copy the two properties (config/marklogic-connect-distributed.properties config/marklogic-sink.properties) to <kafkaHome>/config on the remote server.
 

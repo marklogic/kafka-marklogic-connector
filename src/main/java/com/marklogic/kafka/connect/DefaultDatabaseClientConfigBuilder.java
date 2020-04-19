@@ -1,9 +1,8 @@
 package com.marklogic.kafka.connect;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.ext.ConfiguredDatabaseClientFactory;
+import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
-import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 
@@ -11,25 +10,10 @@ import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-public class DefaultDatabaseClientCreator implements DatabaseClientCreator {
+public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigBuilder {
 
-	private ConfiguredDatabaseClientFactory configuredDatabaseClientFactory;
-
-	public DefaultDatabaseClientCreator() {
-		this.configuredDatabaseClientFactory = new DefaultConfiguredDatabaseClientFactory();
-	}
-
-	/**
-	 * @param kafkaConfig
-	 * @return
-	 */
 	@Override
-	public DatabaseClient createDatabaseClient(Map<String, String> kafkaConfig) {
-		DatabaseClientConfig clientConfig = buildDatabaseClientConfig(kafkaConfig);
-		return configuredDatabaseClientFactory.newDatabaseClient(clientConfig);
-	}
-
-	protected DatabaseClientConfig buildDatabaseClientConfig(Map<String, String> kafkaConfig) {
+	public DatabaseClientConfig buildDatabaseClientConfig(Map<String, String> kafkaConfig) {
 		DatabaseClientConfig clientConfig = new DatabaseClientConfig();
 		clientConfig.setCertFile(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
 		clientConfig.setCertPassword(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD));
@@ -76,11 +60,6 @@ public class DefaultDatabaseClientCreator implements DatabaseClientCreator {
 			throw new RuntimeException("Unable to get default SSLContext: " + e.getMessage(), e);
 		}
 
-		clientConfig.setSslHostnameVerifier((hostname, cns, subjectAlts) -> {
-		});
-	}
-
-	public void setConfiguredDatabaseClientFactory(ConfiguredDatabaseClientFactory configuredDatabaseClientFactory) {
-		this.configuredDatabaseClientFactory = configuredDatabaseClientFactory;
+		clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
 	}
 }
