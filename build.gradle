@@ -17,9 +17,9 @@ configurations {
 }
 
 dependencies {
-    compileOnly "org.apache.kafka:connect-api:2.3.0"
+    compileOnly "org.apache.kafka:connect-api:2.5.0"
 
-    compile ("com.marklogic:marklogic-data-hub:5.2.0") {
+    compile ("com.marklogic:marklogic-data-hub:5.2.2") {
         // Excluding these because there's no need for them
         exclude module: "spring-boot-autoconfigure"
         exclude module: "spring-integration-http"
