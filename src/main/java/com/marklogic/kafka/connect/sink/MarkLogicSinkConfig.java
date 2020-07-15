@@ -41,13 +41,11 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static final String DOCUMENT_MIMETYPE = "ml.document.mimeType";
 	public static final String DOCUMENT_URI_PREFIX = "ml.document.uriPrefix";
 	public static final String DOCUMENT_URI_SUFFIX = "ml.document.uriSuffix";
-	/*
-	 * v1.2.2 changes
-	 */
-	public static final String SSL = "ml.connection.ssl";
-	public static final String TLS_VERSION = "ml.connection.tlsVersion";
-	public static final String SSL_HOST_VERIFIER = "ml.connection.hostNameVerifier";
-	public static final String SSL_MUTUAL_AUTH = "ml.connection.mutualAuth";
+
+	public static final String SSL = "ml.connection.enableCustomSsl";
+	public static final String TLS_VERSION = "ml.connection.customSsl.tlsVersion";
+	public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
+	public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
 
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 		.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, "MarkLogic server hostname")
@@ -76,9 +74,6 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(DOCUMENT_PERMISSIONS, Type.STRING, Importance.MEDIUM, "String-delimited permissions to add to each document; role1,capability1,role2,capability2,etc")
 		.define(DOCUMENT_URI_PREFIX, Type.STRING, Importance.MEDIUM, "Prefix to prepend to each generated URI")
 		.define(DOCUMENT_URI_SUFFIX, Type.STRING, Importance.MEDIUM, "Suffix to append to each generated URI")
-		/*
-		 * v1.2.2 changes
-		 */
 		.define(SSL, Type.BOOLEAN, Importance.LOW, "Whether SSL connection to the App server - true or false.")
 		.define(TLS_VERSION, Type.STRING, Importance.LOW, "Version of TLS to connect to MarkLogic SSL enabled App server. Ex. TLSv1.2")
 		.define(SSL_HOST_VERIFIER, Type.STRING, Importance.LOW, "The strictness of Host Verifier - ANY, COMMON, STRICT")
