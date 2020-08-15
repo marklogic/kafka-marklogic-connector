@@ -6,9 +6,12 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import org.apache.kafka.connect.sink.SinkRecord;
+ 
 import org.junit.jupiter.api.Test;
 
+
 import java.util.*;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +25,7 @@ public class ConvertSinkRecordTest {
 	MarkLogicSinkTask markLogicSinkTask = new MarkLogicSinkTask();
 
 	@Test
-	public void allPropertiesSet() {
+	public void allPropertiesSet() throws IOException {
 		Map<String, String> config = new HashMap<>();
 		config.put("ml.document.collections", "one,two");
 		config.put("ml.document.format", "json");
@@ -54,7 +57,7 @@ public class ConvertSinkRecordTest {
 	}
 
 	@Test
-	public void noPropertiesSet() {
+	public void noPropertiesSet() throws IOException {
 		converter = new DefaultSinkRecordConverter(new HashMap<>());
 		converter.getDocumentWriteOperationBuilder().withContentIdExtractor(content -> "12345");
 
@@ -68,7 +71,7 @@ public class ConvertSinkRecordTest {
 	}
 
 	@Test
-	public void binaryContent() {
+	public void binaryContent() throws IOException{
 		converter = new DefaultSinkRecordConverter(new HashMap<>());
 
 		DocumentWriteOperation op = converter.convert(newSinkRecord("hello world".getBytes()));
