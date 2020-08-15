@@ -1,3 +1,9 @@
+# v1.2.2 Changes
+1. Support of additional authentication options 
+2. Documentation of how to update the connector for security options
+
+Refer MarkLogic_Kafka_Connector_v1.2.2.pdf for details
+
 # kafka-connect-marklogic
 
 This is a connector for subscribing to Kafka queues and pushing messages to MarkLogic
