@@ -26,6 +26,10 @@ import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
 import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
 
 public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigBuilder {
@@ -37,8 +41,11 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		clientConfig.setCertPassword(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD));
 		clientConfig.setTrustManager(new SimpleX509TrustManager());
 		clientConfig = configureHostNameVerifier(clientConfig,kafkaConfig);
+<<<<<<< HEAD
 		String securityContextType = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE).toUpperCase();
 		clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+=======
+>>>>>>> upstream/master
 		String database = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_DATABASE);
 		if (database != null && database.trim().length() > 0) {
 			clientConfig.setDatabase(database);
@@ -51,10 +58,14 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		clientConfig.setHost(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
 		clientConfig.setPassword(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD));
 		clientConfig.setPort(Integer.parseInt(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_PORT)));
+<<<<<<< HEAD
 		String customSsl = kafkaConfig.get(MarkLogicSinkConfig.SSL);
 		if (customSsl != null && Boolean.parseBoolean(customSsl)) {
 			clientConfig = configureCustomSslConnection(clientConfig, kafkaConfig);
 		}
+=======
+		clientConfig = configureCustomSslConnection(clientConfig, kafkaConfig);
+>>>>>>> upstream/master
 		String simpleSsl = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL);
 		if (simpleSsl != null && Boolean.parseBoolean(simpleSsl)) {
 			clientConfig = configureSimpleSsl(clientConfig);
@@ -71,14 +82,26 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 	 * @param clientConfig
 	 */
 	protected DatabaseClientConfig configureSimpleSsl(DatabaseClientConfig clientConfig) {
+<<<<<<< HEAD
 		
 		clientConfig.setSslContext(SimpleX509TrustManager.newSSLContext());
 		clientConfig.setTrustManager(new SimpleX509TrustManager());
+=======
+		try {
+			clientConfig.setSslContext(SSLContext.getDefault());
+			clientConfig.setTrustManager(new SimpleX509TrustManager());
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Unable to get default SSLContext: " + e.getMessage(), e);
+		}
+>>>>>>> upstream/master
 		clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
 		return clientConfig;
 	}
 	
+<<<<<<< HEAD
 	
+=======
+>>>>>>> upstream/master
 	/**
 	 * This function configures the Host Name verifier based on the configuration. 
 	 * ANY, STRICT and COMMON are the possible values, ANY being default. 
@@ -105,7 +128,11 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		SSLContext sslContext = null;
 		String securityContextType = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE).toUpperCase();
 		clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> upstream/master
 		if ("BASIC".equals(securityContextType) ||
 				"DIGEST".equals(securityContextType)
 				) {
