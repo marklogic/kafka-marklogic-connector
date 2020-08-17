@@ -46,11 +46,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static final String TLS_VERSION = "ml.connection.customSsl.tlsVersion";
 	public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
 	public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
-<<<<<<< HEAD
 	public static final String ID_STRATEGY = "ml.id.strategy";
 	public static final String ID_STRATEGY_PATH = "ml.id.strategy.paths";
-=======
->>>>>>> upstream/master
 
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 		.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, "MarkLogic server hostname")
@@ -83,11 +80,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(TLS_VERSION, Type.STRING, Importance.LOW, "Version of TLS to connect to MarkLogic SSL enabled App server. Ex. TLSv1.2")
 		.define(SSL_HOST_VERIFIER, Type.STRING, Importance.LOW, "The strictness of Host Verifier - ANY, COMMON, STRICT")
 		.define(SSL_MUTUAL_AUTH, Type.BOOLEAN, Importance.LOW, "Mutual Authentication for Basic or Digest : true or false")
-<<<<<<< HEAD
 		.define(ID_STRATEGY, Type.STRING, Importance.LOW, "The ID Strategy for URI.")
 		.define(ID_STRATEGY_PATH, Type.STRING, Importance.LOW, "The JSON path for ID Strategy")		
-=======
->>>>>>> upstream/master
 		;
 
 	public MarkLogicSinkConfig(final Map<?, ?> originals) {
