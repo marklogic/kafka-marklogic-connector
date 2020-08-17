@@ -1,5 +1,7 @@
 package com.marklogic.client.ext.document;
 
+import java.io.IOException;
+
 import com.marklogic.client.document.DocumentWriteOperation;
 import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.impl.DocumentWriteOperationImpl;
@@ -15,8 +17,11 @@ public class DocumentWriteOperationBuilder {
 	private String permissions;
 
 	private ContentIdExtractor contentIdExtractor = new DefaultContentIdExtractor();
+	private String idStrategy;
+	private String path;
+	
 
-	public DocumentWriteOperation build(AbstractWriteHandle content, DocumentMetadataHandle metadata ) {
+	public DocumentWriteOperation build(AbstractWriteHandle content, DocumentMetadataHandle metadata, String topic, Integer partition, long offset ) throws IOException {
 		if (content == null) {
 			throw new NullPointerException("'content' must not be null");
 		}
@@ -27,13 +32,64 @@ public class DocumentWriteOperationBuilder {
 		if (hasText(permissions)) {
 			new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());
 		}
-
-		String uri = buildUri(content);
+		String uri = "";
+		if ("JSONPATH".equals(idStrategy)) {
+			uri = buildUri(content,path.trim().split(",")[0]);
+		}
+		else if ("HASH".equals(idStrategy)) {
+			uri = buildUri(content,path.trim().split(","));
+		}
+		else if ("UUID".equals(idStrategy)) {
+			uri = buildUri(content);
+		}
+		else if ("KAFKA_META_WITH_SLASH".equals(idStrategy)) {
+			uri = buildUri(content,topic,partition,offset,idStrategy);
+		}
+		else if ("KAFKA_META_HASHED".equals(idStrategy)) {
+			uri = buildUri(content,topic,partition,offset,idStrategy);
+		}
+		else {
+			uri = buildUri(content);
+		}
+			
 		return build(operationType, uri, metadata, content);
 	}
 
-	protected String buildUri(AbstractWriteHandle content) {
+	protected String buildUri(AbstractWriteHandle content) throws IOException  {
 		String uri = contentIdExtractor.extractId(content);
+		if (hasText(uriPrefix)) {
+			uri = uriPrefix + uri;
+		}
+		if (hasText(uriSuffix)) {
+			uri += uriSuffix;
+		}
+		return uri;
+	}
+	
+	protected String buildUri(AbstractWriteHandle content,String path) throws IOException  {
+		String uri = contentIdExtractor.extractId(content,path);
+		if (hasText(uriPrefix)) {
+			uri = uriPrefix + uri;
+		}
+		if (hasText(uriSuffix)) {
+			uri += uriSuffix;
+		}
+		return uri;
+	}
+	
+	protected String buildUri(AbstractWriteHandle content,String[] paths) throws IOException  {
+		String uri = contentIdExtractor.extractId(content,paths);
+		if (hasText(uriPrefix)) {
+			uri = uriPrefix + uri;
+		}
+		if (hasText(uriSuffix)) {
+			uri += uriSuffix;
+		}
+		return uri;
+	}
+	
+	protected String buildUri(AbstractWriteHandle content,String topic, Integer partition, long offset, String idStrategy) throws IOException  {
+		String uri = contentIdExtractor.extractId(content,topic,partition,offset,idStrategy);
 		if (hasText(uriPrefix)) {
 			uri = uriPrefix + uri;
 		}
@@ -90,4 +146,15 @@ public class DocumentWriteOperationBuilder {
 		this.contentIdExtractor = contentIdExtractor;
 		return this;
 	}
+
+	public DocumentWriteOperationBuilder withIdStrategy(String strategy) {
+		this.idStrategy = strategy;
+		return this;
+	}
+	
+	public DocumentWriteOperationBuilder withIdStrategyPath(String path) {
+		this.path = path;
+		return this;
+	}
+
 }
