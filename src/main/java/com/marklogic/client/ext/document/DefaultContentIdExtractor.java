@@ -10,10 +10,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkTask;
-
-/*
-* v1.2.3
-*/
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
