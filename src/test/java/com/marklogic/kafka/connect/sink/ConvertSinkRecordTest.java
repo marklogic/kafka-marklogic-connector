@@ -12,9 +12,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.io.IOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Verifies that a DocumentWriteOperation is created correctly based on a SinkRecord.
@@ -23,6 +26,7 @@ public class ConvertSinkRecordTest {
 
 	DefaultSinkRecordConverter converter;
 	MarkLogicSinkTask markLogicSinkTask = new MarkLogicSinkTask();
+	private JsonObject doc1, doc2, doc3;
 
 	@Test
 	public void allPropertiesSet() throws IOException {
@@ -59,17 +63,83 @@ public class ConvertSinkRecordTest {
 	@Test
 	public void noPropertiesSet() throws IOException {
 		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		converter.getDocumentWriteOperationBuilder().withContentIdExtractor(content -> "12345");
-
+		//converter.getDocumentWriteOperationBuilder().withContentIdExtractor(content -> "12345");
+		
 		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
-		assertEquals("12345", op.getUri());
+		assertNotNull(op.getUri());
+		assertEquals(36,op.getUri().length());
 
 		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
 		assertTrue(metadata.getCollections().isEmpty());
 		assertTrue(metadata.getPermissions().isEmpty());
 	}
 
+	@Test
+	public void UriWithKafkaMetaData() throws IOException {
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+		converter.getDocumentWriteOperationBuilder().withIdStrategy("KAFKA_META_WITH_SLASH");
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
+
+		assertEquals("test-topic/1/0",op.getUri());
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
+	@Test
+	public void UriWithJsonPath() throws IOException {
+		 JsonParser parser = new JsonParser();
+		 doc1 = parser.parse("{\"f1\":\"100\"}").getAsJsonObject();
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+		converter.getDocumentWriteOperationBuilder().withIdStrategy("JSONPATH").withIdStrategyPath("/f1");
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
+		
+		assertNotNull(op.getUri());
+		assertEquals("100",op.getUri());
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
+	@Test
+	public void UriWithHashedJsonPaths() throws IOException {
+		 JsonParser parser = new JsonParser();
+		 doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+		converter.getDocumentWriteOperationBuilder().withIdStrategy("HASH").withIdStrategyPath("/f1,/f2");
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
+
+		assertNotNull(op.getUri());
+		assertEquals(32,op.getUri().length()); //Checking the length. Alternative is to create a MD5 of 100200 and check asserton the values.
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
+	@Test
+	public void UriWithHashedKafkaMeta() throws IOException {
+		 JsonParser parser = new JsonParser();
+		 doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
+		converter = new DefaultSinkRecordConverter(new HashMap<>());
+		converter.getDocumentWriteOperationBuilder().withIdStrategy("KAFKA_META_HASHED");
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
+
+		assertNotNull(op.getUri());
+		assertEquals(32,op.getUri().length()); //Checking the length. Alternative is to create a MD5 of 100200 and check asserton the values.
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
 	@Test
 	public void binaryContent() throws IOException{
 		converter = new DefaultSinkRecordConverter(new HashMap<>());

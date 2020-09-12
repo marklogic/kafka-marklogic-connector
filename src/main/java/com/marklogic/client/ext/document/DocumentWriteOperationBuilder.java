@@ -25,7 +25,6 @@ public class DocumentWriteOperationBuilder {
 		if (content == null) {
 			throw new NullPointerException("'content' must not be null");
 		}
-
 		if (hasText(collections)) {
 			metadata.getCollections().addAll(collections.trim().split(","));
 		}
@@ -51,52 +50,29 @@ public class DocumentWriteOperationBuilder {
 		else {
 			uri = buildUri(content);
 		}
-			
+		if (hasText(uriPrefix)) {
+			uri = uriPrefix + uri;
+		}
+		if (hasText(uriSuffix)) {
+			uri += uriSuffix;
+		}
 		return build(operationType, uri, metadata, content);
 	}
 
 	protected String buildUri(AbstractWriteHandle content) throws IOException  {
-		String uri = contentIdExtractor.extractId(content);
-		if (hasText(uriPrefix)) {
-			uri = uriPrefix + uri;
-		}
-		if (hasText(uriSuffix)) {
-			uri += uriSuffix;
-		}
-		return uri;
+		return contentIdExtractor.extractId(content);
 	}
 	
 	protected String buildUri(AbstractWriteHandle content,String path) throws IOException  {
-		String uri = contentIdExtractor.extractId(content,path);
-		if (hasText(uriPrefix)) {
-			uri = uriPrefix + uri;
-		}
-		if (hasText(uriSuffix)) {
-			uri += uriSuffix;
-		}
-		return uri;
+		return contentIdExtractor.extractId(content,path);
 	}
 	
 	protected String buildUri(AbstractWriteHandle content,String[] paths) throws IOException  {
-		String uri = contentIdExtractor.extractId(content,paths);
-		if (hasText(uriPrefix)) {
-			uri = uriPrefix + uri;
-		}
-		if (hasText(uriSuffix)) {
-			uri += uriSuffix;
-		}
-		return uri;
+		return contentIdExtractor.extractId(content,paths);
 	}
 	
 	protected String buildUri(AbstractWriteHandle content,String topic, Integer partition, long offset, String idStrategy) throws IOException  {
-		String uri = contentIdExtractor.extractId(content,topic,partition,offset,idStrategy);
-		if (hasText(uriPrefix)) {
-			uri = uriPrefix + uri;
-		}
-		if (hasText(uriSuffix)) {
-			uri += uriSuffix;
-		}
-		return uri;
+		return contentIdExtractor.extractId(content,topic,partition,offset,idStrategy);
 	}
 
 	/**

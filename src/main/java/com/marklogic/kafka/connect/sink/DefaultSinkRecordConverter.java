@@ -108,7 +108,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 		Schema schema = record.valueSchema();
 		/* Determine the converter */
 		if (schema != null && value instanceof Struct) {
-			/* Avro or JSON with schema, ignore schema, handle only the value */
+			/* Avro, ProtoBuf or JSON with schema, ignore schema, handle only the value */
 			converter = "AVRO_OR_JSON_WITH_SCHEMA";
 			logger.info("Avro or JsonWithSchema document received. Converting to byte[].");
 			final String payload = new String(JSON_CONVERTER.fromConnectData(record.topic(), schema, value), StandardCharsets.UTF_8);
