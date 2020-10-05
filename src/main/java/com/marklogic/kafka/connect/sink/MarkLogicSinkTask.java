@@ -6,6 +6,9 @@ import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
+import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.Format;
+import com.marklogic.client.io.StringHandle;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -29,10 +32,15 @@ public class MarkLogicSinkTask extends SinkTask {
 	private DataMovementManager dataMovementManager;
 	private WriteBatcher writeBatcher;
 	private SinkRecordConverter sinkRecordConverter;
+	private boolean logKeys = false;
+	private boolean logHeaders = false;
 
 	@Override
 	public void start(final Map<String, String> config) {
 		logger.info("Starting");
+
+		logKeys = Boolean.parseBoolean(config.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY));
+		logHeaders = Boolean.parseBoolean(config.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS));
 
 		sinkRecordConverter = new DefaultSinkRecordConverter(config);
 
@@ -48,6 +56,12 @@ public class MarkLogicSinkTask extends SinkTask {
 		if (transform != null) {
 			writeBatcher.withTransform(transform);
 		}
+
+		writeBatcher.onBatchFailure((writeBatch, throwable) -> {
+			int batchSize = writeBatch.getItems().length;
+			logger.error("failed to write {} records", batchSize);
+			logger.error("batch failure:", throwable);
+		});
 
 		final String flowName = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
 		if (flowName != null && flowName.trim().length() > 0) {
@@ -147,9 +161,16 @@ public class MarkLogicSinkTask extends SinkTask {
 		}
 
 		records.forEach(record -> {
+			
 			if (record == null) {
 				logger.warn("Skipping null record object.");
 			} else {
+				if (logKeys) {
+					logger.info("received keyed record {}", record.key());
+				}
+				if (logHeaders) {
+					logger.info("record headers: {}", record.headers().toString());
+				}
 				if (logger.isDebugEnabled()) {
 					logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
 				}

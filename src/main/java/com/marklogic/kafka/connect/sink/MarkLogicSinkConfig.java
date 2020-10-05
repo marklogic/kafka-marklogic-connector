@@ -42,6 +42,14 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static final String DOCUMENT_URI_PREFIX = "ml.document.uriPrefix";
 	public static final String DOCUMENT_URI_SUFFIX = "ml.document.uriSuffix";
 
+	public static final String SSL = "ml.connection.enableCustomSsl";
+	public static final String TLS_VERSION = "ml.connection.customSsl.tlsVersion";
+	public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
+	public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
+
+	public static final String LOGGING_RECORD_KEY = "ml.log.record.key";
+	public static final String LOGGING_RECORD_HEADERS = "ml.log.record.headers";
+
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 		.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, "MarkLogic server hostname")
 		.define(CONNECTION_PORT, Type.INT, Importance.HIGH, "The REST app server port to connect to")
@@ -68,7 +76,14 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 		.define(DOCUMENT_MIMETYPE, Type.STRING, Importance.LOW, "Defines the mime type of each document; optional, and typically the format is set instead of the mime type")
 		.define(DOCUMENT_PERMISSIONS, Type.STRING, Importance.MEDIUM, "String-delimited permissions to add to each document; role1,capability1,role2,capability2,etc")
 		.define(DOCUMENT_URI_PREFIX, Type.STRING, Importance.MEDIUM, "Prefix to prepend to each generated URI")
-		.define(DOCUMENT_URI_SUFFIX, Type.STRING, Importance.MEDIUM, "Suffix to append to each generated URI");
+		.define(DOCUMENT_URI_SUFFIX, Type.STRING, Importance.MEDIUM, "Suffix to append to each generated URI")
+		.define(SSL, Type.BOOLEAN, Importance.LOW, "Whether SSL connection to the App server - true or false.")
+		.define(TLS_VERSION, Type.STRING, Importance.LOW, "Version of TLS to connect to MarkLogic SSL enabled App server. Ex. TLSv1.2")
+		.define(SSL_HOST_VERIFIER, Type.STRING, Importance.LOW, "The strictness of Host Verifier - ANY, COMMON, STRICT")
+		.define(SSL_MUTUAL_AUTH, Type.BOOLEAN, Importance.LOW, "Mutual Authentication for Basic or Digest : true or false")
+		.define(LOGGING_RECORD_KEY, Type.BOOLEAN, false, Importance.LOW, "Log incoming record keys")
+		.define(LOGGING_RECORD_HEADERS, Type.BOOLEAN, false, Importance.LOW, "Log incoming record headers")
+		;
 
 	public MarkLogicSinkConfig(final Map<?, ?> originals) {
 		super(CONFIG_DEF, originals, false);
