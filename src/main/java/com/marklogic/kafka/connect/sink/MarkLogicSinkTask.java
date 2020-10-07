@@ -15,10 +15,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Performs the actual work associated with ingesting new documents into MarkLogic based on data received via the
@@ -59,8 +56,8 @@ public class MarkLogicSinkTask extends SinkTask {
 
 		writeBatcher.onBatchFailure((writeBatch, throwable) -> {
 			int batchSize = writeBatch.getItems().length;
-			logger.error("failed to write {} records", batchSize);
-			logger.error("batch failure:", throwable);
+			logger.error("#error failed to write {} records", batchSize);
+			logger.error("#error batch failure:", throwable);
 		});
 
 		final String flowName = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
@@ -160,16 +157,22 @@ public class MarkLogicSinkTask extends SinkTask {
 			return;
 		}
 
+		final List<String> headers = new ArrayList<>();
+
 		records.forEach(record -> {
 			
 			if (record == null) {
 				logger.warn("Skipping null record object.");
 			} else {
 				if (logKeys) {
-					logger.info("received keyed record {}", record.key());
+					logger.info("#record key {}", record.key());
 				}
 				if (logHeaders) {
-					logger.info("record headers: {}", record.headers().toString());
+					headers.clear();
+					record.headers().forEach(header -> {
+						headers.add(String.format("%s:%s", header.key(), header.value().toString()));
+					});
+					logger.info("#record headers: {}", headers);
 				}
 				if (logger.isDebugEnabled()) {
 					logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
