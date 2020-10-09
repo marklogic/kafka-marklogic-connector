@@ -1,6 +1,7 @@
 package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.document.DocumentWriteOperation;
+import com.marklogic.client.id.strategy.IdStrategyFactory;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
@@ -62,8 +63,9 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void noPropertiesSet() throws IOException {
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		//converter.getDocumentWriteOperationBuilder().withContentIdExtractor(content -> "12345");
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
 		
 		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
@@ -76,9 +78,44 @@ public class ConvertSinkRecordTest {
 	}
 
 	@Test
+	public void UriWithUUIDStrategy() throws IOException {
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		kafkaConfig.put("ml.id.strategy","UUID");
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
+
+		assertNotNull(op.getUri());
+		assertEquals(36,op.getUri().length());
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
+	@Test
+	public void UriWithDefaultStrategy() throws IOException {
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
+		
+		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
+
+		assertNotNull(op.getUri());
+		assertEquals(36,op.getUri().length());
+
+		DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+		assertTrue(metadata.getCollections().isEmpty());
+		assertTrue(metadata.getPermissions().isEmpty());
+	}
+	
+	@Test
 	public void UriWithKafkaMetaData() throws IOException {
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		converter.getDocumentWriteOperationBuilder().withIdStrategy("KAFKA_META_WITH_SLASH");
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		kafkaConfig.put("ml.id.strategy","KAFKA_META_WITH_SLASH");
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
 		
 		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
@@ -91,10 +128,13 @@ public class ConvertSinkRecordTest {
 	
 	@Test
 	public void UriWithJsonPath() throws IOException {
-		 JsonParser parser = new JsonParser();
-		 doc1 = parser.parse("{\"f1\":\"100\"}").getAsJsonObject();
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		converter.getDocumentWriteOperationBuilder().withIdStrategy("JSONPATH").withIdStrategyPath("/f1");
+		JsonParser parser = new JsonParser();
+		doc1 = parser.parse("{\"f1\":\"100\"}").getAsJsonObject();
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		kafkaConfig.put("ml.id.strategy","JSONPATH");
+		kafkaConfig.put("ml.id.strategy.paths","/f1");
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
 		
 		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
 		
@@ -108,10 +148,13 @@ public class ConvertSinkRecordTest {
 	
 	@Test
 	public void UriWithHashedJsonPaths() throws IOException {
-		 JsonParser parser = new JsonParser();
-		 doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		converter.getDocumentWriteOperationBuilder().withIdStrategy("HASH").withIdStrategyPath("/f1,/f2");
+		JsonParser parser = new JsonParser();
+		doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		kafkaConfig.put("ml.id.strategy","HASH");
+		kafkaConfig.put("ml.id.strategy.paths","/f1,/f2");
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
 		
 		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
 
@@ -125,12 +168,12 @@ public class ConvertSinkRecordTest {
 	
 	@Test
 	public void UriWithHashedKafkaMeta() throws IOException {
-		 JsonParser parser = new JsonParser();
-		 doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
-		converter = new DefaultSinkRecordConverter(new HashMap<>());
-		converter.getDocumentWriteOperationBuilder().withIdStrategy("KAFKA_META_HASHED");
+		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		kafkaConfig.put("ml.id.strategy","KAFKA_META_HASHED");
+		converter = new DefaultSinkRecordConverter(kafkaConfig);
+		converter.getDocumentWriteOperationBuilder();
 		
-		DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
+		DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
 		assertNotNull(op.getUri());
 		assertEquals(32,op.getUri().length()); //Checking the length. Alternative is to create a MD5 of 100200 and check asserton the values.
