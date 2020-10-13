@@ -17,9 +17,11 @@ configurations {
 }
 
 dependencies {
-    compileOnly "org.apache.kafka:connect-api:2.3.0"
+    compileOnly "org.apache.kafka:connect-api:2.5.0"
+    compileOnly "org.apache.kafka:connect-json:2.5.0"
+    
 
-    compile ("com.marklogic:marklogic-data-hub:5.2.0") {
+    compile ("com.marklogic:marklogic-data-hub:5.2.2") {
         // Excluding these because there's no need for them
         exclude module: "spring-boot-autoconfigure"
         exclude module: "spring-integration-http"
@@ -31,7 +33,9 @@ dependencies {
     }
 
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
-    testCompile "org.apache.kafka:connect-api:2.3.0"
+    testCompile "org.apache.kafka:connect-api:2.5.0"
+    testCompile "org.apache.kafka:connect-json:2.5.0"
+    testCompile "com.google.code.gson:gson:2.8.6"
 
     // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.0"
@@ -79,13 +83,15 @@ task deploy {
 
 // Tasks for building the archive required for submitting to the Confluence Connector Hub
 import org.apache.tools.ant.filters.*
+def baseArchiveBuildDir = "build/connectorArchive"
+def baseArchiveName = "${componentOwner}-${componentName}-${version}"
 task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
     description = "Copy the project manifest into the root folder"
     group = 'connector archive'
 
     from '.'
     include 'manifest.json'
-    into 'build/connectorArchive'
+    into "${baseArchiveBuildDir}/${baseArchiveName}"
     filter(ReplaceTokens, tokens:[CONFLUENT_USER:componentOwner, VERSION:version])
 }
 
@@ -94,7 +100,7 @@ task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
     group = 'connector archive'
 
     from configurations.assets
-    into 'build/connectorArchive/assets'
+    into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
 }
 
 task connectorArchive_CopyEtcToBuildDirectory(type: Copy) {
@@ -103,7 +109,7 @@ task connectorArchive_CopyEtcToBuildDirectory(type: Copy) {
 
     from 'config'
     include '*'
-    into 'build/connectorArchive/etc'
+    into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
 }
 
 task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy) {
@@ -111,7 +117,7 @@ task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy) {
     group = 'connector archive'
 
     from configurations.documentation
-    into 'build/connectorArchive/doc'
+    into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
 }
 
 task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy) {
@@ -121,7 +127,7 @@ task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy) {
 
     from jar
     from configurations.compile
-    into 'build/connectorArchive/lib'
+    into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
 task connectorArchive_BuildDirectory() {
@@ -138,9 +144,8 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
     description = 'Build a Connector Hub for the Confluent Connector Hub'
     group = 'connector archive'
 
-    from 'build/connectorArchive'
-    include '*'
-    include '*/*'
-    archiveName "${componentOwner}-${componentName}-${version}.zip"
+    from "${baseArchiveBuildDir}"
+    include '**/*'
+    archiveName "${baseArchiveName}.zip"
     destinationDir(file('build/distro'))
 }
