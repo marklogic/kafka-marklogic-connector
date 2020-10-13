@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.4.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.4.0) (2020-10-12)
+   [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.4.0...master)
+
+- Support for JSON Schema, ProtoBuf messages
+- Support of ID strategies: UUID, JSONPATH,HASH, KAFKA_META_WITH_SLASH, KAFKA_META_HASHED
+- Changes for additional Security options
+- Updated build.gradle to new kafka connect and datahub
+
+
 ## [1.3.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.3.0) (2020-08-18)
    [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.3.0...master)
 

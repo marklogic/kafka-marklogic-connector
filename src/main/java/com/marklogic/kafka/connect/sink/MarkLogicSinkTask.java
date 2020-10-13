@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
 
 /**
  * Performs the actual work associated with ingesting new documents into MarkLogic based on data received via the
@@ -38,7 +39,7 @@ public class MarkLogicSinkTask extends SinkTask {
 
 		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(config);
 		databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
-
+		
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher()
 			.withBatchSize(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
@@ -154,7 +155,12 @@ public class MarkLogicSinkTask extends SinkTask {
 					logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
 				}
 				if (record.value() != null) {
-					writeBatcher.add(sinkRecordConverter.convert(record));
+					try {
+						writeBatcher.add(sinkRecordConverter.convert(record));
+					}
+					catch (IOException e) {
+						logger.warn("IOException in converting the Sink Record. Record value {} in topic {}", record.value(), record.topic());
+					}
 				} else {
 					logger.warn("Skipping record with null value - possibly a 'tombstone' message.");
 				}

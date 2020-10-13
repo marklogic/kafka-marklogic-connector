@@ -4,7 +4,6 @@
 build
 out
 gradle-local.properties
-testConfig
 
 bin
 .vscode  

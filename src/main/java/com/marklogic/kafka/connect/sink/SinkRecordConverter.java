@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.document.DocumentWriteOperation;
 import org.apache.kafka.connect.sink.SinkRecord;
+import java.io.IOException;
 
 /**
  * Defines how a Kafka SinkRecord is converted into into a DocumentWriteOperation, which can then be
@@ -10,6 +11,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
  */
 public interface SinkRecordConverter {
 
-	DocumentWriteOperation convert(SinkRecord sinkRecord);
+	DocumentWriteOperation convert(SinkRecord sinkRecord)  throws IOException;
 
 }

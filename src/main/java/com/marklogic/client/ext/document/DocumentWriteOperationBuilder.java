@@ -1,10 +1,14 @@
 package com.marklogic.client.ext.document;
 
+import java.io.IOException;
+
 import com.marklogic.client.document.DocumentWriteOperation;
+import com.marklogic.client.id.strategy.IdStrategy;
 import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.impl.DocumentWriteOperationImpl;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import com.marklogic.client.document.RecordContent;
 
 public class DocumentWriteOperationBuilder {
 
@@ -13,14 +17,16 @@ public class DocumentWriteOperationBuilder {
 	private String uriSuffix;
 	private String collections;
 	private String permissions;
-
-	private ContentIdExtractor contentIdExtractor = new DefaultContentIdExtractor();
-
-	public DocumentWriteOperation build(AbstractWriteHandle content, DocumentMetadataHandle metadata ) {
+	
+	public DocumentWriteOperation build(RecordContent record) throws IOException {
+		
+		AbstractWriteHandle content = record.getContent();
+		DocumentMetadataHandle metadata = record.getAdditionalMetadata();
+		String uri = record.getId();
+		
 		if (content == null) {
 			throw new NullPointerException("'content' must not be null");
 		}
-
 		if (hasText(collections)) {
 			metadata.getCollections().addAll(collections.trim().split(","));
 		}
@@ -28,19 +34,14 @@ public class DocumentWriteOperationBuilder {
 			new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());
 		}
 
-		String uri = buildUri(content);
-		return build(operationType, uri, metadata, content);
-	}
-
-	protected String buildUri(AbstractWriteHandle content) {
-		String uri = contentIdExtractor.extractId(content);
 		if (hasText(uriPrefix)) {
 			uri = uriPrefix + uri;
 		}
 		if (hasText(uriSuffix)) {
 			uri += uriSuffix;
 		}
-		return uri;
+
+		return build(operationType, uri, metadata, content);
 	}
 
 	/**
@@ -86,8 +87,4 @@ public class DocumentWriteOperationBuilder {
 		return this;
 	}
 
-	public DocumentWriteOperationBuilder withContentIdExtractor(ContentIdExtractor contentIdExtractor) {
-		this.contentIdExtractor = contentIdExtractor;
-		return this;
-	}
 }
