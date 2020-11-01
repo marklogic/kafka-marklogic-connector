@@ -111,7 +111,7 @@
           "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/kafka-producer-1.0-SNAPSHOT.jar -O /home/bitnami/kafka-producer-1.0-SNAPSHOT.jar\n",
           "sudo chmod 644 /home/bitnami/kafka-producer-1.0-SNAPSHOT.jar\n",
           "sudo mkdir -p /home/bitnami/kafka/config\n",
-          "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/kafka-connect-marklogic-0.9.0.jar -O /opt/bitnami/kafka/libs/kafka-connect-marklogic-0.9.0.jar\n",
+          "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/kafka-connect-marklogic-1.4.0.jar -O /opt/bitnami/kafka/libs/kafka-connect-marklogic-1.4.0.jar\n",
           "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/marklogic-connect-standalone.properties -O /opt/bitnami/kafka/config/marklogic-connect-standalone.properties\n",
           "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/marklogic-sink.properties -O /opt/bitnami/kafka/config/marklogic-sink.properties\n"
         ]]}}
@@ -160,6 +160,7 @@
         ],
         "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
           "#!/bin/bash -xe\n",
+          "sleep 180s\n",
           "sudo apt-get update && sudo apt-get -y upgrade\n",
           "sudo apt -y install sysstat\n",
           "sudo wget https://cf-templates-3tc878fhthic-us-east-1.s3.amazonaws.com/Kafka-Initialization/server.properties -O /opt/bitnami/kafka/config/server.properties\n",
@@ -221,16 +222,18 @@
         ],
         "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
           "#!/bin/bash -xe\n",
+          "sleep 180s\n",
           "sudo yum -y update\n",
           "sudo echo \"MARKLOGIC_EC2_HOST=0\" > /etc/marklogic.conf\n",
           "sudo service MarkLogic start\n",
           "sudo yum install sysstat\n",
+          "sleep 60s\n",
           "curl -X POST -d \"\" http://localhost:8001/admin/v1/init\n",
-          "sleep 30s\n",
+          "sleep 60s\n",
           "curl -i -X POST -d \"admin-username=admin&admin-password=admin&realm=public\" http://localhost:8001/admin/v1/instance-admin\n",
-          "sleep 30s\n",
-          "sudo echo \"<rest-api xmlns=\\\"http://marklogic.com/rest-api\\\"><name>Kafka</name><database>Kafka</database><port>8003</port></rest-api>\" > /etc/kafkaServer.conf\n",
-          "curl --anyauth --user admin:admin -X POST -d@'/etc/kafkaServer.conf' -i -H \"Content-type: application/xml\" http://localhost:8002/v1/rest-apis\n"
+          "sleep 60s\n",
+          "sudo echo \"<rest-api xmlns=\\\"http://marklogic.com/rest-api\\\"><name>Kafka</name><database>Kafka</database><port>8003</port></rest-api>\" > /tmp/kafkaServer.conf\n",
+          "curl --anyauth --user admin:admin -X POST -d@'/tmp/kafkaServer.conf' -i -H \"Content-type: application/xml\" http://localhost:8002/v1/rest-apis\n"
         ]]}}
       },
       "Metadata": {
