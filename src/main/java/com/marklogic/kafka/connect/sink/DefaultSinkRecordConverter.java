@@ -1,24 +1,52 @@
 package com.marklogic.kafka.connect.sink;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Struct;
+
+import org.apache.kafka.connect.json.JsonConverter;
+import org.apache.kafka.connect.sink.SinkRecord;
+import org.apache.kafka.connect.storage.Converter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.marklogic.client.document.DocumentWriteOperation;
+import com.marklogic.client.id.strategy.IdStrategyFactory;
+import com.marklogic.client.id.strategy.IdStrategy;
 import com.marklogic.client.ext.document.DocumentWriteOperationBuilder;
+import com.marklogic.client.document.RecordContent;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
-import java.util.Map;
+import org.apache.kafka.connect.storage.Converter;
+import java.util.Collections;
+import org.apache.kafka.connect.json.JsonConverter;
 
 /**
  * Handles converting a SinkRecord into a DocumentWriteOperation via the properties in the given config map.
  */
 public class DefaultSinkRecordConverter implements SinkRecordConverter {
 
+	private static final Converter JSON_CONVERTER;
+	private static final Logger logger = LoggerFactory.getLogger(DefaultSinkRecordConverter.class);
+	static {
+	    JSON_CONVERTER = new JsonConverter();
+	    JSON_CONVERTER.configure(Collections.singletonMap("schemas.enable", "false"), false);
+		}
+
 	private DocumentWriteOperationBuilder documentWriteOperationBuilder;
 	private Format format;
 	private String mimeType;
 	private Boolean addTopicToCollections = false; 
+	private IdStrategy idStrategy = null;
 	
 	public DefaultSinkRecordConverter(Map<String, String> kafkaConfig) {
 	
@@ -31,9 +59,10 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 			.withCollections(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
 			.withPermissions(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
 			.withUriPrefix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
-			.withUriSuffix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
+			.withUriSuffix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX))
+			;
 
-		 val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
+		val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
 		if (val != null && val.trim().length() > 0) {
 			format = Format.valueOf(val.toUpperCase());
 		}
@@ -41,13 +70,20 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 		if (val != null && val.trim().length() > 0) {
 			mimeType = val;
 		}
+		//Get the correct ID or URI generation strategy based on the configuration
+		idStrategy = IdStrategyFactory.getIdStrategy(kafkaConfig);
 	}
 	
 	@Override
-	public DocumentWriteOperation convert(SinkRecord sinkRecord) {
-		return documentWriteOperationBuilder.build(toContent(sinkRecord), addTopicToCollections(sinkRecord.topic(), addTopicToCollections ) );
+	public DocumentWriteOperation convert(SinkRecord sinkRecord) throws IOException{
+		RecordContent recordContent = new RecordContent();
+		AbstractWriteHandle content = toContent(sinkRecord);
+		recordContent.setContent(content);
+		recordContent.setAdditionalMetadata(addTopicToCollections(sinkRecord.topic(), addTopicToCollections ));
+		recordContent.setId(idStrategy.generateId(content, sinkRecord.topic(), sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
+		return documentWriteOperationBuilder.build(recordContent);
 	}
-
+	
 	/**
 	 * 
 	 *
@@ -73,7 +109,19 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 			throw new NullPointerException("'record' must not be null, and must have a value.");
 		}
 		Object value = record.value();
-		if (value instanceof byte[]) {
+		Schema schema = record.valueSchema();
+		
+		/* Determine the converter based on the value of SinkRecord*/
+		if (schema != null && value instanceof Struct) {
+			/* Avro, ProtoBuf or JSON with schema, ignore schema, handle only the value */
+			value = new String(JSON_CONVERTER.fromConnectData(record.topic(), schema, value), StandardCharsets.UTF_8).getBytes();
+		}
+		
+        if (value instanceof Map) {
+        	value = new String (JSON_CONVERTER.fromConnectData(record.topic(), null, value)).getBytes();
+        }
+
+        if (value instanceof byte[]) {
 			BytesHandle content = new BytesHandle((byte[]) value);
 			if (format != null) {
 				content.withFormat(format);

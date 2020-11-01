@@ -6,9 +6,11 @@ import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.marklogic.client.DatabaseClientFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -70,8 +72,78 @@ public class BuildDatabaseClientConfigTest {
 		assertEquals(SecurityContextType.DIGEST, clientConfig.getSecurityContextType());
 		assertNotNull(clientConfig.getSslContext());
 		assertNotNull(clientConfig.getSslHostnameVerifier());
-		assertNull(clientConfig.getTrustManager(), "If DatabaseClientFactory is given a null TrustManager, it will " +
-			"default to the JVM's cacerts file, which is a reasonable default approach");
+		assertNotNull(clientConfig.getTrustManager());
+	}
+	
+	@Test
+	public void basictAuthenticationAndSimpleSsl() {
+		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+		config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, "true");
+
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+		assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
+		assertNotNull(clientConfig.getSslContext());
+		assertNotNull(clientConfig.getSslHostnameVerifier());
+		assertNotNull(clientConfig.getTrustManager());
+	}
+	
+	@Test
+	public void basicAuthenticationAndMutualSSL() {
+		File file = new File("src/test/resources/srportal.p12");
+		String absolutePath = file.getAbsolutePath();
+		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+		config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, "false");
+		config.put(MarkLogicSinkConfig.SSL, "true");
+		config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+		config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
+		config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, "true");
+		config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
+		config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "abc");
+		
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+		assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
+		assertNotNull(clientConfig.getSslContext());
+		assertEquals(DatabaseClientFactory.SSLHostnameVerifier.STRICT, clientConfig.getSslHostnameVerifier());
+		assertNotNull(clientConfig.getTrustManager());
+	}
+	
+	@Test
+	public void basicAuthenticationAndMutualSSLWithInvalidHost() {
+		File file = new File("src/test/resources/srportal.p12");
+		String absolutePath = file.getAbsolutePath();
+		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+		config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, "false");
+		config.put(MarkLogicSinkConfig.SSL, "true");
+		config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+		config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "SOMETHING");
+		config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, "true");
+		config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
+		config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "abc");
+		
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+		assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
+		assertNotNull(clientConfig.getSslContext());
+		assertEquals(DatabaseClientFactory.SSLHostnameVerifier.ANY, clientConfig.getSslHostnameVerifier());
+		System.out.println(clientConfig.getSslHostnameVerifier());
+		assertNotNull(clientConfig.getTrustManager());
+	}
+	
+	
+	@Test
+	public void digestAuthenticationAnd1WaySSL() {
+		
+		config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+		config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, "false");
+		config.put(MarkLogicSinkConfig.SSL, "true");
+		config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+		config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
+		config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, "false");
+		
+		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+		assertEquals(SecurityContextType.DIGEST, clientConfig.getSecurityContextType());
+		assertNotNull(clientConfig.getSslContext());
+		assertNotNull(clientConfig.getSslHostnameVerifier());
+		assertNotNull(clientConfig.getTrustManager());
 	}
 
 	@Test
