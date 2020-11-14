@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.5.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.5.0) (2020-11-14)
+   [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.5.0...master)
+
+- Added options for logging incoming record keys and headers after write failures
+- Updated the AWS CloudFormation Quick Start document
+- Added documentation for using the connector with the AWS MSK (Kafka as a Service)
+
 ## [1.4.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.4.0) (2020-10-12)
    [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.4.0...master)
 
