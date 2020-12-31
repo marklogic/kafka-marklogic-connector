@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public class BuildSuccessListenerTest {
 
 	MarkLogicSinkTask task = new MarkLogicSinkTask();
-	Map<String, String> config = new HashMap<>();
+	Map<String, Object> config = new HashMap<>();
 
 	@Test
 	void multipleSteps() {

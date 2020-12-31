@@ -3,7 +3,6 @@ package com.marklogic.kafka.connect.sink;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
@@ -11,8 +10,6 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.storage.Converter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.marklogic.client.document.DocumentWriteOperation;
 import com.marklogic.client.id.strategy.IdStrategyFactory;
@@ -24,11 +21,6 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
-import org.apache.kafka.connect.json.JsonConverter;
-import org.apache.kafka.connect.sink.SinkRecord;
-import org.apache.kafka.connect.storage.Converter;
-import java.util.Collections;
-import org.apache.kafka.connect.json.JsonConverter;
 
 /**
  * Handles converting a SinkRecord into a DocumentWriteOperation via the properties in the given config map.
@@ -36,7 +28,6 @@ import org.apache.kafka.connect.json.JsonConverter;
 public class DefaultSinkRecordConverter implements SinkRecordConverter {
 
 	private static final Converter JSON_CONVERTER;
-	private static final Logger logger = LoggerFactory.getLogger(DefaultSinkRecordConverter.class);
 	static {
 	    JSON_CONVERTER = new JsonConverter();
 	    JSON_CONVERTER.configure(Collections.singletonMap("schemas.enable", "false"), false);
@@ -48,30 +39,30 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	private Boolean addTopicToCollections = false; 
 	private IdStrategy idStrategy = null;
 	
-	public DefaultSinkRecordConverter(Map<String, String> kafkaConfig) {
-	
-		String val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
+	public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
+
+		String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
 		if (val != null && val.trim().length() > 0) {
 			addTopicToCollections = Boolean.parseBoolean(val.trim());
 		}
 		
 		documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
-			.withCollections(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
-			.withPermissions(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
-			.withUriPrefix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
-			.withUriSuffix(kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX))
+			.withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
+			.withPermissions((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
+			.withUriPrefix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
+			.withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX))
 			;
 
-		val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
+		val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
 		if (val != null && val.trim().length() > 0) {
 			format = Format.valueOf(val.toUpperCase());
 		}
-		val = kafkaConfig.get(MarkLogicSinkConfig.DOCUMENT_MIMETYPE);
+		val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_MIMETYPE);
 		if (val != null && val.trim().length() > 0) {
 			mimeType = val;
 		}
 		//Get the correct ID or URI generation strategy based on the configuration
-		idStrategy = IdStrategyFactory.getIdStrategy(kafkaConfig);
+		idStrategy = IdStrategyFactory.getIdStrategy(parsedConfig);
 	}
 	
 	@Override

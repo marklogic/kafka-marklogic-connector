@@ -4,6 +4,8 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
+import org.apache.kafka.common.config.ConfigException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.marklogic.client.DatabaseClientFactory;
@@ -11,13 +13,14 @@ import com.marklogic.client.DatabaseClientFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.io.File;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BuildDatabaseClientConfigTest {
 
 	DefaultDatabaseClientConfigBuilder builder = new DefaultDatabaseClientConfigBuilder();
-	Map<String, String> config = new HashMap<>();
+	Map<String, Object> config = new HashMap<>();
 
 	@BeforeEach
 	public void setup() {
@@ -153,5 +156,26 @@ public class BuildDatabaseClientConfigTest {
 
 		DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
 		assertEquals(DatabaseClient.ConnectionType.GATEWAY, clientConfig.getConnectionType());
+	}
+
+	@Test
+	// This also implicitly verifies that all other sink properties are optional
+	public void testMissingRequired() {
+		Map<String, String> allRequiredValuesConfig = new HashMap<>();
+		allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "");
+		allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, "8000");
+		allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "");
+		allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "");
+		MarkLogicSinkConfig.CONFIG_DEF.parse(allRequiredValuesConfig);
+
+		Set<String> keys = allRequiredValuesConfig.keySet();
+		for (String key : keys) {
+			Assertions.assertThrows(ConfigException.class, () -> {
+				HashMap<String, String> missingSingleValueConfig = new HashMap<>();
+				missingSingleValueConfig.putAll(allRequiredValuesConfig);
+				missingSingleValueConfig.remove(key);
+				MarkLogicSinkConfig.CONFIG_DEF.parse(missingSingleValueConfig);
+			});
+		}
 	}
 }
