@@ -45,12 +45,12 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
 		clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
 		clientConfig.setPassword((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD));
-		clientConfig.setPort(Integer.parseInt((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT)));
-		Boolean customSsl = Boolean.parseBoolean((String) parsedConfig.get(MarkLogicSinkConfig.SSL));
+		clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
+		Boolean customSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.SSL);
 		if (customSsl != null && customSsl) {
 			clientConfig = configureCustomSslConnection(clientConfig, parsedConfig, customSsl);
 		}
-		Boolean simpleSsl = Boolean.parseBoolean((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL));
+		Boolean simpleSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL);
 		if (simpleSsl != null && simpleSsl) {
 			clientConfig = configureSimpleSsl(clientConfig);
 		}

@@ -41,9 +41,9 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	
 	public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
 
-		String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
-		if (val != null && val.trim().length() > 0) {
-			addTopicToCollections = Boolean.parseBoolean(val.trim());
+		Boolean booleanVal = (Boolean) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
+		if (booleanVal != null) {
+			addTopicToCollections = booleanVal;
 		}
 		
 		documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
@@ -53,7 +53,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 			.withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX))
 			;
 
-		val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
+		String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
 		if (val != null && val.trim().length() > 0) {
 			format = Format.valueOf(val.toUpperCase());
 		}
