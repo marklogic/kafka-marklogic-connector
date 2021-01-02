@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BuildServerTransformTest {
 
 	private MarkLogicSinkTask task = new MarkLogicSinkTask();
-	private Map<String, String> config = new HashMap<>();
+	private Map<String, Object> config = new HashMap<>();
 
 	@Test
 	public void noTransform() {

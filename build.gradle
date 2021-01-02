@@ -60,6 +60,10 @@ test {
 
 // Customize the Java plugin's jar task to produce a "fat" jar with all dependencies included
 jar {
+    manifest {
+        attributes 'Implementation-Title': 'Kafka-Connect-MarkLogic',
+                   'Implementation-Version': version
+    }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
