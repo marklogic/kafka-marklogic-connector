@@ -5,19 +5,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -31,35 +25,36 @@ import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
 public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigBuilder {
 
 	@Override
-	public DatabaseClientConfig buildDatabaseClientConfig(Map<String, String> kafkaConfig) {
+	public DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> parsedConfig) {
+
 		DatabaseClientConfig clientConfig = new DatabaseClientConfig();
-		clientConfig.setCertFile(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
-		clientConfig.setCertPassword(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD));
+		clientConfig.setCertFile((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
+		clientConfig.setCertPassword((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD));
 		clientConfig.setTrustManager(new SimpleX509TrustManager());
-		clientConfig = configureHostNameVerifier(clientConfig,kafkaConfig);
-		String securityContextType = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE).toUpperCase();
+		clientConfig = configureHostNameVerifier(clientConfig,parsedConfig);
+		String securityContextType = ((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
 		clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
-		String database = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_DATABASE);
+		String database = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_DATABASE);
 		if (database != null && database.trim().length() > 0) {
 			clientConfig.setDatabase(database);
 		}
-		String connType = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_TYPE);
+		String connType = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_TYPE);
 		if (connType != null && connType.trim().length() > 0) {
 			clientConfig.setConnectionType(DatabaseClient.ConnectionType.valueOf(connType.toUpperCase()));
 		}
-		clientConfig.setExternalName(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
-		clientConfig.setHost(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
-		clientConfig.setPassword(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD));
-		clientConfig.setPort(Integer.parseInt(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_PORT)));
-		String customSsl = kafkaConfig.get(MarkLogicSinkConfig.SSL);
-		if (customSsl != null && Boolean.parseBoolean(customSsl)) {
-			clientConfig = configureCustomSslConnection(clientConfig, kafkaConfig);
+		clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
+		clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
+		clientConfig.setPassword((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD));
+		clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
+		Boolean customSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.SSL);
+		if (customSsl != null && customSsl) {
+			clientConfig = configureCustomSslConnection(clientConfig, parsedConfig, customSsl);
 		}
-		String simpleSsl = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL);
-		if (simpleSsl != null && Boolean.parseBoolean(simpleSsl)) {
+		Boolean simpleSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL);
+		if (simpleSsl != null && simpleSsl) {
 			clientConfig = configureSimpleSsl(clientConfig);
 		}
-		clientConfig.setUsername(kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
+		clientConfig.setUsername((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
 		return clientConfig;
 	}
 
@@ -82,8 +77,8 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 	 *
 	 * @param clientConfig
 	 */
-	protected DatabaseClientConfig configureHostNameVerifier(DatabaseClientConfig clientConfig, Map<String, String> kafkaConfig) {
-		String sslHostNameVerifier = kafkaConfig.get(MarkLogicSinkConfig.SSL_HOST_VERIFIER);
+	protected DatabaseClientConfig configureHostNameVerifier(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
+		String sslHostNameVerifier = (String) parsedConfig.get(MarkLogicSinkConfig.SSL_HOST_VERIFIER);
 		if ("ANY".equals(sslHostNameVerifier))
 			clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
 		else if ("COMMON".equals(sslHostNameVerifier))
@@ -95,18 +90,17 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 		return clientConfig;
 	}
 
-	protected DatabaseClientConfig configureCustomSslConnection(DatabaseClientConfig clientConfig, Map<String, String> kafkaConfig) {
-		String ssl = kafkaConfig.get(MarkLogicSinkConfig.SSL);
-		String tlsVersion = kafkaConfig.get(MarkLogicSinkConfig.TLS_VERSION);
-		String sslMutualAuth = kafkaConfig.get(MarkLogicSinkConfig.SSL_MUTUAL_AUTH);
+	protected DatabaseClientConfig configureCustomSslConnection(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig, Boolean ssl) {
+		String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
+		String sslMutualAuth = (String) parsedConfig.get(MarkLogicSinkConfig.SSL_MUTUAL_AUTH);
 		SSLContext sslContext = null;
-		String securityContextType = kafkaConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE).toUpperCase();
+		String securityContextType = ((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
 		clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
 
 		if ("BASIC".equals(securityContextType) ||
 				"DIGEST".equals(securityContextType)
 				) {
-					if (ssl != null && Boolean.parseBoolean(ssl)) {
+					if (ssl != null && ssl) {
 						if (sslMutualAuth != null && Boolean.parseBoolean(sslMutualAuth)) {
 							/*2 way ssl changes*/
 							KeyStore clientKeyStore = null;
@@ -155,7 +149,7 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
 							}
 							clientConfig.setSslContext(sslContext);
 						}
-						else {/*1wayssl*/
+						else {/* 1-way ssl */
 							TrustManager[] trust = new TrustManager[] { new SimpleX509TrustManager()};
 							try {
 									if (tlsVersion != null && tlsVersion.trim().length() > 0 ) {

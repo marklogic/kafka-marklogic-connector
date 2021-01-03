@@ -31,7 +31,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void allPropertiesSet() throws IOException {
-		Map<String, String> config = new HashMap<>();
+		Map<String, Object> config = new HashMap<>();
 		config.put("ml.document.collections", "one,two");
 		config.put("ml.document.format", "json");
 		config.put("ml.document.mimeType", "application/json");
@@ -63,7 +63,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void noPropertiesSet() throws IOException {
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
 		converter.getDocumentWriteOperationBuilder();
 
@@ -79,7 +79,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void UriWithUUIDStrategy() throws IOException {
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		kafkaConfig.put("ml.id.strategy","UUID");
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
 		converter.getDocumentWriteOperationBuilder();
@@ -96,7 +96,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void UriWithDefaultStrategy() throws IOException {
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
 		converter.getDocumentWriteOperationBuilder();
 
@@ -112,7 +112,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void UriWithKafkaMetaData() throws IOException {
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		kafkaConfig.put("ml.id.strategy","KAFKA_META_WITH_SLASH");
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
 		converter.getDocumentWriteOperationBuilder();
@@ -130,7 +130,7 @@ public class ConvertSinkRecordTest {
 	public void UriWithJsonPath() throws IOException {
 		JsonParser parser = new JsonParser();
 		doc1 = parser.parse("{\"f1\":\"100\"}").getAsJsonObject();
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		kafkaConfig.put("ml.id.strategy","JSONPATH");
 		kafkaConfig.put("ml.id.strategy.paths","/f1");
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -150,7 +150,7 @@ public class ConvertSinkRecordTest {
 	public void UriWithHashedJsonPaths() throws IOException {
 		JsonParser parser = new JsonParser();
 		doc1 = parser.parse("{\"f1\":\"100\",\"f2\":\"200\"}").getAsJsonObject();
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		kafkaConfig.put("ml.id.strategy","HASH");
 		kafkaConfig.put("ml.id.strategy.paths","/f1,/f2");
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -168,7 +168,7 @@ public class ConvertSinkRecordTest {
 
 	@Test
 	public void UriWithHashedKafkaMeta() throws IOException {
-		Map<String,String> kafkaConfig = new HashMap<String,String>();
+		Map<String,Object> kafkaConfig = new HashMap<String,Object>();
 		kafkaConfig.put("ml.id.strategy","KAFKA_META_HASHED");
 		converter = new DefaultSinkRecordConverter(kafkaConfig);
 		converter.getDocumentWriteOperationBuilder();

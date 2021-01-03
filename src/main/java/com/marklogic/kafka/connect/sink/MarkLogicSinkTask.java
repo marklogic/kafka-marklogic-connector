@@ -6,9 +6,6 @@ import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
-import com.marklogic.client.io.DocumentMetadataHandle;
-import com.marklogic.client.io.Format;
-import com.marklogic.client.io.StringHandle;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -37,20 +34,22 @@ public class MarkLogicSinkTask extends SinkTask {
 	public void start(final Map<String, String> config) {
 		logger.info("Starting");
 
-		logKeys = Boolean.parseBoolean(config.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY));
-		logHeaders = Boolean.parseBoolean(config.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS));
+		Map<String, Object> parsedConfig = MarkLogicSinkConfig.CONFIG_DEF.parse(config);
 
-		sinkRecordConverter = new DefaultSinkRecordConverter(config);
+		logKeys = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY);
+		logHeaders = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS);
 
-		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(config);
+		sinkRecordConverter = new DefaultSinkRecordConverter(parsedConfig);
+
+		DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
 		databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
-		
+
 		dataMovementManager = databaseClient.newDataMovementManager();
 		writeBatcher = dataMovementManager.newWriteBatcher()
-			.withBatchSize(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
-			.withThreadCount(Integer.parseInt(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
+			.withBatchSize((Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE))
+			.withThreadCount((Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT));
 
-		ServerTransform transform = buildServerTransform(config);
+		ServerTransform transform = buildServerTransform(parsedConfig);
 		if (transform != null) {
 			writeBatcher.withTransform(transform);
 		}
@@ -61,9 +60,9 @@ public class MarkLogicSinkTask extends SinkTask {
 			logger.error("#error batch failure:", throwable);
 		});
 
-		final String flowName = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
+		final String flowName = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
 		if (flowName != null && flowName.trim().length() > 0) {
-			writeBatcher.onBatchSuccess(buildSuccessListener(flowName, config, databaseClientConfig));
+			writeBatcher.onBatchSuccess(buildSuccessListener(flowName, parsedConfig, databaseClientConfig));
 		}
 
 		dataMovementManager.startJob(writeBatcher);
@@ -76,12 +75,12 @@ public class MarkLogicSinkTask extends SinkTask {
 	 * construct the reusable RunFlowWriteBatchListener.
 	 *
 	 * @param flowName
-	 * @param kafkaConfig
+	 * @param parsedConfig
 	 * @param databaseClientConfig
 	 */
-	protected RunFlowWriteBatchListener buildSuccessListener(String flowName, Map<String, String> kafkaConfig, DatabaseClientConfig databaseClientConfig) {
+	protected RunFlowWriteBatchListener buildSuccessListener(String flowName, Map<String, Object> parsedConfig, DatabaseClientConfig databaseClientConfig) {
 		String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
-		final String flowSteps = kafkaConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
+		final String flowSteps = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
 		List<String> steps = null;
 		if (flowSteps != null && flowSteps.trim().length() > 0) {
 			steps = Arrays.asList(flowSteps.split(","));
@@ -90,8 +89,8 @@ public class MarkLogicSinkTask extends SinkTask {
 		logger.info(logMessage);
 
 		RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(flowName, steps, databaseClientConfig);
-		if (kafkaConfig.containsKey(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)) {
-			listener.setLogResponse(Boolean.parseBoolean(kafkaConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)));
+		if (parsedConfig.containsKey(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)) {
+			listener.setLogResponse((Boolean) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE));
 		}
 		return listener;
 	}
@@ -100,16 +99,16 @@ public class MarkLogicSinkTask extends SinkTask {
 	 * Builds a REST ServerTransform object based on the DMSDK parameters in the given config. If no transform name
 	 * is configured, then null will be returned.
 	 *
-	 * @param config - The complete configuration object including any transform parameters.
+	 * @param parsedConfig - The complete configuration object including any transform parameters.
 	 * @return - The ServerTransform that will operate on each record, or null
 	 */
-	protected ServerTransform buildServerTransform(final Map<String, String> config) {
-		String transform = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
+	protected ServerTransform buildServerTransform(final Map<String, Object> parsedConfig) {
+		String transform = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
 		if (transform != null && transform.trim().length() > 0) {
 			ServerTransform t = new ServerTransform(transform);
-			String params = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
+			String params = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
 			if (params != null && params.trim().length() > 0) {
-				String delimiter = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
+				String delimiter = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
 				if (delimiter != null && delimiter.trim().length() > 0) {
 					String[] tokens = params.split(delimiter);
 					for (int i = 0; i < tokens.length; i += 2) {

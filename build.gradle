@@ -20,8 +20,10 @@ dependencies {
     compileOnly "org.apache.kafka:connect-api:2.5.0"
     compileOnly "org.apache.kafka:connect-json:2.5.0"
 
-
-    compile ("com.marklogic:marklogic-data-hub:5.2.2") {
+    compile "com.marklogic:marklogic-client-api:5.3.0"
+    compile ("com.marklogic:marklogic-data-hub:5.2.4") {
+        // Prefer the version above
+        exclude module: "marklogic-client-api"
         // Excluding these because there's no need for them
         exclude module: "spring-boot-autoconfigure"
         exclude module: "spring-integration-http"
@@ -60,6 +62,10 @@ test {
 
 // Customize the Java plugin's jar task to produce a "fat" jar with all dependencies included
 jar {
+    manifest {
+        attributes 'Implementation-Title': 'Kafka-Connect-MarkLogic',
+                   'Implementation-Version': version
+    }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
