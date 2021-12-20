@@ -9,8 +9,8 @@ In particular, IP addresses are in the config files._
 
 ## Requirements
 * You need to have an AWS account
-* You need to have subscribed to the [MarkLogic AMI](https://aws.amazon.com/marketplace/pp/B072Z536VB?ref_=aws-mp-console-subscription-detail)
-* You need to have subscribed to the [Kafka Certified by Bitnami AMI](https://aws.amazon.com/marketplace/pp/B01K0IWPVI?qid=1587125714910&sr=0-1&ref_=srh_res_product_title)
+* You need to have subscribed to the [MarkLogic AMI](https://aws.amazon.com/marketplace/pp/prodview-ukwfvbhifree4)
+* You need to have subscribed to the [Apache Kafka packaged by Bitnami AMI](https://aws.amazon.com/marketplace/pp/prodview-wwaejlwapzhng)
 
 ## Create a Key Pair in AWS
 Please note: if you are using the default values in the resource files, you will need to be in the us-east-1 (Virginia) region when you follow these steps.
@@ -31,7 +31,7 @@ Please note: if you are using the default values in the resource files, you will
 
 ## Build the AWS Resources
 1. Navigate to the [AWS CloudFormation](https://console.aws.amazon.com/cloudformation/home?region=us-east-1) page.
-1. Click "Create Stack" and "With new resources (standard)"
+1. Click "Create Stack"
 1. Click the "Upload a template file" radio button
 1. Click "Upload File" and upload "readyToGo.json"
 1. Click "Next"
