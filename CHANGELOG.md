@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.5.0) (2021-1-3)
+   [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.6.0...master)
+
+- Ensuring optional parameters are actually optional and do not cause a crash when they are not included.
+- Fixing some Boolean and Integer casts now that the initial configuration object is a Hashmap of <String, Object> instead of <String, String>. Also fixed some tests that used that configuration object.
+- Updating the build to use the ML client api v5.3.0 and the ML data hub v5.2.4. This should solve problems with running the connector with Java 11.
+
 ## [1.5.0](https://github.com/marklogic-community/kafka-marklogic-connector/releases/tag/1.5.0) (2020-11-14)
    [Full Changelog](https://github.com/marklogic-community/kafka-marklogic-connector/compare/1.5.0...master)
 
