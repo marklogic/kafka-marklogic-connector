@@ -71,7 +71,7 @@
       "Properties": {
         "DisableApiTermination": "false",
         "InstanceInitiatedShutdownBehavior": "stop",
-        "ImageId": "ami-0879bd2e59cecb73e",
+        "ImageId": "ami-00a5412a2533c3c4f",
         "InstanceType": "t2.large",
         "KeyName": "kafka",
         "Monitoring": "false",
@@ -128,7 +128,7 @@
       "Properties": {
         "DisableApiTermination": "false",
         "InstanceInitiatedShutdownBehavior": "stop",
-        "ImageId": "ami-0879bd2e59cecb73e",
+        "ImageId": "ami-00a5412a2533c3c4f",
         "InstanceType": "t2.large",
         "KeyName": "kafka",
         "Monitoring": "false",
@@ -191,7 +191,7 @@
       "Properties": {
         "DisableApiTermination": "false",
         "InstanceInitiatedShutdownBehavior": "stop",
-        "ImageId": "ami-0d77ce6990428613f",
+        "ImageId": "ami-02d4f218b9851a406",
         "InstanceType": "r3.large",
         "KeyName": "kafka",
         "Monitoring": "false",
