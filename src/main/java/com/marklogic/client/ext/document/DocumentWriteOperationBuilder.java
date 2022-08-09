@@ -1,14 +1,10 @@
 package com.marklogic.client.ext.document;
 
-import java.io.IOException;
-
 import com.marklogic.client.document.DocumentWriteOperation;
-import com.marklogic.client.id.strategy.IdStrategy;
 import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.impl.DocumentWriteOperationImpl;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
-import com.marklogic.client.document.RecordContent;
 
 public class DocumentWriteOperationBuilder {
 
@@ -18,7 +14,7 @@ public class DocumentWriteOperationBuilder {
 	private String collections;
 	private String permissions;
 	
-	public DocumentWriteOperation build(RecordContent record) throws IOException {
+	public DocumentWriteOperation build(RecordContent record) {
 		
 		AbstractWriteHandle content = record.getContent();
 		DocumentMetadataHandle metadata = record.getAdditionalMetadata();

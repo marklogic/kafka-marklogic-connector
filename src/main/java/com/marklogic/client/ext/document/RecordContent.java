@@ -1,4 +1,4 @@
-package com.marklogic.client.document;
+package com.marklogic.client.ext.document;
 
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;

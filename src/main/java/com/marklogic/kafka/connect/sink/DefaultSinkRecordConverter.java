@@ -1,6 +1,5 @@
 package com.marklogic.kafka.connect.sink;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
@@ -15,7 +14,7 @@ import com.marklogic.client.document.DocumentWriteOperation;
 import com.marklogic.client.id.strategy.IdStrategyFactory;
 import com.marklogic.client.id.strategy.IdStrategy;
 import com.marklogic.client.ext.document.DocumentWriteOperationBuilder;
-import com.marklogic.client.document.RecordContent;
+import com.marklogic.client.ext.document.RecordContent;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
@@ -37,7 +36,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 	private Format format;
 	private String mimeType;
 	private Boolean addTopicToCollections = false; 
-	private IdStrategy idStrategy = null;
+	private IdStrategy idStrategy;
 	
 	public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
 
@@ -50,8 +49,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 			.withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
 			.withPermissions((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
 			.withUriPrefix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
-			.withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX))
-			;
+			.withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
 
 		String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
 		if (val != null && val.trim().length() > 0) {
@@ -61,12 +59,12 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
 		if (val != null && val.trim().length() > 0) {
 			mimeType = val;
 		}
-		//Get the correct ID or URI generation strategy based on the configuration
+
 		idStrategy = IdStrategyFactory.getIdStrategy(parsedConfig);
 	}
 	
 	@Override
-	public DocumentWriteOperation convert(SinkRecord sinkRecord) throws IOException{
+	public DocumentWriteOperation convert(SinkRecord sinkRecord) {
 		RecordContent recordContent = new RecordContent();
 		AbstractWriteHandle content = toContent(sinkRecord);
 		recordContent.setContent(content);
