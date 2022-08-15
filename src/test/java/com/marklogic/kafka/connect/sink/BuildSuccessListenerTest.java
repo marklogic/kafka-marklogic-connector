@@ -12,32 +12,32 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class BuildSuccessListenerTest {
 
-	MarkLogicSinkTask task = new MarkLogicSinkTask();
-	Map<String, Object> config = new HashMap<>();
+    MarkLogicSinkTask task = new MarkLogicSinkTask();
+    Map<String, Object> config = new HashMap<>();
 
-	@Test
-	void multipleSteps() {
-		config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, "1,2");
-		RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+    @Test
+    void multipleSteps() {
+        config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, "1,2");
+        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
 
-		assertEquals("myFlow", listener.getFlowName());
-		List<String> steps = listener.getSteps();
-		assertEquals(2, steps.size());
-		assertEquals("1", steps.get(0));
-		assertEquals("2", steps.get(1));
-	}
+        assertEquals("myFlow", listener.getFlowName());
+        List<String> steps = listener.getSteps();
+        assertEquals(2, steps.size());
+        assertEquals("1", steps.get(0));
+        assertEquals("2", steps.get(1));
+    }
 
-	@Test
-	void emptySteps() {
-		config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, " ");
-		RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
-		assertNull(listener.getSteps());
-	}
+    @Test
+    void emptySteps() {
+        config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, " ");
+        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+        assertNull(listener.getSteps());
+    }
 
-	@Test
-	void noSteps() {
-		RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
-		assertNull(listener.getSteps());
-	}
+    @Test
+    void noSteps() {
+        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+        assertNull(listener.getSteps());
+    }
 
 }

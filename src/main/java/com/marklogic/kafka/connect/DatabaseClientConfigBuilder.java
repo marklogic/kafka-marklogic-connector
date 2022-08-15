@@ -9,6 +9,6 @@ import java.util.Map;
  */
 public interface DatabaseClientConfigBuilder {
 
-	DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> kafkaConfig);
+    DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> kafkaConfig);
 
 }
