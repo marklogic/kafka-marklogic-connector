@@ -1,157 +1,160 @@
 plugins {
-    id 'java'
-    id 'net.saliman.properties' version '1.4.6'
-    id "com.github.jk1.dependency-license-report" version "1.3"
+  id 'java'
+  id 'net.saliman.properties' version '1.5.2'
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
+  id "com.github.jk1.dependency-license-report" version "1.3"
 }
 
-sourceCompatibility = 1.8
+java {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
 
 repositories {
-    mavenCentral()
-    jcenter()
+  mavenCentral()
 }
 
 configurations {
-    documentation
-    assets
+  documentation
+  assets
+}
+
+ext {
+  kafkaVersion = "2.8.1"
 }
 
 dependencies {
-    compileOnly "org.apache.kafka:connect-api:2.5.0"
-    compileOnly "org.apache.kafka:connect-json:2.5.0"
+  compileOnly "org.apache.kafka:connect-api:${kafkaVersion}"
+  compileOnly "org.apache.kafka:connect-json:${kafkaVersion}"
 
-    compile "com.marklogic:marklogic-client-api:5.3.0"
-    compile ("com.marklogic:marklogic-data-hub:5.2.4") {
-        // Prefer the version above
-        exclude module: "marklogic-client-api"
-        // Excluding these because there's no need for them
-        exclude module: "spring-boot-autoconfigure"
-        exclude module: "spring-integration-http"
-        exclude module: "jaeger-core"
-        exclude module: "jaeger-thrift"
+  implementation "com.marklogic:marklogic-client-api:5.5.3"
 
-        // Excluding because it causes Kafka Connect to complain mightily if included
-        exclude module: "logback-classic"
-    }
+  implementation("com.marklogic:marklogic-data-hub:5.7.2") {
+    // Excluding these because there's no need for them
+    exclude module: "spring-boot-autoconfigure"
+    exclude module: "spring-integration-http"
+    exclude module: "jaeger-core"
+    exclude module: "jaeger-thrift"
 
-    testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
-    testCompile "org.apache.kafka:connect-api:2.5.0"
-    testCompile "org.apache.kafka:connect-json:2.5.0"
-    testCompile "com.google.code.gson:gson:2.8.6"
+    // Excluding because it causes Kafka Connect to complain mightily if included
+    exclude module: "logback-classic"
+  }
 
-    // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
-    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.0"
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+  testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
+  testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
 
-    // Forcing logback to be used for test logging
-    testRuntime "ch.qos.logback:logback-classic:1.1.8"
-    testRuntime group: "org.slf4j", name: "jcl-over-slf4j", version: "1.7.22"
-    testRuntime group: "org.slf4j", name: "slf4j-api", version: "1.7.22"
+  // Forcing logback to be used for test logging
+  testImplementation "ch.qos.logback:logback-classic:1.2.11"
+  testImplementation "org.slf4j:jcl-over-slf4j:1.7.36"
+  testImplementation "org.slf4j:slf4j-api:1.7.36"
 
-    documentation files('LICENSE.txt')
-    documentation files('NOTICE.txt')
-    documentation files('README.md')
+  documentation files('LICENSE.txt')
+  documentation files('NOTICE.txt')
+  documentation files('README.md')
 
-    assets files('MarkLogic_logo.png')
-    assets files('apache_logo.png')
+  assets files('MarkLogic_logo.png')
+  assets files('apache_logo.png')
 }
 
 // Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
 test {
-    useJUnitPlatform()
+  useJUnitPlatform()
 }
 
-// Customize the Java plugin's jar task to produce a "fat" jar with all dependencies included
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'Kafka-Connect-MarkLogic',
-                   'Implementation-Version': version
-    }
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+shadowJar {
+  // Exclude DHF source files
+  exclude "hub-internal-artifacts/**"
+  exclude "hub-internal-config/**"
+  exclude "ml-config/**"
+  exclude "ml-modules*/**"
+  exclude "scaffolding/**"
 }
 
-task copyJarToKafka(type: Copy) {
-    description = "Used for local development and testing; copies the jar to your local Kafka install"
-    from "build/libs"
-    into "${kafkaHome}/libs"
+task copyJarToKafka(type: Copy, dependsOn: shadowJar) {
+  description = "Used for local development and testing; copies the jar to your local Kafka install"
+  from "build/libs"
+  into "${kafkaHome}/libs"
 }
-copyJarToKafka.mustRunAfter(jar)
 
 task copyPropertyFilesToKafka(type: Copy) {
-    description = "Used for local development and testing; copies the properties files to your local Kafka install"
-    from "config"
-    into "${kafkaHome}/config"
+  description = "Used for local development and testing; copies the properties files to your local Kafka install"
+  from "config"
+  into "${kafkaHome}/config"
 }
 
 task deploy {
-    description = "Used for local development and testing; builds the jar and copies it and the properties files to your local Kafka install"
-    dependsOn = ["jar", "copyJarToKafka", "copyPropertyFilesToKafka"]
+  description = "Used for local development and testing; builds the jar and copies it and the properties files to your local Kafka install"
+  dependsOn = ["copyJarToKafka", "copyPropertyFilesToKafka"]
 }
 
 // Tasks for building the archive required for submitting to the Confluence Connector Hub
-import org.apache.tools.ant.filters.*
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
 def baseArchiveBuildDir = "build/connectorArchive"
 def baseArchiveName = "${componentOwner}-${componentName}-${version}"
 task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
-    description = "Copy the project manifest into the root folder"
-    group = 'connector archive'
+  description = "Copy the project manifest into the root folder"
+  group = 'connector archive'
 
-    from '.'
-    include 'manifest.json'
-    into "${baseArchiveBuildDir}/${baseArchiveName}"
-    filter(ReplaceTokens, tokens:[CONFLUENT_USER:componentOwner, VERSION:version])
+  from '.'
+  include 'manifest.json'
+  into "${baseArchiveBuildDir}/${baseArchiveName}"
+  filter(ReplaceTokens, tokens: [CONFLUENT_USER: componentOwner, VERSION: version])
 }
 
 task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
-    description = "Copy the project assets into the assets folder"
-    group = 'connector archive'
+  description = "Copy the project assets into the assets folder"
+  group = 'connector archive'
 
-    from configurations.assets
-    into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
+  from configurations.assets
+  into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
 }
 
 task connectorArchive_CopyEtcToBuildDirectory(type: Copy) {
-    description = "Copy the project support files into the etc folder"
-    group = 'connector archive'
+  description = "Copy the project support files into the etc folder"
+  group = 'connector archive'
 
-    from 'config'
-    include '*'
-    into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
+  from 'config'
+  include '*'
+  into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
 }
 
 task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy) {
-    description = "Copy the project documentation into the doc folder"
-    group = 'connector archive'
+  description = "Copy the project documentation into the doc folder"
+  group = 'connector archive'
 
-    from configurations.documentation
-    into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
+  from configurations.documentation
+  into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
 }
 
 task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy) {
-    description = "Copy the dependency jars into the lib folder"
-    group = 'connector archive'
-    dependsOn = [jar]
+  description = "Copy the dependency jars into the lib folder"
+  group = 'connector archive'
+  dependsOn = [jar]
 
-    from jar
-    from configurations.compile
-    into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
+  from jar
+  from configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }
+  into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
 task connectorArchive_BuildDirectory() {
-    description = "Build the directory that will be used to create the Kafka Connector Archive"
-    dependsOn = [connectorArchive_CopyManifestToBuildDirectory,
-                 connectorArchive_CopyDependenciesToBuildDirectory,
-                 connectorArchive_CopyDocumentationToBuildDirectory,
-                 connectorArchive_CopyEtcToBuildDirectory,
-                 connectorArchive_CopyAssetsToBuildDirectory]
-    group = 'connector archive'
+  description = "Build the directory that will be used to create the Kafka Connector Archive"
+  dependsOn = [connectorArchive_CopyManifestToBuildDirectory,
+               connectorArchive_CopyDependenciesToBuildDirectory,
+               connectorArchive_CopyDocumentationToBuildDirectory,
+               connectorArchive_CopyEtcToBuildDirectory,
+               connectorArchive_CopyAssetsToBuildDirectory]
+  group = 'connector archive'
 }
 
 task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
-    description = 'Build a Connector Hub for the Confluent Connector Hub'
-    group = 'connector archive'
+  description = 'Build a Connector Hub for the Confluent Connector Hub'
+  group = 'connector archive'
 
-    from "${baseArchiveBuildDir}"
-    include '**/*'
-    archiveName "${baseArchiveName}.zip"
-    destinationDir(file('build/distro'))
+  from "${baseArchiveBuildDir}"
+  include '**/*'
+  archiveName "${baseArchiveName}.zip"
+  destinationDir(file('build/distro'))
 }
