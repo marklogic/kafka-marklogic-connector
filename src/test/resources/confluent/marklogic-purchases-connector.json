@@ -1,0 +1,17 @@
+{
+  "name": "marklogic-purchases",
+  "config": {
+    "topics": "purchases",
+    "connector.class": "com.marklogic.kafka.connect.sink.MarkLogicSinkConnector",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "tasks.max": "1",
+    "ml.connection.host": "localhost",
+    "ml.connection.port": 8000,
+    "ml.connection.username": "admin",
+    "ml.connection.password": "admin",
+    "ml.connection.securityContextType": "DIGEST",
+    "ml.document.format": "JSON",
+    "ml.document.uriSuffix": ".json"
+  }
+}
