@@ -6,6 +6,7 @@ import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.common.config.types.Password;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ public class BuildDatabaseClientConfigTest {
     public void basicAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "some-user");
-        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "some-password");
+        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, new Password("some-password"));
 
         DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
         assertEquals("some-host", clientConfig.getHost());
@@ -49,7 +50,7 @@ public class BuildDatabaseClientConfigTest {
     public void certificateAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "certificate");
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, "/path/to/file");
-        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "cert-password");
+        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, new Password("cert-password"));
 
         DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
         assertEquals(SecurityContextType.CERTIFICATE, clientConfig.getSecurityContextType());
@@ -102,7 +103,7 @@ public class BuildDatabaseClientConfigTest {
         config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
         config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, "true");
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
-        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "abc");
+        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, new Password("abc"));
 
         DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
         assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
@@ -122,7 +123,7 @@ public class BuildDatabaseClientConfigTest {
         config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "SOMETHING");
         config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, "true");
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
-        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, "abc");
+        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, new Password("abc"));
 
         DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
         assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
@@ -165,8 +166,6 @@ public class BuildDatabaseClientConfigTest {
         Map<String, Object> allRequiredValuesConfig = new HashMap<>();
         allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "");
         allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
-        allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "");
-        allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "");
         MarkLogicSinkConfig.CONFIG_DEF.parse(allRequiredValuesConfig);
 
         Set<String> keys = allRequiredValuesConfig.keySet();

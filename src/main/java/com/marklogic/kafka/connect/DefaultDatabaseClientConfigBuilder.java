@@ -4,8 +4,10 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
+import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
+import org.apache.kafka.common.config.types.Password;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
@@ -16,13 +18,16 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigBuilder {
+public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements DatabaseClientConfigBuilder {
 
     @Override
     public DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> parsedConfig) {
         DatabaseClientConfig clientConfig = new DatabaseClientConfig();
         clientConfig.setCertFile((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
-        clientConfig.setCertPassword((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD));
+        Password certPassword = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD);
+        if (certPassword != null) {
+            clientConfig.setCertPassword(certPassword.value());
+        }
         clientConfig.setTrustManager(new SimpleX509TrustManager());
         clientConfig = configureHostNameVerifier(clientConfig, parsedConfig);
         String securityContextType = ((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
@@ -37,7 +42,10 @@ public class DefaultDatabaseClientConfigBuilder implements DatabaseClientConfigB
         }
         clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
         clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
-        clientConfig.setPassword((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD));
+        Password password = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD);
+        if (password != null) {
+            clientConfig.setPassword(password.value());
+        }
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
         Boolean customSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.SSL);
         if (customSsl != null && customSsl) {
