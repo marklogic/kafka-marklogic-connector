@@ -17,7 +17,14 @@ This is a connector for subscribing to Kafka queues and pushing messages to Mark
 1. Copy the jar to the <kafkaHome>/libs on the remote server.
 1. Copy the two properties (config/marklogic-connect-distributed.properties config/marklogic-sink.properties) to <kafkaHome>/config on the remote server.
 
-See https://kafka.apache.org/quickstart for instructions on starting up Zookeeper and Kafka.
+See https://kafka.apache.org/quickstart for instructions on starting up Zookeeper and Kafka, which as of August 2022 
+will instruct you to run the following commands (in separate terminal windows, both from the Kafka home directory):
+
+    bin/zookeeper-server-start.sh config/zookeeper.properties
+
+and: 
+
+    bin/kafka-server-start.sh config/server.properties
 
 To start the Kafka connector in standalone mode (from the Kafka home directory):
 
