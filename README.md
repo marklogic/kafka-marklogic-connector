@@ -1,24 +1,36 @@
-# kafka-connect-marklogic
+# MarkLogic Kafka connector
 
-This is a connector for subscribing to Kafka queues and pushing messages to MarkLogic
+The MarkLogic Kafka connector is a [Kafka Connect](https://docs.confluent.io/platform/current/connect/index.html) 
+sink connector for receiving messages from Kafka topics and writing them to a MarkLogic database. 
 
 ## Requirements
+
 * MarkLogic 9
 
-## Quick Start
+## Quick Start with Confluent Platform
 
-#### To try this out locally:
+TODO, will borrow some content from the CONTRIBUTING file
 
-1. Configure kafkaHome in gradle-local.properties - e.g. kafkaHome=/Users/myusername/tools/kafka_2.11-2.1.0
-1. Run "./gradlew clean deploy" to build a jar and copy it and the below property files into the appropriate Kafka directories
+## Quick Start with Apache Kafka
 
-#### To try this out on a remote Kafka server
-1. Run "./gradlew clean jar" to build the jar.
-1. Copy the jar to the <kafkaHome>/libs on the remote server.
-1. Copy the two properties (config/marklogic-connect-distributed.properties config/marklogic-sink.properties) to <kafkaHome>/config on the remote server.
+These instructions assume that you already have an instance of Apache Kafka installed; the [Kafka Quickstart]
+(https://kafka.apache.org/quickstart) instructions provide an easy way of accomplishing this. Perform step 1 of these
+instructions before proceeding.
 
-See https://kafka.apache.org/quickstart for instructions on starting up Zookeeper and Kafka, which as of August 2022 
-will instruct you to run the following commands (in separate terminal windows, both from the Kafka home directory):
+Next, if you are running Kafka locally, do the following:
+
+1. Configure `kafkaHome` in gradle-local.properties - e.g. kafkaHome=/Users/myusername/kafka_2.13-2.8.1
+1. Run `./gradlew clean deploy` to build a jar and copy it and the below property files into the appropriate Kafka directories
+
+If you are running Kafka on a remote server, do the following:
+
+1. Run `./gradlew clean shadowJar` to build the jar
+1. Copy the jar to the <kafkaHome>/libs on the remote server
+1. Copy the two properties (config/marklogic-connect-distributed.properties config/marklogic-sink.properties) to <kafkaHome>/config on the remote server
+
+See step 2 in the [Kafka Quickstart guide](https://kafka.apache.org/quickstart) for instructions on starting 
+Zookeeper and Kafka. As of August 2022, the guide will instruct you to run the following commands (in separate 
+terminal windows, both from the Kafka home directory):
 
     bin/zookeeper-server-start.sh config/zookeeper.properties
 
@@ -26,13 +38,13 @@ and:
 
     bin/kafka-server-start.sh config/server.properties
 
-To start the Kafka connector in standalone mode (from the Kafka home directory):
+Next, start the Kafka connector in standalone mode (also from the Kafka home directory):
 
     bin/connect-standalone.sh config/marklogic-connect-standalone.properties config/marklogic-sink.properties
 
 You'll see a fair amount of logging from Kafka itself; near the end of the logging, look for messages from 
-MarkLogicSinkTask and the Data Movement classes such as WriteBatcherImpl to ensure that the connector has started up
-correctly.
+`MarkLogicSinkTask` and MarkLogic Java Client classes such as `WriteBatcherImpl` to ensure that the connector has 
+started up correctly.
 
 You can also start the connector in distributed mode:
 

@@ -57,7 +57,6 @@ dependencies {
   assets files('apache_logo.png')
 }
 
-// Needed by Gradle 4.6+ - see https://www.petrikainulainen.net/programming/testing/junit-5-tutorial-running-unit-tests-with-gradle/
 test {
   useJUnitPlatform()
 }
@@ -88,73 +87,105 @@ task deploy {
   dependsOn = ["copyJarToKafka", "copyPropertyFilesToKafka"]
 }
 
+ext {
+  confluentArchiveGroup = "Confluent Connector Archive"
+  confluentTestingGroup = "Confluent Platform Local Testing"
+  baseArchiveBuildDir = "build/connectorArchive"
+  baseArchiveName = "${componentOwner}-${componentName}-${version}"
+}
+
 // Tasks for building the archive required for submitting to the Confluence Connector Hub
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-def baseArchiveBuildDir = "build/connectorArchive"
-def baseArchiveName = "${componentOwner}-${componentName}-${version}"
-task connectorArchive_CopyManifestToBuildDirectory(type: Copy) {
+task connectorArchive_CopyManifestToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
   description = "Copy the project manifest into the root folder"
-  group = 'connector archive'
-
   from '.'
   include 'manifest.json'
   into "${baseArchiveBuildDir}/${baseArchiveName}"
   filter(ReplaceTokens, tokens: [CONFLUENT_USER: componentOwner, VERSION: version])
 }
 
-task connectorArchive_CopyAssetsToBuildDirectory(type: Copy) {
+task connectorArchive_CopyAssetsToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
   description = "Copy the project assets into the assets folder"
-  group = 'connector archive'
-
   from configurations.assets
   into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
 }
 
-task connectorArchive_CopyEtcToBuildDirectory(type: Copy) {
+task connectorArchive_CopyEtcToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
   description = "Copy the project support files into the etc folder"
-  group = 'connector archive'
-
   from 'config'
   include '*'
   into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
 }
 
-task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy) {
+task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
   description = "Copy the project documentation into the doc folder"
-  group = 'connector archive'
-
   from configurations.documentation
   into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
 }
 
-task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy) {
+task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: confluentArchiveGroup, dependsOn: jar) {
   description = "Copy the dependency jars into the lib folder"
-  group = 'connector archive'
-  dependsOn = [jar]
-
   from jar
   from configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }
   into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
-task connectorArchive_BuildDirectory() {
+task connectorArchive_BuildDirectory(group: confluentArchiveGroup) {
   description = "Build the directory that will be used to create the Kafka Connector Archive"
-  dependsOn = [connectorArchive_CopyManifestToBuildDirectory,
-               connectorArchive_CopyDependenciesToBuildDirectory,
-               connectorArchive_CopyDocumentationToBuildDirectory,
-               connectorArchive_CopyEtcToBuildDirectory,
-               connectorArchive_CopyAssetsToBuildDirectory]
-  group = 'connector archive'
+  dependsOn = [
+    connectorArchive_CopyManifestToBuildDirectory,
+    connectorArchive_CopyDependenciesToBuildDirectory,
+    connectorArchive_CopyDocumentationToBuildDirectory,
+    connectorArchive_CopyEtcToBuildDirectory,
+    connectorArchive_CopyAssetsToBuildDirectory
+  ]
 }
 
-task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory) {
+task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, group: confluentArchiveGroup) {
   description = 'Build a Connector Hub for the Confluent Connector Hub'
-  group = 'connector archive'
-
   from "${baseArchiveBuildDir}"
   include '**/*'
   archiveName "${baseArchiveName}.zip"
   destinationDir(file('build/distro'))
 }
+
+task copyConnectorToConfluent(type: Copy, group: confluentTestingGroup, dependsOn: connectorArchive_BuildDirectory) {
+  description = "Build the connector archive and copy it to your local Confluent Platform"
+  from baseArchiveBuildDir
+  into "${confluentHome}/share/confluent-hub-components"
+}
+
+// See https://docs.confluent.io/confluent-cli/current/command-reference/local/confluent_local_destroy.html
+task destroyLocalConfluent(type: Exec, group: confluentTestingGroup) {
+  description = "Destroy the local Confluent Platform instance"
+  commandLine "confluent", "local", "destroy"
+}
+
+// See https://docs.confluent.io/confluent-cli/current/command-reference/local/services/confluent_local_services_start.html
+task startLocalConfluent(type: Exec, group: confluentTestingGroup) {
+  description = "Convenience task for starting a local instance of Confluent Platform"
+  commandLine "confluent", "local", "services", "start"
+}
+
+task loadDatagenPurchasesConnector(type: Exec, group: confluentTestingGroup) {
+  description = "Load an instance of the Datagen connector into Confluent Platform for sending JSON documents to " +
+    "the 'purchases' topic"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "datagen-purchases", "-c",
+    "src/test/resources/confluent/datagen-purchases-connector.json"
+}
+
+task loadMarkLogicPurchasesConnector(type: Exec, group: confluentTestingGroup) {
+  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
+    "MarkLogic from the 'purchases' topic"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases", "-c",
+    "src/test/resources/confluent/marklogic-purchases-connector.json"
+}
+
+task setupLocalConfluent(group: confluentTestingGroup) {
+  description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
+}
+setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesConnector
+loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
+loadMarkLogicPurchasesConnector.mustRunAfter startLocalConfluent
