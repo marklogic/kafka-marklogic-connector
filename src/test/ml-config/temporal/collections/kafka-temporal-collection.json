@@ -1,0 +1,6 @@
+{
+	"collection-name": "kafka-temporal-collection",
+	"system-axis": "system",
+	"valid-axis": "valid",
+	"option": ["updates-safe"]
+}

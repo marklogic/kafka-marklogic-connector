@@ -11,6 +11,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -45,14 +46,9 @@ public class MarkLogicSinkTask extends SinkTask {
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
         dataMovementManager = databaseClient.newDataMovementManager();
-        writeBatcher = dataMovementManager.newWriteBatcher()
-            .withBatchSize((Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE))
-            .withThreadCount((Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT));
 
-        ServerTransform transform = buildServerTransform(parsedConfig);
-        if (transform != null) {
-            writeBatcher.withTransform(transform);
-        }
+        writeBatcher = dataMovementManager.newWriteBatcher();
+        configureWriteBatcher(parsedConfig, writeBatcher);
 
         writeBatcher.onBatchFailure((writeBatch, throwable) -> {
             int batchSize = writeBatch.getItems().length;
@@ -68,6 +64,39 @@ public class MarkLogicSinkTask extends SinkTask {
         dataMovementManager.startJob(writeBatcher);
 
         logger.info("Started");
+    }
+
+    /**
+     * Configure the given WriteBatcher based on DMSDK-related options in the parsedConfig.
+     *
+     * @param parsedConfig
+     * @param writeBatcher
+     */
+    protected void configureWriteBatcher(Map<String, Object> parsedConfig, WriteBatcher writeBatcher) {
+        Integer batchSize = (Integer)parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE);
+        if (batchSize != null) {
+            logger.info("DMSDK batch size: " + batchSize);
+            writeBatcher.withBatchSize(batchSize);
+        }
+
+        Integer threadCount = (Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT);
+        if (threadCount != null) {
+            logger.info("DMSDK thread count: " + threadCount);
+            writeBatcher.withThreadCount(threadCount);
+        }
+
+        ServerTransform transform = buildServerTransform(parsedConfig);
+        if (transform != null) {
+            // Not logging transform parameters as they may contain sensitive values
+            logger.info("Will apply server transform: " + transform.getName());
+            writeBatcher.withTransform(transform);
+        }
+
+        String temporalCollection = (String)parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION);
+        if (StringUtils.hasText(temporalCollection)) {
+            logger.info("Will add documents to temporal collection: " + temporalCollection);
+            writeBatcher.withTemporalCollection(temporalCollection);
+        }
     }
 
     /**
@@ -104,7 +133,7 @@ public class MarkLogicSinkTask extends SinkTask {
      */
     protected ServerTransform buildServerTransform(final Map<String, Object> parsedConfig) {
         String transform = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
-        if (transform != null && transform.trim().length() > 0) {
+        if (StringUtils.hasText(transform)) {
             ServerTransform t = new ServerTransform(transform);
             String params = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
             if (params != null && params.trim().length() > 0) {
@@ -198,5 +227,14 @@ public class MarkLogicSinkTask extends SinkTask {
 
     public String version() {
         return MarkLogicSinkConnector.MARKLOGIC_SINK_CONNECTOR_VERSION;
+    }
+
+    /**
+     * Exposed to facilitate testing.
+     *
+     * @return
+     */
+    protected WriteBatcher getWriteBatcher() {
+        return writeBatcher;
     }
 }
