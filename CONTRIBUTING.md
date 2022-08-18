@@ -105,6 +105,17 @@ You can also manually configure an instance of the MarkLogic Kafka connector as 
 In the list of connectors in Control Center, the connector will initially have a status of "Failed" while it starts up.
 After it starts successfully, it will have a status of "Running". 
 
+## Debugging the MarkLogic Kafka connector
+
+The main mechanism for debugging an instance of the MarkLogic Kafka connector is by examining logs from the 
+connector. You can access those, along with logging from Kafka Connect and all other connectors, by running the 
+following:
+
+    confluent local services connect log -f
+
+See [the log command docs](https://docs.confluent.io/confluent-cli/current/command-reference/local/services/connect/confluent_local_services_connect_log.html)
+for more information.
+
 ## Destroying and setting up the Confluent Platform instance
 
 While developing and testing the MarkLogic Kafka connector, it is common that the "local" instance of Confluent 
@@ -112,11 +123,13 @@ Platform will become unstable and no longer work. The [Confluent local docs](htt
 make reference to this - "The data that are produced are transient and are intended to be temporary". 
 
 It is thus advisable that after you copy a new instance of the MarkLogic Kafka connector into Confluent Platform (i.e. 
-by running `./gradlew copyConnectorToConfluent`), you should destroy your local Confluent Platform instance:
+by running `./gradlew copyConnectorToConfluent`), you should destroy your local Confluent Platform instance (this 
+will usually finish in around 15s):
 
     ./gradlew destroyLocalConfluent
 
-After doing that, you can quickly automate starting Confluent Platform and loading the two connectors via the following:
+After doing that, you can quickly automate starting Confluent Platform and loading the two connectors via the 
+following (this will usually finish in around 1m):
 
     ./gradlew setupLocalConfluent
 
@@ -124,6 +137,11 @@ Remember that if you've modified the connector code, you'll first need to run `.
 
 Doing the above will provide the most reliable way to get a new and working instance of Confluent Platform with the 
 MarkLogic Kafka connector installed.
+
+For brevity, you may prefer this (Gradle will figure out the tasks as long as only one task starts with "destroy" 
+and one task starts with "setup"):
+
+    ./gradlew destroy setup
 
 You may have luck with simply doing `confluent local services stop`, `./gradlew copyConnectorToConfluent`, and 
 `confluent local services start`, but this has so far not worked reliably - i.e. one of the Confluent Platform 

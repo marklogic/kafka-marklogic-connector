@@ -12,6 +12,8 @@
     "ml.connection.password": "admin",
     "ml.connection.securityContextType": "DIGEST",
     "ml.document.format": "JSON",
-    "ml.document.uriSuffix": ".json"
+    "ml.document.uriPrefix": "/purchase/",
+    "ml.document.uriSuffix": ".json",
+    "ml.document.collections": "purchases,kafka-data"
   }
 }
