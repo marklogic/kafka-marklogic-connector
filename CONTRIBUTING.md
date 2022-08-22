@@ -1,4 +1,5 @@
-This guide describes how to develop and contribute pull requests to this connector.
+This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
+develop and test the connector, either via a local install of Confluent Platform or of the regular Kafka distribution.
 
 # Running the test suite
 
@@ -27,8 +28,11 @@ Alternatively, you can import this project into an IDE such as IntelliJ and run 
 # Testing with Confluent Platform
 
 [Confluent Platform](https://docs.confluent.io/platform/7.2.1/overview.html) provides an easy mechanism for running
-Kafka locally via a single application. To try out the MarkLogic Kafka connector via the Confluent Platform, follow
-the steps below.
+Kafka locally via a single application. A primary benefit of testing with Confluent Platform is to test configuring the
+MarkLogic Kafka connector via the [Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) 
+web application. 
+
+To try out the MarkLogic Kafka connector via the Confluent Platform, follow the steps below.
 
 ## Install Confluent Platform with the MarkLogic Kafka connector
 
@@ -173,4 +177,52 @@ services (sometimes Schema Registry, sometimes Control Center) usually stops wor
 
 # Testing with Apache Kafka
 
-TODO, will borrow a lot of content from the README.
+The primary reason to test the MarkLogic Kafka connector via a regular Kafka distribution is that the development 
+cycle is much faster and more reliable - i.e. you can repeatedly redeploy the connector and restart Kafka Connect to 
+test changes, and Kafka Connect will continue to work fine. This is particularly useful when the changes you're testing
+do not require testing the GUI provided by Confluent Control Center.
+
+To get started, these instructions assume that you already have an instance of Apache Kafka installed; the 
+[Kafka Quickstart](https://kafka.apache.org/quickstart) instructions provide an easy way of accomplishing this. Perform 
+step 1 of these instructions before proceeding.
+
+Next, configure your Gradle properties to point to your Kafka installation and deploy the connector there:
+
+1. Configure `kafkaHome` in gradle-local.properties - e.g. `kafkaHome=/Users/myusername/kafka_2.13-2.8.1`
+2. Configure `kafkaMlUsername` and `kafkaMlPassword` in gradle-local.properties, setting these to a MarkLogic user that
+   is able to write documents to MarkLogic. These values will be used to populate the 
+   `ml.connection.username` and `ml.connection.password` connector properties.
+3. Run `./gradlew clean deploy` to build a jar and copy it and the config property files to your Kafka installation
+
+[Step 2 in the Kafka Quickstart guide](https://kafka.apache.org/quickstart) provides the instructions for starting the
+separate Zookeeper and Kafka server processes. You'll need to run these commands from your Kafka installation 
+directory. As of August 2022, those commands are (these seem very unlikely to change and thus are included here for 
+convenience):
+
+    bin/zookeeper-server-start.sh config/zookeeper.properties
+
+and 
+
+    bin/kafka-server-start.sh config/server.properties
+
+Next, start the Kafka connector in standalone mode (also from the Kafka home directory):
+
+    bin/connect-standalone.sh config/marklogic-connect-standalone.properties config/marklogic-sink.properties
+
+You'll see a fair amount of logging from Kafka itself; near the end of the logging, look for messages from
+`MarkLogicSinkTask` and MarkLogic Java Client classes such as `WriteBatcherImpl` to ensure that the connector has
+started up correctly.
+
+To test out the connector, you can use the following command to enter a CLI that allows you to manually send 
+messages to the `marklogic` topic that the connector is configured by default to read from:
+
+    bin/kafka-console-producer.sh --broker-list localhost:9092 --topic marklogic
+
+Be sure that the messages you send are consistent with your configuration properties - i.e. if you've set a format of
+JSON, you should send properly formed JSON objects.
+
+When a document is received and written by the connector, you'll see logging like this:
+
+```
+[2018-12-20 12:54:13,561] INFO flushing 1 queued docs (com.marklogic.client.datamovement.impl.WriteBatcherImpl:549)
+```

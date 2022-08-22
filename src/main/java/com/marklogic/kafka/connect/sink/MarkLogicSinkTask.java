@@ -37,8 +37,12 @@ public class MarkLogicSinkTask extends SinkTask {
 
         Map<String, Object> parsedConfig = MarkLogicSinkConfig.CONFIG_DEF.parse(config);
 
-        logKeys = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY);
-        logHeaders = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS);
+        if (parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY) != null) {
+            logKeys = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY);
+        }
+        if (parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS) != null) {
+            logHeaders = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS);
+        }
 
         sinkRecordConverter = new DefaultSinkRecordConverter(parsedConfig);
 
@@ -118,7 +122,7 @@ public class MarkLogicSinkTask extends SinkTask {
         logger.info(logMessage);
 
         RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(flowName, steps, databaseClientConfig);
-        if (parsedConfig.containsKey(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE)) {
+        if (parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE) != null) {
             listener.setLogResponse((Boolean) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE));
         }
         return listener;
