@@ -36,6 +36,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 
     public static final String DOCUMENT_COLLECTIONS_ADD_TOPIC = "ml.document.addTopicToCollections";
     public static final String DOCUMENT_COLLECTIONS = "ml.document.collections";
+    public static final String DOCUMENT_TEMPORAL_COLLECTION = "ml.document.temporalCollection";
     public static final String DOCUMENT_PERMISSIONS = "ml.document.permissions";
     public static final String DOCUMENT_FORMAT = "ml.document.format";
     public static final String DOCUMENT_MIMETYPE = "ml.document.mimeType";
@@ -69,13 +70,14 @@ public class MarkLogicSinkConfig extends AbstractConfig {
         .define(DATAHUB_FLOW_NAME, Type.STRING, null, Importance.MEDIUM, "Name of a Data Hub flow to run")
         .define(DATAHUB_FLOW_STEPS, Type.STRING, null, Importance.MEDIUM, "Comma-delimited names of steps to run")
         .define(DATAHUB_FLOW_LOG_RESPONSE, Type.BOOLEAN, false, Importance.LOW, "If set to true, the response from running a flow on each ingested batch will be logged at the info level")
-        .define(DMSDK_BATCH_SIZE, Type.INT, 100, Importance.HIGH, "Number of documents to write in each batch")
-        .define(DMSDK_THREAD_COUNT, Type.INT, 8, Importance.HIGH, "Number of threads for DMSDK to use")
-        .define(DMSDK_TRANSFORM, Type.STRING, "", Importance.MEDIUM, "Name of a REST transform to use when writing documents")
-        .define(DMSDK_TRANSFORM_PARAMS, Type.STRING, "", Importance.MEDIUM, "Delimited set of transform names and values")
+        .define(DMSDK_BATCH_SIZE, Type.INT, null, Importance.HIGH, "Number of documents to write in each batch")
+        .define(DMSDK_THREAD_COUNT, Type.INT, null, Importance.HIGH, "Number of threads for DMSDK to use")
+        .define(DMSDK_TRANSFORM, Type.STRING, null, Importance.MEDIUM, "Name of a REST transform to use when writing documents")
+        .define(DMSDK_TRANSFORM_PARAMS, Type.STRING, null, Importance.MEDIUM, "Delimited set of transform names and values")
         .define(DMSDK_TRANSFORM_PARAMS_DELIMITER, Type.STRING, ",", Importance.LOW, "Delimiter for transform parameter names and values; defaults to a comma")
         .define(DOCUMENT_COLLECTIONS_ADD_TOPIC, Type.BOOLEAN, false, Importance.LOW, "Indicates if the topic name should be added to the set of collections for a document")
         .define(DOCUMENT_COLLECTIONS, Type.STRING, "", Importance.MEDIUM, "String-delimited collections to add each document to")
+        .define(DOCUMENT_TEMPORAL_COLLECTION, Type.STRING, null, Importance.LOW, "Specify the name of a temporal collection for documents to be inserted into")
         .define(DOCUMENT_FORMAT, Type.STRING, "", Importance.LOW, "Defines format of each document; can be one of json, xml, text, binary, or unknown")
         .define(DOCUMENT_MIMETYPE, Type.STRING, "", Importance.LOW, "Defines the mime type of each document; optional, and typically the format is set instead of the mime type")
         .define(DOCUMENT_PERMISSIONS, Type.STRING, "", Importance.MEDIUM, "String-delimited permissions to add to each document; role1,capability1,role2,capability2,etc")

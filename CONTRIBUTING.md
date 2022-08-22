@@ -1,5 +1,29 @@
 This guide describes how to develop and contribute pull requests to this connector.
 
+# Running the test suite
+
+The test suite for the MarkLogic Kafka connector, found at `src/test/resources`, requires that an application first be
+deployed to a MarkLogic instance. This application is deployed via 
+[ml-gradle](https://github.com/marklogic-community/ml-gradle). Before deploying, first create `gradle-local.properties`
+if it does not yet exist in the root directory of this project and configure `mlPassword` for your `admin` user - e.g.
+
+    mlPassword=changeme
+
+Then deploy the application:
+
+    ./gradlew -i mlDeploy
+
+The application deploys a single REST API app server listening on port 8019; please ensure you have this port available
+before deploying.
+
+You can then run the tests via:
+
+    ./gradlew test
+
+Alternatively, you can import this project into an IDE such as IntelliJ and run each of the tests found under 
+`src/test/java`.
+
+
 # Testing with Confluent Platform
 
 [Confluent Platform](https://docs.confluent.io/platform/7.2.1/overview.html) provides an easy mechanism for running

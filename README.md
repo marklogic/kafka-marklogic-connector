@@ -77,29 +77,30 @@ When a document is received and written by the connector, you'll see logging lik
 | offset.flush.interval.ms       | 10000                                            | Interval at which to try committing offsets for tasks.                                                                                                                        |
 
 #### MarkLogic-specific properties are defined in config/marklogic-sink.properties
-| Property | Default Value | Description |
-|:-------- |:--------------|:------------|
-| name | marklogic-sink | The name of the connector |
-| connector.class | <div>com.marklogic.kafka.connect.</div>sink.MarkLogicSinkConnector | The FQ name of the connector class |
-| tasks.max | 1 | The maximum number of concurrent tasks |
-| topics | marklogic | The name of the topic(s) to subscribe to |
-| ml.connection.host | localhost | A MarkLogic host to connect to. The connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster. |
-| ml.connection.port | 8000 | The port of a REST API server to connect to. |
-| ml.connection.database | Documents | Optional - the name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this. |
-| ml.connection.type | (empty) | Optional - set to "gateway" when using a load balancer, else leave blank. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information. |
-| ml.connection.securityContextType | DIGEST | Either DIGEST, BASIC, CERTIFICATE, KERBEROS, or NONE |
-| ml.connection.username | admin | MarkLogic username |
-| ml.connection.password | admin | MarkLogic password |
-| ml.connection.certFile | (empty) | Certificate file for Certificate based authentication |
-| ml.connection.certPassword | (empty) | Certificate password for Certificate based authentication |
-| ml.connection.externalName | (empty) | The external name to use to connect to MarkLogic |
-| ml.connection.simpleSsl | false | Set to "true" for a "simple" SSL strategy that uses the JVM's default SslContext and X509TrustManager and a "trust everything" HostnameVerifier. Further customization of an SSL connection via properties is not supported. If you need to do so, consider using the source code for this connector as a starting point. |
-| ml.dmsdk.batchSize | 100 | Sets the number of documents to be written in a batch to MarkLogic. This may not have any impact depending on the connector receives data from Kafka, as the connector calls flushAsync on the DMSDK WriteBatcher after processing every collection of records. Thus, if the connector never receives at one time more than the value of this property, then the value of this property will have no impact. |
-| ml.dmsdk.threadCount | 8 | Sets the number of threads used by the Data Movement SDK for parallelizing writes to MarkLogic. Similar to the batch size property above, this may never come into play depending on how many records the connector receives at once. |
-| ml.document.collections | kafka-data | Optional - a comma-separated list of collections that each document should be written to |
-| ml.document.addTopicToCollections | false | Set this to true so that the name of the topic that the connector reads from is added as a collection to each document inserted by the connector
-| ml.document.format | JSON | Optional - specify the format of each document; either JSON, XML, BINARY, TEXT, or UNKNOWN |
-| ml.document.mimeType | (empty) | Optional - specify a mime type for each document; typically the format property above will be used instead of this |
-| ml.document.permissions | rest-reader,read,rest-writer,update | Optional - a comma-separated list of roles and capabilities that define the permissions for each document written to MarkLogic |
-| ml.document.uriPrefix | /kafka-data/ | Optional - a prefix to prepend to each URI; the URI itself is a UUID |
-| ml.document.uriSuffix | .json | Optional - a suffix to append to each URI |
+| Property                          | Default Value                                                      | Description |
+|:----------------------------------|:-------------------------------------------------------------------|:------------|
+| name                              | marklogic-sink                                                     | The name of the connector |
+| connector.class                   | <div>com.marklogic.kafka.connect.</div>sink.MarkLogicSinkConnector | The FQ name of the connector class |
+| tasks.max                         | 1                                                                  | The maximum number of concurrent tasks |
+| topics                            | marklogic                                                          | The name of the topic(s) to subscribe to |
+| ml.connection.host                | localhost                                                          | A MarkLogic host to connect to. The connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster. |
+| ml.connection.port                | 8000                                                               | The port of a REST API server to connect to. |
+| ml.connection.database            | Documents                                                          | Optional - the name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this. |
+| ml.connection.type                | (empty)                                                            | Optional - set to "gateway" when using a load balancer, else leave blank. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information. |
+| ml.connection.securityContextType | DIGEST                                                             | Either DIGEST, BASIC, CERTIFICATE, KERBEROS, or NONE |
+| ml.connection.username            | admin                                                              | MarkLogic username |
+| ml.connection.password            | admin                                                              | MarkLogic password |
+| ml.connection.certFile            | (empty)                                                            | Certificate file for Certificate based authentication |
+| ml.connection.certPassword        | (empty)                                                            | Certificate password for Certificate based authentication |
+| ml.connection.externalName        | (empty)                                                            | The external name to use to connect to MarkLogic |
+| ml.connection.simpleSsl           | false                                                              | Set to "true" for a "simple" SSL strategy that uses the JVM's default SslContext and X509TrustManager and a "trust everything" HostnameVerifier. Further customization of an SSL connection via properties is not supported. If you need to do so, consider using the source code for this connector as a starting point. |
+| ml.dmsdk.batchSize                | 100                                                                | Sets the number of documents to be written in a batch to MarkLogic. This may not have any impact depending on the connector receives data from Kafka, as the connector calls flushAsync on the DMSDK WriteBatcher after processing every collection of records. Thus, if the connector never receives at one time more than the value of this property, then the value of this property will have no impact. |
+| ml.dmsdk.threadCount              | 8                                                                  | Sets the number of threads used by the Data Movement SDK for parallelizing writes to MarkLogic. Similar to the batch size property above, this may never come into play depending on how many records the connector receives at once. |
+| ml.document.collections           | kafka-data                                                         | Optional - a comma-separated list of collections that each document should be written to |
+| ml.document.addTopicToCollections | false                                                              | Set this to true so that the name of the topic that the connector reads from is added as a collection to each document inserted by the connector |
+| ml.document.temporalCollection    | (empty)                                                            | Specify the name of a temporal collection for documents to be inserted into |
+| ml.document.format                | JSON                                                               | Optional - specify the format of each document; either JSON, XML, BINARY, TEXT, or UNKNOWN |
+| ml.document.mimeType              | (empty)                                                            | Optional - specify a mime type for each document; typically the format property above will be used instead of this |
+| ml.document.permissions           | rest-reader,read,rest-writer,update                                | Optional - a comma-separated list of roles and capabilities that define the permissions for each document written to MarkLogic |
+| ml.document.uriPrefix             | /kafka-data/                                                       | Optional - a prefix to prepend to each URI; the URI itself is a UUID |
+| ml.document.uriSuffix             | .json                                                              | Optional - a suffix to append to each URI |
