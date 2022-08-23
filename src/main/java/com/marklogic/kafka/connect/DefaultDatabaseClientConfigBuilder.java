@@ -47,12 +47,10 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             clientConfig.setPassword(password.value());
         }
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
-        Boolean customSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL);
-        if (customSsl != null && customSsl) {
+        if (ConfigUtil.getBoolean(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
             configureCustomSslConnection(clientConfig, parsedConfig);
         }
-        Boolean simpleSsl = (Boolean) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL);
-        if (simpleSsl != null && simpleSsl) {
+        if (ConfigUtil.getBoolean(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
             configureSimpleSsl(clientConfig);
         }
         clientConfig.setUsername((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
@@ -90,12 +88,11 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
     private void configureCustomSslConnection(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
         String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
-        Boolean sslMutualAuth = (Boolean) parsedConfig.get(MarkLogicSinkConfig.SSL_MUTUAL_AUTH);
         SSLContext sslContext = null;
         SecurityContextType securityContextType = clientConfig.getSecurityContextType();
 
         if (SecurityContextType.BASIC.equals(securityContextType) || SecurityContextType.DIGEST.equals(securityContextType)) {
-            if (sslMutualAuth != null && sslMutualAuth) {
+            if (ConfigUtil.getBoolean(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, parsedConfig)) {
                 /*2 way ssl changes*/
                 KeyStore clientKeyStore = null;
                 try {

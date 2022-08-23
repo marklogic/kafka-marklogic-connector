@@ -101,6 +101,7 @@ connector.
 | ml.dmsdk.transform | | Name of a REST transform to use when writing documents |
 | ml.dmsdk.transformParams | | Delimited set of transform parameter names and values; example = param1,value1,param2,value2 |
 | ml.dmsdk.transformParamsDelimiter | , | Delimiter for transform parameter names and values |
+| ml.dmsdk.includeKafkaMetadata | false | Set to true so that Kafka record metadata is added to document metadata before it is written. If the document fails to be written, the Kafka record metadata will be logged as well. |
 | ml.log.record.key | false | Set to true to log at the info level the key of each record |
 | ml.log.record.headers | false | Set to true to log at the info level the headers of each record | 
 | ml.datahub.flow.name | | Name of a Data Hub Framework flow to run after writing documents |

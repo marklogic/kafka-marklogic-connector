@@ -6,6 +6,7 @@ import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
+import com.marklogic.kafka.connect.ConfigUtil;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -37,12 +38,8 @@ public class MarkLogicSinkTask extends SinkTask {
 
         Map<String, Object> parsedConfig = MarkLogicSinkConfig.CONFIG_DEF.parse(config);
 
-        if (parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY) != null) {
-            logKeys = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_KEY);
-        }
-        if (parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS) != null) {
-            logHeaders = (Boolean) parsedConfig.get(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS);
-        }
+        logKeys = ConfigUtil.getBoolean(MarkLogicSinkConfig.LOGGING_RECORD_KEY, parsedConfig);
+        logHeaders = ConfigUtil.getBoolean(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS, parsedConfig);
 
         sinkRecordConverter = new DefaultSinkRecordConverter(parsedConfig);
 
@@ -50,15 +47,8 @@ public class MarkLogicSinkTask extends SinkTask {
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
         dataMovementManager = databaseClient.newDataMovementManager();
-
         writeBatcher = dataMovementManager.newWriteBatcher();
         configureWriteBatcher(parsedConfig, writeBatcher);
-
-        writeBatcher.onBatchFailure((writeBatch, throwable) -> {
-            int batchSize = writeBatch.getItems().length;
-            logger.error("#error failed to write {} records", batchSize);
-            logger.error("#error batch failure:", throwable);
-        });
 
         final String flowName = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
         if (flowName != null && flowName.trim().length() > 0) {
@@ -76,8 +66,8 @@ public class MarkLogicSinkTask extends SinkTask {
      * @param parsedConfig
      * @param writeBatcher
      */
-    protected void configureWriteBatcher(Map<String, Object> parsedConfig, WriteBatcher writeBatcher) {
-        Integer batchSize = (Integer)parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE);
+    private void configureWriteBatcher(Map<String, Object> parsedConfig, WriteBatcher writeBatcher) {
+        Integer batchSize = (Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE);
         if (batchSize != null) {
             logger.info("DMSDK batch size: " + batchSize);
             writeBatcher.withBatchSize(batchSize);
@@ -96,11 +86,14 @@ public class MarkLogicSinkTask extends SinkTask {
             writeBatcher.withTransform(transform);
         }
 
-        String temporalCollection = (String)parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION);
+        String temporalCollection = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION);
         if (StringUtils.hasText(temporalCollection)) {
             logger.info("Will add documents to temporal collection: " + temporalCollection);
             writeBatcher.withTemporalCollection(temporalCollection);
         }
+
+        writeBatcher.onBatchFailure(new WriteFailureHandler(
+            ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig)));
     }
 
     /**
@@ -123,7 +116,7 @@ public class MarkLogicSinkTask extends SinkTask {
 
         RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(flowName, steps, databaseClientConfig);
         if (parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE) != null) {
-            listener.setLogResponse((Boolean) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE));
+            listener.setLogResponse(ConfigUtil.getBoolean(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE, parsedConfig));
         }
         return listener;
     }
@@ -190,10 +183,7 @@ public class MarkLogicSinkTask extends SinkTask {
             return;
         }
 
-        final List<String> headers = new ArrayList<>();
-
         records.forEach(record -> {
-
             if (record == null) {
                 logger.warn("Skipping null record object.");
             } else {
@@ -201,7 +191,7 @@ public class MarkLogicSinkTask extends SinkTask {
                     logger.info("#record key {}", record.key());
                 }
                 if (logHeaders) {
-                    headers.clear();
+                    List<String> headers = new ArrayList<>();
                     record.headers().forEach(header -> {
                         headers.add(String.format("%s:%s", header.key(), header.value().toString()));
                     });
