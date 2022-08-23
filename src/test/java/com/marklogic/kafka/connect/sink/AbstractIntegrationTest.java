@@ -61,7 +61,12 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
     protected void putContent(MarkLogicSinkTask task, String content) {
         String topic = "topic-name-doesnt-matter";
         SinkRecord record = new SinkRecord(topic, 1, null, null, null, content, 0);
+        putSinkRecord(task, record);
+    }
+
+    protected void putSinkRecord(MarkLogicSinkTask task, SinkRecord record) {
         task.put(Stream.of(record).collect(Collectors.toList()));
         task.getWriteBatcher().flushAndWait();
     }
+
 }

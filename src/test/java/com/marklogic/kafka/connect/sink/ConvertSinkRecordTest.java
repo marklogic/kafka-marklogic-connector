@@ -7,6 +7,7 @@ import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +25,7 @@ public class ConvertSinkRecordTest {
     private final MarkLogicSinkTask markLogicSinkTask = new MarkLogicSinkTask();
 
     @Test
-    public void allPropertiesSet() {
+    void allPropertiesSet() {
         Map<String, Object> config = new HashMap<>();
         config.put("ml.document.collections", "one,two");
         config.put("ml.document.format", "json");
@@ -56,7 +57,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void noPropertiesSet() {
+    void noPropertiesSet() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
@@ -71,7 +72,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithUUIDStrategy() {
+    void uriWithUUIDStrategy() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put("ml.id.strategy", "UUID");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -87,7 +88,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithDefaultStrategy() {
+    void uriWithDefaultStrategy() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
@@ -102,7 +103,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithKafkaMetaData() {
+    void uriWithKafkaMetaData() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put("ml.id.strategy", "KAFKA_META_WITH_SLASH");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -117,7 +118,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithJsonPath() throws IOException {
+    void uriWithJsonPath() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\"}");
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put("ml.id.strategy", "JSONPATH");
@@ -135,7 +136,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithHashedJsonPaths() throws IOException {
+    void uriWithHashedJsonPaths() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\",\"f2\":\"200\"}");
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put("ml.id.strategy", "HASH");
@@ -153,7 +154,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void uriWithHashedKafkaMeta() {
+    void uriWithHashedKafkaMeta() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put("ml.id.strategy", "KAFKA_META_HASHED");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -169,7 +170,7 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void binaryContent() {
+    void binaryContent() {
         converter = new DefaultSinkRecordConverter(new HashMap<>());
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("hello world".getBytes()));
@@ -179,17 +180,58 @@ public class ConvertSinkRecordTest {
     }
 
     @Test
-    public void emptyContent() {
+    void emptyContent() {
         final Collection<SinkRecord> records = new ArrayList<>();
         records.add(newSinkRecord(null));
         markLogicSinkTask.put(records);
     }
 
     @Test
-    public void nullContent() {
+    void nullContent() {
         final Collection<SinkRecord> records = new ArrayList<>();
         records.add(null);
         markLogicSinkTask.put(records);
+    }
+
+    @Test
+    void includeKafkaMetadata() {
+        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, true);
+        converter = new DefaultSinkRecordConverter(kafkaConfig);
+
+        final int partition = 5;
+        final long offset = 2;
+        final String key = "some-key";
+        final Long timestamp = System.currentTimeMillis();
+        DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
+            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME));
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        assertEquals(key, values.get("kafka-key"));
+        assertEquals(offset, Long.parseLong(values.get("kafka-offset")));
+        assertEquals(partition, Integer.parseInt(values.get("kafka-partition")));
+        assertEquals(timestamp, Long.parseLong(values.get("kafka-timestamp")));
+        assertEquals("topic1", values.get("kafka-topic"));
+        assertEquals(5, values.keySet().size(), "Only expecting the above 5 keys; bump this expected" +
+            " number up in the future if we add metadata that should exist regardless of the setting for including " +
+            "Kafka metadata");
+    }
+
+    @Test
+    void dontIncludeKafkaMetadata() {
+        converter = new DefaultSinkRecordConverter(new HashMap<>());
+
+        DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", 5, null, "key1",
+            null, "some-value", 123, System.currentTimeMillis(), TimestampType.CREATE_TIME));
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        assertNull(values.get("kafka-offset"));
+        assertNull(values.get("kafka-key"));
+        assertNull(values.get("kafka-partition"));
+        assertNull(values.get("kafka-timestamp"));
+        assertNull(values.get("kafka-topic"));
     }
 
     private SinkRecord newSinkRecord(Object value) {

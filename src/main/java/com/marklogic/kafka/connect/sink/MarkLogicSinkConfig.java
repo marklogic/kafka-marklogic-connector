@@ -33,6 +33,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
     public static final String DMSDK_TRANSFORM = "ml.dmsdk.transform";
     public static final String DMSDK_TRANSFORM_PARAMS = "ml.dmsdk.transformParams";
     public static final String DMSDK_TRANSFORM_PARAMS_DELIMITER = "ml.dmsdk.transformParamsDelimiter";
+    public static final String DMSDK_INCLUDE_KAFKA_METADATA = "ml.dmsdk.includeKafkaMetadata";
 
     public static final String DOCUMENT_COLLECTIONS_ADD_TOPIC = "ml.document.addTopicToCollections";
     public static final String DOCUMENT_COLLECTIONS = "ml.document.collections";
@@ -120,6 +121,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
             "Delimited set of transform parameter names and values; example = param1,value1,param2,value2")
         .define(DMSDK_TRANSFORM_PARAMS_DELIMITER, Type.STRING, ",", Importance.LOW,
             "Delimiter for transform parameter names and values")
+        .define(DMSDK_INCLUDE_KAFKA_METADATA, Type.BOOLEAN, null, Importance.LOW,
+            "Set to true so that Kafka record metadata is added to document metadata before it is written. If the document fails to be written, the Kafka record metadata will be logged as well.")
 
         .define(LOGGING_RECORD_KEY, Type.BOOLEAN, null, Importance.LOW,
             "Set to true to log at the info level the key of each record")

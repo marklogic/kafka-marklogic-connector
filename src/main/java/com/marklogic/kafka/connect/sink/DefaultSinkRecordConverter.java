@@ -10,11 +10,13 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import com.marklogic.kafka.connect.ConfigUtil;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.storage.Converter;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -35,15 +37,13 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
     private DocumentWriteOperationBuilder documentWriteOperationBuilder;
     private Format format;
     private String mimeType;
-    private Boolean addTopicToCollections = false;
+    private boolean addTopicToCollections = false;
+    private boolean includeKafkaMetadata = false;
     private IdStrategy idStrategy;
 
     public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
-
-        Boolean booleanVal = (Boolean) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC);
-        if (booleanVal != null) {
-            addTopicToCollections = booleanVal;
-        }
+        this.addTopicToCollections = ConfigUtil.getBoolean(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, parsedConfig);
+        this.includeKafkaMetadata = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig);
 
         documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
             .withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
@@ -52,15 +52,16 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
             .withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
 
         String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
-        if (val != null && val.trim().length() > 0) {
-            format = Format.valueOf(val.toUpperCase());
-        }
-        val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_MIMETYPE);
-        if (val != null && val.trim().length() > 0) {
-            mimeType = val;
+        if (StringUtils.hasText(val)) {
+            this.format = Format.valueOf(val.toUpperCase());
         }
 
-        idStrategy = IdStrategyFactory.getIdStrategy(parsedConfig);
+        val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_MIMETYPE);
+        if (StringUtils.hasText(val)) {
+            this.mimeType = val;
+        }
+
+        this.idStrategy = IdStrategyFactory.getIdStrategy(parsedConfig);
     }
 
     @Override
@@ -68,19 +69,32 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
         RecordContent recordContent = new RecordContent();
         AbstractWriteHandle content = toContent(sinkRecord);
         recordContent.setContent(content);
-        recordContent.setAdditionalMetadata(addTopicToCollections(sinkRecord.topic(), addTopicToCollections));
+        recordContent.setAdditionalMetadata(buildAdditionalMetadata(sinkRecord));
         recordContent.setId(idStrategy.generateId(content, sinkRecord.topic(), sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
         return documentWriteOperationBuilder.build(recordContent);
     }
 
-    /**
-     * @param topic, addTopicToCollections
-     * @return metadata
-     */
-    protected DocumentMetadataHandle addTopicToCollections(String topic, Boolean addTopicToCollections) {
+    private DocumentMetadataHandle buildAdditionalMetadata(SinkRecord sinkRecord) {
         DocumentMetadataHandle metadata = new DocumentMetadataHandle();
-        if (addTopicToCollections) {
-            metadata.getCollections().add(topic);
+        if (this.addTopicToCollections) {
+            metadata.getCollections().add(sinkRecord.topic());
+        }
+        if (this.includeKafkaMetadata) {
+            DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+            Object key = sinkRecord.key();
+            if (key != null) {
+                values.add("kafka-key", key.toString());
+            }
+            values.add("kafka-offset", sinkRecord.kafkaOffset() + "");
+            Integer partition = sinkRecord.kafkaPartition();
+            if (partition != null) {
+                values.add("kafka-partition", partition + "");
+            }
+            Long timestamp = sinkRecord.timestamp();
+            if (timestamp != null) {
+                values.add("kafka-timestamp", timestamp + "");
+            }
+            values.add("kafka-topic", sinkRecord.topic());
         }
         return metadata;
     }
@@ -91,10 +105,11 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
      * @param record
      * @return
      */
-    protected AbstractWriteHandle toContent(SinkRecord record) {
-        if ((record == null) || (record.value() == null)) {
-            throw new NullPointerException("'record' must not be null, and must have a value.");
+    private AbstractWriteHandle toContent(SinkRecord record) {
+        if (record == null || record.value() == null) {
+            throw new IllegalArgumentException("Sink record must not be null and must have a value");
         }
+
         Object value = record.value();
         Schema schema = record.valueSchema();
 
