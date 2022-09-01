@@ -12,7 +12,9 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ConvertSinkRecordTest {
 
     private DefaultSinkRecordConverter converter;
-    private final MarkLogicSinkTask markLogicSinkTask = new MarkLogicSinkTask();
 
     @Test
     void allPropertiesSet() {
@@ -177,20 +178,6 @@ public class ConvertSinkRecordTest {
 
         BytesHandle content = (BytesHandle) op.getContent();
         assertEquals("hello world".getBytes().length, content.get().length);
-    }
-
-    @Test
-    void emptyContent() {
-        final Collection<SinkRecord> records = new ArrayList<>();
-        records.add(newSinkRecord(null));
-        markLogicSinkTask.put(records);
-    }
-
-    @Test
-    void nullContent() {
-        final Collection<SinkRecord> records = new ArrayList<>();
-        records.add(null);
-        markLogicSinkTask.put(records);
     }
 
     @Test

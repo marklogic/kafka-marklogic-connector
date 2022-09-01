@@ -10,15 +10,15 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class BuildSuccessListenerTest {
+public class BuildRunFlowListenerTest {
 
-    MarkLogicSinkTask task = new MarkLogicSinkTask();
+    WriteBatcherSinkTask task = new WriteBatcherSinkTask();
     Map<String, Object> config = new HashMap<>();
 
     @Test
     void multipleSteps() {
         config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, "1,2");
-        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+        RunFlowWriteBatchListener listener = task.buildRunFlowListener("myFlow", config, new DatabaseClientConfig());
 
         assertEquals("myFlow", listener.getFlowName());
         List<String> steps = listener.getSteps();
@@ -30,13 +30,13 @@ public class BuildSuccessListenerTest {
     @Test
     void emptySteps() {
         config.put(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS, " ");
-        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+        RunFlowWriteBatchListener listener = task.buildRunFlowListener("myFlow", config, new DatabaseClientConfig());
         assertNull(listener.getSteps());
     }
 
     @Test
     void noSteps() {
-        RunFlowWriteBatchListener listener = task.buildSuccessListener("myFlow", config, new DatabaseClientConfig());
+        RunFlowWriteBatchListener listener = task.buildRunFlowListener("myFlow", config, new DatabaseClientConfig());
         assertNull(listener.getSteps());
     }
 
