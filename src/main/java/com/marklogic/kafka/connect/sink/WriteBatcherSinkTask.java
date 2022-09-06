@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
  */
-class WriteBatcherSinkTask extends AbstractSinkTask {
+public class WriteBatcherSinkTask extends AbstractSinkTask {
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;

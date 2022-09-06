@@ -27,7 +27,7 @@ import java.util.Map;
  * to provide their own endpoint implementation, thus giving the user full control over how data is written to
  * MarkLogic.
  */
-class BulkDataServicesSinkTask extends AbstractSinkTask {
+public class BulkDataServicesSinkTask extends AbstractSinkTask {
 
     private DatabaseClient databaseClient;
     private InputCaller.BulkInputCaller<JsonNode> bulkInputCaller;
