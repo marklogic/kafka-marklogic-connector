@@ -67,9 +67,9 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
         if (bulkInputCaller != null) {
-            logger.info("Flushing BulkInputCaller");
+            logger.debug("Flushing BulkInputCaller");
             bulkInputCaller.awaitCompletion();
-            logger.info("Finished flushing BulkInputCaller");
+            logger.debug("Finished flushing BulkInputCaller");
         }
     }
 

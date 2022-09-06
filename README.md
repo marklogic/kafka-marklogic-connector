@@ -337,6 +337,17 @@ name starts with `ml.document.`. These properties are included to support an end
 dynamic endpoint that is driven by the values of these properties instead of them being hardcoded within the 
 endpoint module. This can allow for reusing the same endpoint module across multiple connector instances.
 
+Note that when using this approach, none of the properties starting with the following prefixes will have any impact, 
+as they are specific to the approach that uses DMSDK:
+
+- `ml.datahub`
+- `ml.dmsdk`
+- `ml.document`  
+- `ml.id.strategy`
+
+As noted above, the `ml.document` properties will be included in `endpointConstants`, but they otherwise have no impact
+because the endpoint developer chooses whether to apply them or not in their endpoint module.
+
 #### Configuring Bulk Data Services performance
 
 MarkLogic's Bulk Data Services feature is designed to leverage the multi-threading and parallelization support provided
