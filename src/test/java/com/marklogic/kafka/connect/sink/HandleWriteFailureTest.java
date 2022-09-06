@@ -23,7 +23,7 @@ public class HandleWriteFailureTest extends AbstractIntegrationTest {
     void handleWriteFailure() {
         final String TEST_COLLECTION = "handle-write-failure-test";
 
-        MarkLogicSinkTask task = startSinkTask(
+        WriteBatcherSinkTask task = (WriteBatcherSinkTask) startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
             MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, TEST_COLLECTION,
             MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true"
@@ -44,7 +44,7 @@ public class HandleWriteFailureTest extends AbstractIntegrationTest {
 
         SinkRecord record = new SinkRecord(topic, partition, null, key, null, value, offset,
             timestamp, TimestampType.CREATE_TIME);
-        putSinkRecord(task, record);
+        putAndFlushRecords(task, record);
 
         assertCollectionSize("The target collection should be empty since the content was not valid JSON",
             TEST_COLLECTION, 0);
@@ -64,7 +64,7 @@ public class HandleWriteFailureTest extends AbstractIntegrationTest {
      */
     @Test
     void handleWriteFailureWithMinimalKafkaMetadata() {
-        MarkLogicSinkTask task = startSinkTask(
+        WriteBatcherSinkTask task = (WriteBatcherSinkTask) startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
             MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true"
         );
@@ -81,7 +81,7 @@ public class HandleWriteFailureTest extends AbstractIntegrationTest {
         // Based on the constructor, it seems that partition/offset are guaranteed to exist, and we know topic will
         // exist as well.
         SinkRecord record = new SinkRecord(topic, partition, null, null, null, value, offset);
-        putSinkRecord(task, record);
+        putAndFlushRecords(task, record);
 
         assertEquals(1, failedBatches.size());
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) failedBatches.get(0).getItems()[0].getMetadata();

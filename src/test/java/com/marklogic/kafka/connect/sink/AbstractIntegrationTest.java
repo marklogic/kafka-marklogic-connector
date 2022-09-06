@@ -5,10 +5,9 @@ import com.marklogic.junit5.spring.SimpleTestConfig;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Base class for any test that wishes to connect to the "kafka-test-test-content" app server on port 8019.
@@ -36,37 +35,34 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
     }
 
     /**
-     *
      * @param configParamNamesAndValues
      * @return a MarkLogicSinkTask based on the default connection config and any optional config params provided by
      * the caller
      */
-    protected MarkLogicSinkTask startSinkTask(String... configParamNamesAndValues) {
+    protected AbstractSinkTask startSinkTask(String... configParamNamesAndValues) {
         Map<String, String> config = newSinkConfig();
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }
-        MarkLogicSinkTask task = new MarkLogicSinkTask();
+        MarkLogicSinkConnector connector = new MarkLogicSinkConnector();
+        connector.start(config);
+        AbstractSinkTask task;
+        try {
+            task = (AbstractSinkTask) connector.taskClass().newInstance();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
         task.start(config);
         return task;
     }
 
-    /**
-     * Helper method for constructing a new SinkRecord from the given content, putting it into the given sink task, and
-     * then waiting for DMSDK to write the record to ML so that it can then be verified.
-     *
-     * @param task
-     * @param content
-     */
-    protected void putContent(MarkLogicSinkTask task, String content) {
+    protected SinkRecord newSinkRecord(String content) {
         String topic = "topic-name-doesnt-matter";
-        SinkRecord record = new SinkRecord(topic, 1, null, null, null, content, 0);
-        putSinkRecord(task, record);
+        return new SinkRecord(topic, 1, null, null, null, content, 0);
     }
 
-    protected void putSinkRecord(MarkLogicSinkTask task, SinkRecord record) {
-        task.put(Stream.of(record).collect(Collectors.toList()));
-        task.getWriteBatcher().flushAndWait();
+    protected void putAndFlushRecords(AbstractSinkTask task, SinkRecord... records) {
+        task.put(Arrays.asList(records));
+        task.flush(new HashMap<>());
     }
-
 }

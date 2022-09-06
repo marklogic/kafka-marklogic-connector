@@ -1,0 +1,20 @@
+{
+  "endpoint": "/example/bad-bulk-endpoint.sjs",
+  "params": [
+    {
+      "name": "endpointConstants",
+      "datatype": "jsonDocument",
+      "multiple": false,
+      "nullable": false
+    },
+    {
+      "name": "input",
+      "datatype": "jsonDocument",
+      "multiple": true,
+      "nullable": true
+    }
+  ],
+  "$bulk": {
+    "inputBatchSize": 3
+  }
+}

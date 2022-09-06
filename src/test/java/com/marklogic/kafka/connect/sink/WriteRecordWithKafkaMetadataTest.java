@@ -21,7 +21,7 @@ public class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationTest {
     void includeKafkaMetadata() {
         final String TEST_COLLECTION = "include-kafka-metadata-test";
 
-        MarkLogicSinkTask task = startSinkTask(
+        AbstractSinkTask task = startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
             MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, TEST_COLLECTION,
             MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true",
@@ -43,7 +43,7 @@ public class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationTest {
 
         SinkRecord record = new SinkRecord(topic, partition, null, key, null, content.toString(),
             offset, timestamp, TimestampType.CREATE_TIME);
-        putSinkRecord(task, record);
+        putAndFlushRecords(task, record);
 
         assertCollectionSize(TEST_COLLECTION, 1);
 

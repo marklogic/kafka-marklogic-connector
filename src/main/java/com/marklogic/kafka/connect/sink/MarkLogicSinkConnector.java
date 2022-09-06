@@ -3,11 +3,17 @@ package com.marklogic.kafka.connect.sink;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Entry point into the MarkLogic sink connector for Kafka. Main purpose is to determine if the user wishes to use
+ * Bulk Data Services or DMSDK for writing data to MarkLogic.
+ */
 public class MarkLogicSinkConnector extends SinkConnector {
 
     static final String MARKLOGIC_SINK_CONNECTOR_VERSION = MarkLogicSinkConnector.class.getPackage().getImplementationVersion();
@@ -20,8 +26,8 @@ public class MarkLogicSinkConnector extends SinkConnector {
     }
 
     @Override
-    public void start(final Map<String, String> arg0) {
-        config = arg0;
+    public void start(final Map<String, String> config) {
+        this.config = config;
     }
 
     @Override
@@ -30,7 +36,11 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        return MarkLogicSinkTask.class;
+        Class clazz = StringUtils.hasText(this.config.get(MarkLogicSinkConfig.BULK_DS_API_URI)) ?
+            BulkDataServicesSinkTask.class :
+            WriteBatcherSinkTask.class;
+        LoggerFactory.getLogger(getClass()).info("Task class: " + clazz);
+        return clazz;
     }
 
     @Override

@@ -61,14 +61,14 @@ public class WriteTemporalDocumentTest extends AbstractIntegrationTest {
 
     @Test
     void kafkaConnectorCanWriteTemporalDocument() {
-        MarkLogicSinkTask task = startSinkTask(
+        AbstractSinkTask task = startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "kafka1,kafka2",
             MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, TEMPORAL_COLLECTION,
             MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, ".xml",
             MarkLogicSinkConfig.DOCUMENT_FORMAT, "xml"
         );
 
-        putContent(task, TEMPORAL_CONTENT);
+        putAndFlushRecords(task, newSinkRecord(TEMPORAL_CONTENT));
 
         assertCollectionSize(TEMPORAL_COLLECTION, 1);
         // Verify that the normal collections were applied correctly
@@ -85,7 +85,7 @@ public class WriteTemporalDocumentTest extends AbstractIntegrationTest {
 
     @Test
     void invalidTemporalCollection() {
-        MarkLogicSinkTask task = startSinkTask(
+        WriteBatcherSinkTask task = (WriteBatcherSinkTask) startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, "not-a-temporal-collection"
         );
 
@@ -94,7 +94,7 @@ public class WriteTemporalDocumentTest extends AbstractIntegrationTest {
             errorMessages.add(failure.getMessage());
         });
 
-        putContent(task, TEMPORAL_CONTENT);
+        putAndFlushRecords(task, newSinkRecord(TEMPORAL_CONTENT));
 
         assertCollectionSize(TEMPORAL_COLLECTION, 0);
         assertEquals(1, errorMessages.size(), "An error should have been captured due to the configured " +

@@ -15,6 +15,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
     public static final String CONNECTION_HOST = "ml.connection.host";
     public static final String CONNECTION_PORT = "ml.connection.port";
     public static final String CONNECTION_DATABASE = "ml.connection.database";
+    public static final String CONNECTION_MODULES_DATABASE = "ml.connection.modulesDatabase";
     public static final String CONNECTION_SECURITY_CONTEXT_TYPE = "ml.connection.securityContextType";
     public static final String CONNECTION_USERNAME = "ml.connection.username";
     public static final String CONNECTION_PASSWORD = "ml.connection.password";
@@ -34,6 +35,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
     public static final String DMSDK_TRANSFORM_PARAMS = "ml.dmsdk.transformParams";
     public static final String DMSDK_TRANSFORM_PARAMS_DELIMITER = "ml.dmsdk.transformParamsDelimiter";
     public static final String DMSDK_INCLUDE_KAFKA_METADATA = "ml.dmsdk.includeKafkaMetadata";
+
+    public static final String BULK_DS_API_URI = "ml.sink.bulkds.apiUri";
 
     public static final String DOCUMENT_COLLECTIONS_ADD_TOPIC = "ml.document.addTopicToCollections";
     public static final String DOCUMENT_COLLECTIONS = "ml.document.collections";
@@ -74,6 +77,8 @@ public class MarkLogicSinkConfig extends AbstractConfig {
             "External name for 'KERBEROS' authentication")
         .define(CONNECTION_DATABASE, Type.STRING, null, Importance.LOW,
             "Name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this.")
+        .define(CONNECTION_MODULES_DATABASE, Type.STRING, null, Importance.MEDIUM,
+            "Name of the modules database associated with the app server; required if using Bulk Data Services so that the API module can be retrieved")
         .define(CONNECTION_TYPE, Type.STRING, null, Importance.MEDIUM,
             "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.")
         // Boolean fields must have a default value of null; otherwise, Confluent Platform, at least in version 7.2.1,
@@ -123,6 +128,11 @@ public class MarkLogicSinkConfig extends AbstractConfig {
             "Delimiter for transform parameter names and values")
         .define(DMSDK_INCLUDE_KAFKA_METADATA, Type.BOOLEAN, null, Importance.LOW,
             "Set to true so that Kafka record metadata is added to document metadata before it is written. If the document fails to be written, the Kafka record metadata will be logged as well.")
+
+        // TODO Need more info here on the API declaration itself?
+        .define(BULK_DS_API_URI, Type.STRING, null, Importance.LOW,
+            "Defines the URI of a Bulk Data Services API declaration. If set, all DMSDK properties will be ignored as Bulk Data Services will be used instead of DMSDK. " +
+                "Also, ml.connection.modulesDatabase must be defined so that the API declaration can be retrieved from the modules database.")
 
         .define(LOGGING_RECORD_KEY, Type.BOOLEAN, null, Importance.LOW,
             "Set to true to log at the info level the key of each record")

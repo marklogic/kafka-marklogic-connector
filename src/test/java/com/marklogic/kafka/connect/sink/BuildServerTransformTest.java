@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BuildServerTransformTest {
 
-    private MarkLogicSinkTask task = new MarkLogicSinkTask();
+    private WriteBatcherSinkTask task = new WriteBatcherSinkTask();
     private Map<String, Object> config = new HashMap<>();
 
     @Test

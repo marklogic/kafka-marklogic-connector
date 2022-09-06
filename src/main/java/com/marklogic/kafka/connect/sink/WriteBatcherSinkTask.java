@@ -1,50 +1,39 @@
 package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.DataMovementManager;
-import com.marklogic.client.datamovement.WriteBatcher;
+import com.marklogic.client.datamovement.*;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
+import com.marklogic.client.ext.helper.LoggingObject;
+import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.marker.DocumentMetadataWriteHandle;
 import com.marklogic.kafka.connect.ConfigUtil;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.apache.kafka.connect.sink.SinkTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Performs the actual work associated with ingesting new documents into MarkLogic based on data received via the
- * "put" method.
+ * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
  */
-public class MarkLogicSinkTask extends SinkTask {
-
-    private static final Logger logger = LoggerFactory.getLogger(MarkLogicSinkTask.class);
+class WriteBatcherSinkTask extends AbstractSinkTask {
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
     private WriteBatcher writeBatcher;
     private SinkRecordConverter sinkRecordConverter;
-    private boolean logKeys = false;
-    private boolean logHeaders = false;
 
     @Override
-    public void start(final Map<String, String> config) {
-        logger.info("Starting");
-
-        Map<String, Object> parsedConfig = MarkLogicSinkConfig.CONFIG_DEF.parse(config);
-
-        logKeys = ConfigUtil.getBoolean(MarkLogicSinkConfig.LOGGING_RECORD_KEY, parsedConfig);
-        logHeaders = ConfigUtil.getBoolean(MarkLogicSinkConfig.LOGGING_RECORD_HEADERS, parsedConfig);
-
-        sinkRecordConverter = new DefaultSinkRecordConverter(parsedConfig);
-
+    protected void onStart(Map<String, Object> parsedConfig) {
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
-        databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
+        this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
         dataMovementManager = databaseClient.newDataMovementManager();
         writeBatcher = dataMovementManager.newWriteBatcher();
@@ -52,12 +41,49 @@ public class MarkLogicSinkTask extends SinkTask {
 
         final String flowName = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
         if (flowName != null && flowName.trim().length() > 0) {
-            writeBatcher.onBatchSuccess(buildSuccessListener(flowName, parsedConfig, databaseClientConfig));
+            writeBatcher.onBatchSuccess(buildRunFlowListener(flowName, parsedConfig, databaseClientConfig));
         }
 
         dataMovementManager.startJob(writeBatcher);
 
-        logger.info("Started");
+        this.sinkRecordConverter = new DefaultSinkRecordConverter(parsedConfig);
+    }
+
+    @Override
+    public void put(Collection<SinkRecord> records) {
+        super.put(records);
+        // An async flush can be performed here since Kafka expects any writes to be async within this method
+        this.writeBatcher.flushAsync();
+    }
+
+    @Override
+    protected void writeSinkRecord(SinkRecord sinkRecord) {
+        this.writeBatcher.add(this.sinkRecordConverter.convert(sinkRecord));
+    }
+
+    /**
+     * Because each call to {@code put} results in the records being flushed asynchronously, it is not expected that
+     * anything will need to be flushed here. But just in case, {@code flushAndWait} is used here to ensure that a
+     * user expection of all data being flushed is met.
+     *
+     * @param currentOffsets
+     */
+    @Override
+    public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
+        if (writeBatcher != null) {
+            writeBatcher.flushAndWait();
+        }
+    }
+
+    @Override
+    public void stop() {
+        if (writeBatcher != null) {
+            writeBatcher.flushAndWait();
+            dataMovementManager.stopJob(writeBatcher);
+        }
+        if (databaseClient != null) {
+            databaseClient.release();
+        }
     }
 
     /**
@@ -104,7 +130,8 @@ public class MarkLogicSinkTask extends SinkTask {
      * @param parsedConfig
      * @param databaseClientConfig
      */
-    protected RunFlowWriteBatchListener buildSuccessListener(String flowName, Map<String, Object> parsedConfig, DatabaseClientConfig databaseClientConfig) {
+    protected RunFlowWriteBatchListener buildRunFlowListener(String flowName, Map<String, Object> parsedConfig,
+                                                             DatabaseClientConfig databaseClientConfig) {
         String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
         final String flowSteps = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
         List<String> steps = null;
@@ -154,81 +181,41 @@ public class MarkLogicSinkTask extends SinkTask {
         return null;
     }
 
-    @Override
-    public void stop() {
-        logger.info("Stopping");
-        if (writeBatcher != null) {
-            writeBatcher.flushAndWait();
-            dataMovementManager.stopJob(writeBatcher);
-        }
-        if (databaseClient != null) {
-            databaseClient.release();
-        }
-        logger.info("Stopped");
-    }
-
     /**
-     * This is doing all the work of writing to MarkLogic, which includes calling flushAsync on the WriteBatcher.
-     * Alternatively, could move the flushAsync call to an overridden flush() method. Kafka defaults to flushing every
-     * 60000ms - this can be configured via the offset.flush.interval.ms property.
-     * <p>
-     * Because this is calling flushAsync, the batch size won't come into play unless the incoming collection has a
-     * size equal to or greater than the batch size.
-     *
-     * @param records - The records retrieved from Kafka
-     */
-    @Override
-    public void put(final Collection<SinkRecord> records) {
-        if (records.isEmpty()) {
-            return;
-        }
-
-        records.forEach(record -> {
-            if (record == null) {
-                logger.warn("Skipping null record object.");
-            } else {
-                if (logKeys) {
-                    logger.info("#record key {}", record.key());
-                }
-                if (logHeaders) {
-                    List<String> headers = new ArrayList<>();
-                    record.headers().forEach(header -> {
-                        headers.add(String.format("%s:%s", header.key(), header.value().toString()));
-                    });
-                    logger.info("#record headers: {}", headers);
-                }
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
-                }
-                if (record.value() != null) {
-                    try {
-                        writeBatcher.add(sinkRecordConverter.convert(record));
-                    } catch (IOException e) {
-                        logger.warn("IOException in converting the Sink Record. Record value {} in topic {}", record.value(), record.topic());
-                    }
-                } else {
-                    logger.warn("Skipping record with null value - possibly a 'tombstone' message.");
-                }
-            }
-        });
-
-        if (writeBatcher != null) {
-            writeBatcher.flushAsync();
-        } else {
-            logger.warn("writeBatcher is null - ignore this is you are running unit tests, otherwise this is a problem.");
-        }
-    }
-
-    public String version() {
-        return MarkLogicSinkConnector.MARKLOGIC_SINK_CONNECTOR_VERSION;
-    }
-
-    /**
-     * Exposed to facilitate testing.
+     * Exposed for testing.
      *
      * @return
      */
     protected WriteBatcher getWriteBatcher() {
-        return writeBatcher;
+        return this.writeBatcher;
+    }
+}
+
+class WriteFailureHandler extends LoggingObject implements WriteFailureListener {
+
+    private boolean includeKafkaMetadata;
+
+    public WriteFailureHandler(boolean includeKafkaMetadata) {
+        this.includeKafkaMetadata = includeKafkaMetadata;
+    }
+
+    @Override
+    public void processFailure(WriteBatch batch, Throwable throwable) {
+        logger.error("Batch failed; size: {}; cause: {}", batch.getItems().length, throwable.getMessage());
+        if (this.includeKafkaMetadata) {
+            logger.error("Logging Kafka record metadata for each failed document");
+            for (WriteEvent event : batch.getItems()) {
+                DocumentMetadataWriteHandle writeHandle = event.getMetadata();
+                if (writeHandle instanceof DocumentMetadataHandle) {
+                    DocumentMetadataHandle metadata = (DocumentMetadataHandle) writeHandle;
+                    DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+                    if (values != null) {
+                        logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
+                            event.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
+                            values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
+                    }
+                }
+            }
+        }
     }
 }
