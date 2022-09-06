@@ -12,10 +12,8 @@ import org.apache.kafka.common.config.types.Password;
 import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements DatabaseClientConfigBuilder {
@@ -23,15 +21,12 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
     @Override
     public DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> parsedConfig) {
         DatabaseClientConfig clientConfig = new DatabaseClientConfig();
-        clientConfig.setCertFile((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
-        Password certPassword = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD);
-        if (certPassword != null) {
-            clientConfig.setCertPassword(certPassword.value());
-        }
-        clientConfig.setTrustManager(new SimpleX509TrustManager());
-        configureHostNameVerifier(clientConfig, parsedConfig);
+
+        clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
+        clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
         String securityContextType = ((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
         clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+
         String database = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_DATABASE);
         if (database != null && database.trim().length() > 0) {
             clientConfig.setDatabase(database);
@@ -40,20 +35,30 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         if (connType != null && connType.trim().length() > 0) {
             clientConfig.setConnectionType(DatabaseClient.ConnectionType.valueOf(connType.toUpperCase()));
         }
-        clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
-        clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
+
+        clientConfig.setUsername((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
         Password password = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD);
         if (password != null) {
             clientConfig.setPassword(password.value());
         }
-        clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
+
+        clientConfig.setCertFile((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
+        Password certPassword = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD);
+        if (certPassword != null) {
+            clientConfig.setCertPassword(certPassword.value());
+        }
+
+        clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
+
         if (ConfigUtil.getBoolean(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
-            configureCustomSslConnection(clientConfig, parsedConfig);
+            clientConfig.setTrustManager(new SimpleX509TrustManager());
+            configureCustomSslContext(clientConfig, parsedConfig);
+            configureHostNameVerifier(clientConfig, parsedConfig);
         }
         if (ConfigUtil.getBoolean(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
             configureSimpleSsl(clientConfig);
         }
-        clientConfig.setUsername((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
+
         return clientConfig;
     }
 
@@ -86,67 +91,53 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
     }
 
-    private void configureCustomSslConnection(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
-        String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
-        SSLContext sslContext = null;
-        SecurityContextType securityContextType = clientConfig.getSecurityContextType();
-
+    private void configureCustomSslContext(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
+        final SecurityContextType securityContextType = clientConfig.getSecurityContextType();
         if (SecurityContextType.BASIC.equals(securityContextType) || SecurityContextType.DIGEST.equals(securityContextType)) {
-            if (ConfigUtil.getBoolean(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, parsedConfig)) {
-                /*2 way ssl changes*/
-                KeyStore clientKeyStore = null;
-                try {
-                    clientKeyStore = KeyStore.getInstance("PKCS12");
-                } catch (KeyStoreException e) {
+            SSLContext sslContext = ConfigUtil.getBoolean(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, parsedConfig) ?
+                buildTwoWaySslContext(clientConfig.getCertFile(), clientConfig.getCertPassword(), parsedConfig) :
+                buildOneWaySslContext(parsedConfig);
+            clientConfig.setSslContext(sslContext);
+        }
+    }
 
-                    throw new RuntimeException("Unable to get default SSLContext: " + e.getMessage(), e);
-                }
-                TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
+    private SSLContext buildTwoWaySslContext(String certFile, String certPassword, Map<String, Object> parsedConfig) {
+        final String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
 
-                try (InputStream keystoreInputStream = new FileInputStream(clientConfig.getCertFile())) {
-                    clientKeyStore.load(keystoreInputStream, clientConfig.getCertPassword().toCharArray());
-                } catch (Exception e) {
-                    throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
-                }
-                KeyManagerFactory keyManagerFactory = null;
-                try {
-                    keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                } catch (Exception e) {
+        KeyStore clientKeyStore;
+        try {
+            clientKeyStore = KeyStore.getInstance("PKCS12");
+        } catch (KeyStoreException e) {
+            throw new RuntimeException("Unable to get default SSLContext: " + e.getMessage(), e);
+        }
 
-                    throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
-                }
-                try {
-                    keyManagerFactory.init(clientKeyStore, clientConfig.getCertPassword().toCharArray());
-                } catch (Exception e) {
+        KeyManagerFactory keyManagerFactory;
+        SSLContext sslContext;
+        try (InputStream keystoreInputStream = new FileInputStream(certFile)) {
+            clientKeyStore.load(keystoreInputStream, certPassword.toCharArray());
+            keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(clientKeyStore, certPassword.toCharArray());
+            sslContext = SSLContext.getInstance(tlsVersion);
 
-                    throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
-                }
-                KeyManager[] key = keyManagerFactory.getKeyManagers();
-                try {
-                    sslContext = SSLContext.getInstance(tlsVersion);
-                } catch (NoSuchAlgorithmException e) {
-                    throw new RuntimeException("Unable to configure custom SSL connection:" + e.getMessage(), e);
-                }
-                try {
-                    sslContext.init(key, trust, null);
-                } catch (KeyManagementException e) {
-                    throw new RuntimeException("Unable to configure custom SSL connection:" + e.getMessage(), e);
-                }
-                clientConfig.setSslContext(sslContext);
-            } else {/* 1-way ssl */
-                TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
-                try {
-                    sslContext = SSLContext.getInstance(tlsVersion);
-                } catch (NoSuchAlgorithmException e) {
-                    throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
-                }
-                try {
-                    sslContext.init(null, trust, null);
-                } catch (KeyManagementException e) {
-                    throw new RuntimeException("Unable to configure custom SSL connection:" + e.getMessage(), e);
-                }
-                clientConfig.setSslContext(sslContext);
-            }
+            TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
+            KeyManager[] key = keyManagerFactory.getKeyManagers();
+            sslContext.init(key, trust, null);
+            return sslContext;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
+        }
+    }
+
+    private SSLContext buildOneWaySslContext(Map<String, Object> parsedConfig) {
+        final String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
+        TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance(tlsVersion);
+            sslContext.init(null, trust, null);
+            return sslContext;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to configure custom SSL connection:" + e.getMessage(), e);
         }
     }
 }

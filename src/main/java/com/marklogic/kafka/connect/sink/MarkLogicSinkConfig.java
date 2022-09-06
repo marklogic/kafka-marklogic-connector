@@ -62,7 +62,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
         .define(CONNECTION_HOST, Type.STRING, Importance.HIGH,
             "Required; a MarkLogic host to connect to. By default, the connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster.")
         .define(CONNECTION_PORT, Type.INT, Importance.HIGH,
-            "Required; the port of a REST API server to connect to")
+            "Required; the port of a REST API app server to connect to; if using Bulk Data Services, can be a plain HTTP app server")
         .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", Importance.HIGH,
             "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'")
         .define(CONNECTION_USERNAME, Type.STRING, null, Importance.MEDIUM,
