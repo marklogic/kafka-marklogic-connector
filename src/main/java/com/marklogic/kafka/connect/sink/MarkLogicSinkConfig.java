@@ -94,6 +94,10 @@ public class MarkLogicSinkConfig extends AbstractConfig {
         .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
             "Set this to true for 2-way SSL; defaults to 1-way SSL")
 
+        .define(BULK_DS_API_URI, Type.STRING, null, Importance.LOW,
+            "Defines the URI of a Bulk Data Services API declaration. Requires that ml.connection.modulesDatabase be set. See the " +
+                "user guide for more information on using Bulk Data Services instead of DMSDK for writing data to MarkLogic.")
+
         .define(DOCUMENT_FORMAT, Type.STRING, null, Importance.MEDIUM,
             "Specify the format of each document; either 'JSON', 'XML', 'BINARY', 'TEXT', or 'UNKNOWN'. If not set, MarkLogic will determine the document type based on the ml.document.uriSuffix property.")
         .define(DOCUMENT_COLLECTIONS, Type.STRING, null, Importance.MEDIUM,
@@ -128,11 +132,6 @@ public class MarkLogicSinkConfig extends AbstractConfig {
             "Delimiter for transform parameter names and values")
         .define(DMSDK_INCLUDE_KAFKA_METADATA, Type.BOOLEAN, null, Importance.LOW,
             "Set to true so that Kafka record metadata is added to document metadata before it is written. If the document fails to be written, the Kafka record metadata will be logged as well.")
-
-        // TODO Need more info here on the API declaration itself?
-        .define(BULK_DS_API_URI, Type.STRING, null, Importance.LOW,
-            "Defines the URI of a Bulk Data Services API declaration. If set, all DMSDK properties will be ignored as Bulk Data Services will be used instead of DMSDK. " +
-                "Also, ml.connection.modulesDatabase must be defined so that the API declaration can be retrieved from the modules database.")
 
         .define(LOGGING_RECORD_KEY, Type.BOOLEAN, null, Importance.LOW,
             "Set to true to log at the info level the key of each record")
