@@ -36,7 +36,7 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        Class clazz = StringUtils.hasText(this.config.get(MarkLogicSinkConfig.BULK_DS_API_URI)) ?
+        Class clazz = StringUtils.hasText(this.config.get(MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI)) ?
             BulkDataServicesSinkTask.class :
             WriteBatcherSinkTask.class;
         LoggerFactory.getLogger(getClass()).info("Task class: " + clazz);

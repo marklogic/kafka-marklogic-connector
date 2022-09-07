@@ -13,8 +13,5 @@
       "multiple": true,
       "nullable": true
     }
-  ],
-  "$bulk": {
-    "inputBatchSize": 3
-  }
+  ]
 }
