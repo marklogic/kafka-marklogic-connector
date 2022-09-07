@@ -1,0 +1,7 @@
+{
+  "user-name": "kafka-test-user",
+  "password": "kafkatest",
+  "role": [
+    "kafka-test-minimal-user"
+  ]
+}

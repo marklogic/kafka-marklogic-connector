@@ -24,13 +24,14 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
     /**
      * @return a config map containing connection values based on the test application configuration
      */
-    protected Map<String, String> newSinkConfig() {
+    private Map<String, String> newSinkConfig() {
         Map<String, String> config = new HashMap<>();
         config.put("ml.connection.host", testConfig.getHost());
         config.put("ml.connection.port", testConfig.getRestPort() + "");
         config.put("ml.connection.securityContextType", "DIGEST");
-        config.put("ml.connection.username", testConfig.getUsername());
-        config.put("ml.connection.password", testConfig.getPassword());
+        config.put("ml.connection.username", "kafka-test-user");
+        config.put("ml.connection.password", "kafkatest");
+        config.put("ml.document.permissions", "rest-reader,read,rest-writer,update");
         return config;
     }
 
