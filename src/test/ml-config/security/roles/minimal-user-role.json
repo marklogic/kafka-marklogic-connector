@@ -1,9 +1,6 @@
 {
   "role-name": "kafka-test-minimal-user",
-  "description": "rest-reader/rest-writer privileges are needed to read forest info and write documents; rest-extension-user, any-uri, unprotected-collections, and xdmp-eval-in is needed for Bulk DS to read the API declaration",
-  "role": [
-    "rest-extension-user"
-  ],
+  "description": "rest-reader/rest-writer privileges are needed to read forest info and write documents; any-uri and unprotected-collections are needed by the test endpoint to insert a document",
   "privilege": [
     {
       "privilege-name": "rest-reader",
@@ -23,11 +20,6 @@
     {
       "privilege-name": "unprotected-collections",
       "action": "http://marklogic.com/xdmp/privileges/unprotected-collections",
-      "kind": "execute"
-    },
-    {
-      "privilege-name": "xdmp:eval-in",
-      "action": "http://marklogic.com/xdmp/privileges/xdmp-eval-in",
       "kind": "execute"
     }
   ]

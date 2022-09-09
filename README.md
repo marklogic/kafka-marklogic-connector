@@ -164,8 +164,12 @@ recommended only for users with experience in writing and deploying custom code 
 ### Writing data via configuration (DMSDK)
 
 The intent behind using DMSDK with the MarkLogic REST API is that as many aspects of writing data to MarkLogic can be 
-controlled via properties without the need to write any code. The following sections describe the various ways in 
-which this can be achieved.
+controlled via properties without the need to write any code.
+
+#### Security requirements
+
+The user that the connector authenticates as must have the `rest-reader` and `rest-writer` privileges in order to 
+write data via the MarkLogic REST API, which the connector depends upon.
 
 #### Configuring document URIs
 
@@ -268,13 +272,23 @@ typically a dataflow framework like Kafka that can support multiple workers writ
 MarkLogic Kafka connector utilizes Bulk Data Services to send Kafka record data to a custom endpoint in which a 
 developer can write any code they like to control how the data is processed. 
 
-Configuring the MarkLogic Kafka connector to use Bulk Data Services requires the following two properties:
+#### Security requirements
 
-- `ml.sink.bulkds.apiUri` = the URI of the Bulk Data Services API declaration
-- `ml.connection.modulesDatabase` = the name of the modules database containing both the API declaration and the 
-  endpoint module that it refers to
+Unlike when using the MarkLogic REST API, no specific privileges or roles are required in order for the connector to
+invoke a Bulk Data Services endpoint. Instead, the required privileges and/or roles for the MarkLogic user that the 
+connector authenticates as will be entirely determined by the Bulk Data Services endpoint implementation. 
 
-The MarkLogic Kafka connector expects the API declaration to be:
+#### Configuring Bulk Data Services usage
+
+Configuring the MarkLogic Kafka connector to use Bulk Data Services involves the following properties:
+
+- `ml.sink.bulkds.endpointUri` = the URI of the Bulk Data Services endpoint module
+- `ml.sink.bulkds.batchSize` = an optional batch size; defaults to 100. Note that if you include `$bulk/inputBatchSize` 
+in your API declaration, it will be ignored in favor of this property. 
+
+Bulk Data Services requires that your endpoint module have an API declaration. The URI of the API declaration must 
+match that of your endpoint, but with `.api` as a suffix instead of `.sjs` or `.xqy`. The MarkLogic Kafka connector 
+expects the API declaration to have the following configuration:
 
 ```
 {
@@ -292,15 +306,11 @@ The MarkLogic Kafka connector expects the API declaration to be:
       "multiple": true,
       "nullable": true
     }
-  ],
-  "$bulk": {
-    "inputBatchSize": 100
-  }
+  ]
 }
 ```
 
-The `endpoint` field must be the URI of the associated Bulk Data Services endpoint module. You are free to set the 
-`inputBatchSize` to any numeric value you want based on the expected workload for your connector. 
+The `endpoint` field should have the same value as the `ml.sink.bulkds.endpointUri` property.
 
 It is recommended to start your endpoint module implementation with the following code:
 
@@ -357,15 +367,12 @@ in parallel.
 
 A key design feature of Bulk Data Services to understand is that, unlike MarkLogic's Data Movement SDK, it does not 
 support asynchronous flushing of data. Bulk Data Services will not write any data to MarkLogic until it has a number of
-documents equalling that of the batch size in the API declaration. Importantly, partial batches will not be written 
-until either enough records are received to meet the batch size, or until Kafka invokes the "flush" operation on the
+documents equalling that of the `ml.sink.bulkds.batchSize` property. Importantly, partial batches will not be written 
+until either enough records are received to meet the batch size, or until Kafka invokes the `flush` operation on the
 MarkLogic Kafka connector. You can use the Kafka connector property named `offset.flush.interval` to control how often
 the flush operation is invoked. This is a synchronous operation, but you may wish to have this occur fairly regularly, 
 such as every 5 or 10 seconds, to ensure that partial batches of data are not waiting too long to be written to 
 MarkLogic.
-
-You may also want to configure the `inputBatchSize` field in your API declaration to see if increasing or decreasing
-this value results in greater performance. 
 
 As always with MarkLogic applications, use the [MarkLogic Monitoring dashboard](https://docs.marklogic.com/guide/monitoring/intro)
 to understand resource consumption and server performance while testing various connector settings. 

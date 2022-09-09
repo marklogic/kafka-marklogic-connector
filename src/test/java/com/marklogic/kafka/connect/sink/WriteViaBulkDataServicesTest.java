@@ -7,19 +7,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WriteViaBulkDataServicesTest extends AbstractIntegrationTest {
 
     private final static String TEST_COLLECTION = "bulk-ds-test";
-    private final static String TEST_BULK_API_URI = "/example/bulk-endpoint.api";
-    private final static String MODULES_DATABASE = "kafka-test-modules";
+    private final static String TEST_BULK_ENDPOINT_URI = "/example/bulk-endpoint.sjs";
 
     @Test
     void twoBatches() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, TEST_BULK_API_URI,
-            MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE, MODULES_DATABASE,
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
+            MarkLogicSinkConfig.BULK_DS_BATCH_SIZE, "3",
+
             // Turning on logging here to get coverage of this code; not possibly to verify the output via assertions
             MarkLogicSinkConfig.LOGGING_RECORD_HEADERS, "true",
             MarkLogicSinkConfig.LOGGING_RECORD_KEY, "true"
@@ -42,10 +43,28 @@ public class WriteViaBulkDataServicesTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void defaultBatchSize() {
+        AbstractSinkTask task = startSinkTask(
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI
+        );
+
+        for (int i = 1; i < 100; i++) {
+            task.put(Arrays.asList(newSinkRecord("<anything/>")));
+        }
+        assertCollectionSize("The default batch size is expected to be 100, so no docs should have been written since " +
+            "we've only put 99", TEST_COLLECTION, 0);
+
+        task.put(Arrays.asList(newSinkRecord("<anything/>")));
+        assertCollectionSize(TEST_COLLECTION, 100);
+
+        task.put(Arrays.asList(newSinkRecord("<anything/>")));
+        assertCollectionSize(TEST_COLLECTION, 100);
+    }
+
+    @Test
     void verifyEndpointConstants() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, TEST_BULK_API_URI,
-            MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE, MODULES_DATABASE,
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
             MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "json-test",
             MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/json/",
             MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json",
@@ -92,8 +111,7 @@ public class WriteViaBulkDataServicesTest extends AbstractIntegrationTest {
     @Test
     void verifyKafkaMetadata() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, TEST_BULK_API_URI,
-            MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE, MODULES_DATABASE
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI
         );
 
         final String topic = "topic1";
@@ -120,31 +138,9 @@ public class WriteViaBulkDataServicesTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void missingModulesDatabase() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, TEST_BULK_API_URI
-        ));
-        assertTrue(ex.getMessage().contains("Cannot read Bulk Data Services API declaration"),
-            "Unexpected error: " + ex.getMessage());
-    }
-
-    @Test
-    void invalidApiUri() {
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, "/this-doesnt-exist.api",
-            MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE, MODULES_DATABASE
-        ));
-        String message = ex.getMessage();
-        assertTrue(message.startsWith("Unable to read Bulk Data Services API declaration at URI: /this-doesnt-exist.api"),
-            "Unexpected message: " + message);
-        assertTrue(message.contains("Could not read non-existent document"), "Unexpected message: " + message);
-    }
-
-    @Test
     void badBulkEndpoint() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_API_URI, "/example/bad-bulk-endpoint.api",
-            MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE, MODULES_DATABASE
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, "/example/bad-bulk-endpoint.sjs"
         );
 
         putAndFlushRecords(task, newSinkRecord("content-doesnt-matter"));

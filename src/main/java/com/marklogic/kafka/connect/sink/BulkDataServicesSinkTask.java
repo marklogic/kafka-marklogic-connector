@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.sink;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.dataservices.IOEndpoint;
@@ -43,7 +44,7 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
-        JacksonHandle modulesHandle = readApiDeclarationFromMarkLogic(parsedConfig, databaseClientConfig);
+        JacksonHandle modulesHandle = new JacksonHandle(buildApiDeclaration(parsedConfig));
         InputCaller<JsonNode> inputCaller = InputCaller.on(databaseClient, modulesHandle, new JacksonHandle().withFormat(Format.JSON));
 
         IOEndpoint.CallContext callContext = inputCaller.newCallContext()
@@ -95,35 +96,35 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Bulk Data Services requires that the API declaration exist in the modules database associated with the app
-     * server that the connector will talk to.
+     * Build an API declaration based on the user inputs for an endpoint URI and optional batch size. It's feasible to
+     * do this because the connector knows what the {@code params} array must be, and the documentation instructs the
+     * endpoint developer to use the same array of parameters. Building the API here also avoids having to read it
+     * from a modules database which requires either the xdmp-eval-in or xdbc-eval privilege.
      *
      * @param parsedConfig
-     * @param databaseClientConfig
      * @return
      */
-    private JacksonHandle readApiDeclarationFromMarkLogic(Map<String, Object> parsedConfig, DatabaseClientConfig databaseClientConfig) {
-        final String bulkApiUri = (String) parsedConfig.get(MarkLogicSinkConfig.BULK_DS_API_URI);
-        final String modulesDatabase = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE);
-        if (!StringUtils.hasText(modulesDatabase)) {
-            throw new IllegalArgumentException("Cannot read Bulk Data Services API declaration at URI: " + bulkApiUri
-                + "; no modules database configured. Please set the "
-                + MarkLogicSinkConfig.CONNECTION_MODULES_DATABASE + " property.");
-        }
+    private JsonNode buildApiDeclaration(Map<String, Object> parsedConfig) {
+        final String endpoint = parsedConfig.get(MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI).toString();
 
-        final String originalDatabase = databaseClientConfig.getDatabase();
-        try {
-            databaseClientConfig.setDatabase(modulesDatabase);
-            DatabaseClient modulesClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
-            return modulesClient.newJSONDocumentManager().read(bulkApiUri, new JacksonHandle().withFormat(Format.JSON));
-        } catch (Exception ex) {
-            // The stacktrace isn't of any value here for a user; the message below will provide sufficient information
-            // for debugging
-            throw new RuntimeException("Unable to read Bulk Data Services API declaration at URI: " + bulkApiUri +
-                "; modules database: " + modulesDatabase + "; cause: " + ex.getMessage());
-        } finally {
-            databaseClientConfig.setDatabase(originalDatabase);
+        ObjectNode api = this.objectMapper.createObjectNode();
+        api.put("endpoint", endpoint);
+        ArrayNode params = api.putArray("params");
+        ObjectNode param = params.addObject();
+        param.put("name", "endpointConstants");
+        param.put("datatype", "jsonDocument");
+        param.put("multiple", false);
+        param.put("nullable", false);
+        param = params.addObject();
+        param.put("name", "input");
+        param.put("datatype", "jsonDocument");
+        param.put("multiple", true);
+        param.put("nullable", true);
+        if (parsedConfig.containsKey(MarkLogicSinkConfig.BULK_DS_BATCH_SIZE)) {
+            int batchSize = Integer.parseInt(parsedConfig.get(MarkLogicSinkConfig.BULK_DS_BATCH_SIZE).toString());
+            api.putObject("$bulk").put("inputBatchSize", batchSize);
         }
+        return api;
     }
 
     /**
