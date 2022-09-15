@@ -3,6 +3,7 @@ plugins {
   id 'net.saliman.properties' version '1.5.2'
   id 'com.github.johnrengelman.shadow' version '7.1.2'
   id "com.github.jk1.dependency-license-report" version "1.19"
+  id "io.snyk.gradle.plugin.snykplugin" version "0.4"
 
   // Only used for testing
   id 'com.marklogic.ml-gradle' version '4.5.0'
@@ -89,6 +90,15 @@ dependencies {
 tasks.withType(JavaCompile) {
   options.compilerArgs << '-Xlint:unchecked'
   options.deprecation = true
+}
+
+// See https://github.com/snyk/gradle-plugin for more information
+snyk {
+  //arguments = '--all-sub-projects'
+  severity = 'low'
+  api = snykToken
+  autoDownload = true
+  autoUpdate = true
 }
 
 test {

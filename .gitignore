@@ -6,7 +6,7 @@ out
 gradle-local.properties
 
 bin
-.vscode  
+.vscode
 *.class
 
 .classpath
@@ -14,3 +14,5 @@ bin
 *.prefs
 
 .project
+
+snyk
