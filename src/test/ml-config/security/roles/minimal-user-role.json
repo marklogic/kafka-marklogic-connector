@@ -1,6 +1,9 @@
 {
   "role-name": "kafka-test-minimal-user",
   "description": "rest-reader/rest-writer privileges are needed to read forest info and write documents; any-uri and unprotected-collections are needed by the test endpoint to insert a document",
+  "role": [
+    "rest-extension-user"
+  ],
   "privilege": [
     {
       "privilege-name": "rest-reader",
