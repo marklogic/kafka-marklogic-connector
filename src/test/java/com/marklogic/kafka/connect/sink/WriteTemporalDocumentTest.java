@@ -64,7 +64,7 @@ public class WriteTemporalDocumentTest extends AbstractIntegrationTest {
         AbstractSinkTask task = startSinkTask(
             MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "kafka1,kafka2",
             MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, TEMPORAL_COLLECTION,
-            MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, ".xml",
+            MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".xml",
             MarkLogicSinkConfig.DOCUMENT_FORMAT, "xml"
         );
 
