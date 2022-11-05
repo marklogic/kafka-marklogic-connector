@@ -49,7 +49,7 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
         connector.start(config);
         AbstractSinkTask task;
         try {
-            task = (AbstractSinkTask) connector.taskClass().newInstance();
+            task = (AbstractSinkTask) connector.taskClass().getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
