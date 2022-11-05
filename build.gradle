@@ -58,6 +58,7 @@ dependencies {
 
   testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
+  testImplementation 'net.mguenther.kafka:kafka-junit:3.2.2'
 
   // Forcing logback to be used for test logging
   testImplementation "ch.qos.logback:logback-classic:1.2.11"

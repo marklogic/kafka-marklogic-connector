@@ -28,12 +28,12 @@ public class ConvertSinkRecordTest {
     @Test
     void allPropertiesSet() {
         Map<String, Object> config = new HashMap<>();
-        config.put("ml.document.collections", "one,two");
-        config.put("ml.document.format", "json");
-        config.put("ml.document.mimeType", "application/json");
-        config.put("ml.document.permissions", "manage-user,read,manage-admin,update");
-        config.put("ml.document.uriPrefix", "/example/");
-        config.put("ml.document.uriSuffix", ".json");
+        config.put(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "one,two");
+        config.put(MarkLogicSinkConfig.DOCUMENT_FORMAT, "json");
+        config.put(MarkLogicSinkConfig.DOCUMENT_MIMETYPE, "application/json");
+        config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "manage-user,read,manage-admin,update");
+        config.put(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/example/");
+        config.put(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json");
         converter = new DefaultSinkRecordConverter(config);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("test"));
@@ -75,7 +75,7 @@ public class ConvertSinkRecordTest {
     @Test
     void uriWithUUIDStrategy() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put("ml.id.strategy", "UUID");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "UUID");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
@@ -106,7 +106,7 @@ public class ConvertSinkRecordTest {
     @Test
     void uriWithKafkaMetaData() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put("ml.id.strategy", "KAFKA_META_WITH_SLASH");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "KAFKA_META_WITH_SLASH");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
@@ -122,8 +122,8 @@ public class ConvertSinkRecordTest {
     void uriWithJsonPath() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\"}");
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put("ml.id.strategy", "JSONPATH");
-        kafkaConfig.put("ml.id.strategy.paths", "/f1");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/f1");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
@@ -140,8 +140,8 @@ public class ConvertSinkRecordTest {
     void uriWithHashedJsonPaths() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\",\"f2\":\"200\"}");
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put("ml.id.strategy", "HASH");
-        kafkaConfig.put("ml.id.strategy.paths", "/f1,/f2");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "HASH");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/f1,/f2");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
@@ -157,7 +157,7 @@ public class ConvertSinkRecordTest {
     @Test
     void uriWithHashedKafkaMeta() {
         Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put("ml.id.strategy", "KAFKA_META_HASHED");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "KAFKA_META_HASHED");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
