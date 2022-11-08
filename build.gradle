@@ -26,14 +26,21 @@ configurations {
 }
 
 ext {
-  kafkaVersion = "2.8.1"
+  kafkaVersion = "3.2.3"
 }
 
 dependencies {
   compileOnly "org.apache.kafka:connect-api:${kafkaVersion}"
   compileOnly "org.apache.kafka:connect-json:${kafkaVersion}"
+  compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  implementation "com.marklogic:marklogic-client-api:5.5.3"
+  // The latest jackson libraries can be removed once the marklogic-client is upgraded to include them.
+  implementation 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+  implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.13.4'
+
+  implementation "com.marklogic:marklogic-client-api:5.5.4"
 
   implementation("com.marklogic:marklogic-data-hub:5.7.2") {
     // Excluding these because there's no need for them
@@ -62,6 +69,13 @@ dependencies {
 
   assets files('MarkLogic_logo.png')
   assets files('apache_logo.png')
+}
+
+// This ensures that the compiler reports "unchecked" warnings.
+// This helps us use the compiler to prevent potential problems.
+tasks.withType(JavaCompile) {
+  options.compilerArgs << '-Xlint:unchecked'
+  options.deprecation = true
 }
 
 test {
