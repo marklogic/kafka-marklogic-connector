@@ -21,17 +21,20 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
     @Autowired
     SimpleTestConfig testConfig;
 
+    private final static long DEFAULT_RETRY_SLEEP_TIME = 250;
+    private final static int DEFAULT_RETRY_ATTEMPTS = 10;
+
     /**
      * @return a config map containing connection values based on the test application configuration
      */
     private Map<String, String> newSinkConfig() {
         Map<String, String> config = new HashMap<>();
-        config.put("ml.connection.host", testConfig.getHost());
-        config.put("ml.connection.port", testConfig.getRestPort() + "");
-        config.put("ml.connection.securityContextType", "DIGEST");
-        config.put("ml.connection.username", "kafka-test-user");
-        config.put("ml.connection.password", "kafkatest");
-        config.put("ml.document.permissions", "rest-reader,read,rest-writer,update");
+        config.put(MarkLogicSinkConfig.CONNECTION_HOST, testConfig.getHost());
+        config.put(MarkLogicSinkConfig.CONNECTION_PORT, testConfig.getRestPort() + "");
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "DIGEST");
+        config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "kafka-test-user");
+        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "kafkatest");
+        config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update");
         return config;
     }
 
@@ -65,5 +68,29 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
     protected void putAndFlushRecords(AbstractSinkTask task, SinkRecord... records) {
         task.put(Arrays.asList(records));
         task.flush(new HashMap<>());
+    }
+
+    protected final void retryIfNotSuccessful(Runnable r) {
+        retryIfNotSuccessful(r, DEFAULT_RETRY_SLEEP_TIME, DEFAULT_RETRY_ATTEMPTS);
+    }
+
+    protected final void retryIfNotSuccessful(Runnable r, long sleepTime, int attempts) {
+        for (int i = 1; i <= attempts; i++) {
+            logger.info("Trying assertion, attempt " + i + " out of " + attempts);
+            try {
+                r.run();
+                return;
+            } catch (Throwable ex) {
+                if (i == attempts) {
+                    throw ex;
+                }
+                logger.info("Assertion failed: " + ex.getMessage() + "; will sleep for " + sleepTime + " ms and try again");
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    // Ignore, not expected during a test
+                }
+            }
+        }
     }
 }
