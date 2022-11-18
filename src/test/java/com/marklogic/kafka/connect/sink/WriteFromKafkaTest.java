@@ -16,7 +16,7 @@ import static net.mguenther.kafka.junit.EmbeddedConnectConfig.kafkaConnect;
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
 
-public class WriteFromKafkaTest extends AbstractIntegrationTest {
+public class WriteFromKafkaTest extends AbstractIntegrationSinkTest {
 
     private final String ML_COLLECTION = "kafka-data";
     private final String TOPIC = "test-topic";

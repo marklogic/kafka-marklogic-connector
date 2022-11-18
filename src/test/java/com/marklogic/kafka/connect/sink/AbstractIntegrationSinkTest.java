@@ -15,7 +15,7 @@ import java.util.Map;
  * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
-public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
+public class AbstractIntegrationSinkTest extends AbstractSpringMarkLogicTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired
