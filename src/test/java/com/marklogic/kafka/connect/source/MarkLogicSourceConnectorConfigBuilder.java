@@ -39,7 +39,7 @@ public class MarkLogicSourceConnectorConfigBuilder {
         ifNonExisting(ConnectorConfig.CONNECTOR_CLASS_CONFIG, "MarkLogicSourceConnector");
         ifNonExisting(ConnectorConfig.TASKS_MAX_CONFIG, "1");
         ifNonExisting("topics", topic);
-        ifNonExisting("dsl", dsl);
+        ifNonExisting(MarkLogicSourceConfig.DSL_PLAN, dsl);
 
         ifNonExisting(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
         ifNonExisting(MarkLogicSourceConfig.CONNECTION_PORT, "8000");

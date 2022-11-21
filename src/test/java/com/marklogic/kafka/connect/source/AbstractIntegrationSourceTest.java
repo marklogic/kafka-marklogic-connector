@@ -1,10 +1,9 @@
 package com.marklogic.kafka.connect.source;
 
-import com.marklogic.junit5.spring.AbstractSpringMarkLogicTest;
 import com.marklogic.junit5.spring.SimpleTestConfig;
+import com.marklogic.kafka.connect.AbstractIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -13,34 +12,22 @@ import java.util.Map;
  * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
-public class AbstractIntegrationSourceTest extends AbstractSpringMarkLogicTest {
+public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired
     protected SimpleTestConfig testConfig;
 
-    /**
-     * @return a config map containing connection values based on the test application configuration
-     */
-    // This isn't called yet, but it will be...
-    private Map<String, String> newSourceConfig() {
-        Map<String, String> config = new HashMap<>();
-        config.put(MarkLogicSourceConfig.CONNECTION_HOST, testConfig.getHost());
-        config.put(MarkLogicSourceConfig.CONNECTION_PORT, testConfig.getRestPort() + "");
-        config.put(MarkLogicSourceConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "DIGEST");
-        config.put(MarkLogicSourceConfig.CONNECTION_USERNAME, "kafka-test-user");
-        config.put(MarkLogicSourceConfig.CONNECTION_PASSWORD, "kafkatest");
-        return config;
-    }
+    protected final String AUTHORS_OPTIC_DSL = "op.fromView(\"Medical\", \"Authors\")";
+
 
     /**
-     * @param configParamNamesAndValues
+     * @param configParamNamesAndValues - Configuration values that need to be set for the test.
      * @return a MarkLogicSourceTask based on the default connection config and any optional config params provided by
      * the caller
      */
-    // This isn't called yet, but it will be...
     protected RowBatcherSourceTask startSourceTask(String... configParamNamesAndValues) {
-        Map<String, String> config = newSourceConfig();
+        Map<String, String> config = newMarkLogicConfig(testConfig);
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }

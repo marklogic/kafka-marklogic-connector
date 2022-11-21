@@ -1,7 +1,7 @@
 package com.marklogic.kafka.connect.sink;
 
-import com.marklogic.junit5.spring.AbstractSpringMarkLogicTest;
 import com.marklogic.junit5.spring.SimpleTestConfig;
+import com.marklogic.kafka.connect.AbstractIntegrationTest;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,7 +15,7 @@ import java.util.Map;
  * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
-public class AbstractIntegrationSinkTest extends AbstractSpringMarkLogicTest {
+public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired
@@ -25,26 +25,14 @@ public class AbstractIntegrationSinkTest extends AbstractSpringMarkLogicTest {
     private final static int DEFAULT_RETRY_ATTEMPTS = 10;
 
     /**
-     * @return a config map containing connection values based on the test application configuration
-     */
-    private Map<String, String> newSinkConfig() {
-        Map<String, String> config = new HashMap<>();
-        config.put(MarkLogicSinkConfig.CONNECTION_HOST, testConfig.getHost());
-        config.put(MarkLogicSinkConfig.CONNECTION_PORT, testConfig.getRestPort() + "");
-        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "DIGEST");
-        config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "kafka-test-user");
-        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "kafkatest");
-        config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update");
-        return config;
-    }
-
-    /**
-     * @param configParamNamesAndValues
+     * @param configParamNamesAndValues - Configuration values that need to be set for the test.
      * @return a MarkLogicSinkTask based on the default connection config and any optional config params provided by
      * the caller
      */
     protected AbstractSinkTask startSinkTask(String... configParamNamesAndValues) {
-        Map<String, String> config = newSinkConfig();
+        Map<String, String> config = newMarkLogicConfig(testConfig);
+        config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update");
+
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }
