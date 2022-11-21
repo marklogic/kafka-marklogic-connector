@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class WriteTemporalDocumentTest extends AbstractIntegrationTest {
+public class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
 
     private final static String TEMPORAL_COLLECTION = "kafka-temporal-collection";
 

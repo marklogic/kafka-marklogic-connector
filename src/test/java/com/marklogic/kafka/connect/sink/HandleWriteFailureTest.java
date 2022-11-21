@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class HandleWriteFailureTest extends AbstractIntegrationTest {
+public class HandleWriteFailureTest extends AbstractIntegrationSinkTest {
 
     /**
      * This test is expected to log the URI of each failed document. We don't yet have a way to capture logging output
