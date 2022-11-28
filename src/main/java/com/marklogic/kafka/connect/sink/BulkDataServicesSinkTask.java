@@ -19,7 +19,6 @@ import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -32,7 +31,7 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
 
     private DatabaseClient databaseClient;
     private InputCaller.BulkInputCaller<JsonNode> bulkInputCaller;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     private SinkRecordConverter sinkRecordConverter;
 
     public BulkDataServicesSinkTask() {

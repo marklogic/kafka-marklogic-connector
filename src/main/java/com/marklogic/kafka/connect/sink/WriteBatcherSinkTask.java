@@ -137,7 +137,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         List<String> steps = null;
         if (flowSteps != null && flowSteps.trim().length() > 0) {
             steps = Arrays.asList(flowSteps.split(","));
-            logMessage += String.format(" with steps '%s' constrained to the URIs in that batch", steps.toString());
+            logMessage += String.format(" with steps '%s' constrained to the URIs in that batch", steps);
         }
         logger.info(logMessage);
 
@@ -193,7 +193,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
 
 class WriteFailureHandler extends LoggingObject implements WriteFailureListener {
 
-    private boolean includeKafkaMetadata;
+    private final boolean includeKafkaMetadata;
 
     public WriteFailureHandler(boolean includeKafkaMetadata) {
         this.includeKafkaMetadata = includeKafkaMetadata;

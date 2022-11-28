@@ -6,12 +6,12 @@ import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
-import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.apache.kafka.common.config.types.Password;
 
 import javax.net.ssl.*;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.util.Map;
@@ -22,40 +22,40 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
     public DatabaseClientConfig buildDatabaseClientConfig(Map<String, Object> parsedConfig) {
         DatabaseClientConfig clientConfig = new DatabaseClientConfig();
 
-        clientConfig.setHost((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_HOST));
-        clientConfig.setPort((Integer) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PORT));
-        String securityContextType = ((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
+        clientConfig.setHost((String) parsedConfig.get(MarkLogicConfig.CONNECTION_HOST));
+        clientConfig.setPort((Integer) parsedConfig.get(MarkLogicConfig.CONNECTION_PORT));
+        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
         clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
 
-        String database = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_DATABASE);
+        String database = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_DATABASE);
         if (database != null && database.trim().length() > 0) {
             clientConfig.setDatabase(database);
         }
-        String connType = (String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_TYPE);
+        String connType = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_TYPE);
         if (connType != null && connType.trim().length() > 0) {
             clientConfig.setConnectionType(DatabaseClient.ConnectionType.valueOf(connType.toUpperCase()));
         }
 
-        clientConfig.setUsername((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_USERNAME));
-        Password password = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_PASSWORD);
+        clientConfig.setUsername((String) parsedConfig.get(MarkLogicConfig.CONNECTION_USERNAME));
+        Password password = (Password) parsedConfig.get(MarkLogicConfig.CONNECTION_PASSWORD);
         if (password != null) {
             clientConfig.setPassword(password.value());
         }
 
-        clientConfig.setCertFile((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_FILE));
-        Password certPassword = (Password) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD);
+        clientConfig.setCertFile((String) parsedConfig.get(MarkLogicConfig.CONNECTION_CERT_FILE));
+        Password certPassword = (Password) parsedConfig.get(MarkLogicConfig.CONNECTION_CERT_PASSWORD);
         if (certPassword != null) {
             clientConfig.setCertPassword(certPassword.value());
         }
 
-        clientConfig.setExternalName((String) parsedConfig.get(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME));
+        clientConfig.setExternalName((String) parsedConfig.get(MarkLogicConfig.CONNECTION_EXTERNAL_NAME));
 
-        if (ConfigUtil.getBoolean(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
+        if (ConfigUtil.getBoolean(MarkLogicConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
             clientConfig.setTrustManager(new SimpleX509TrustManager());
             configureCustomSslContext(clientConfig, parsedConfig);
             configureHostNameVerifier(clientConfig, parsedConfig);
         }
-        if (ConfigUtil.getBoolean(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
+        if (ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
             configureSimpleSsl(clientConfig);
         }
 
@@ -82,7 +82,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
      * @param clientConfig
      */
     private void configureHostNameVerifier(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
-        String sslHostNameVerifier = (String) parsedConfig.get(MarkLogicSinkConfig.SSL_HOST_VERIFIER);
+        String sslHostNameVerifier = (String) parsedConfig.get(MarkLogicConfig.SSL_HOST_VERIFIER);
         if ("COMMON".equals(sslHostNameVerifier))
             clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.COMMON);
         else if ("STRICT".equals(sslHostNameVerifier))
@@ -94,7 +94,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
     private void configureCustomSslContext(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
         final SecurityContextType securityContextType = clientConfig.getSecurityContextType();
         if (SecurityContextType.BASIC.equals(securityContextType) || SecurityContextType.DIGEST.equals(securityContextType)) {
-            SSLContext sslContext = ConfigUtil.getBoolean(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, parsedConfig) ?
+            SSLContext sslContext = ConfigUtil.getBoolean(MarkLogicConfig.SSL_MUTUAL_AUTH, parsedConfig) ?
                 buildTwoWaySslContext(clientConfig.getCertFile(), clientConfig.getCertPassword(), parsedConfig) :
                 buildOneWaySslContext(parsedConfig);
             clientConfig.setSslContext(sslContext);
@@ -102,7 +102,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
     }
 
     private SSLContext buildTwoWaySslContext(String certFile, String certPassword, Map<String, Object> parsedConfig) {
-        final String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
+        final String tlsVersion = (String) parsedConfig.get(MarkLogicConfig.TLS_VERSION);
 
         KeyStore clientKeyStore;
         try {
@@ -113,7 +113,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
         KeyManagerFactory keyManagerFactory;
         SSLContext sslContext;
-        try (InputStream keystoreInputStream = new FileInputStream(certFile)) {
+        try (InputStream keystoreInputStream = Files.newInputStream(Paths.get(certFile))) {
             clientKeyStore.load(keystoreInputStream, certPassword.toCharArray());
             keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(clientKeyStore, certPassword.toCharArray());
@@ -129,7 +129,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
     }
 
     private SSLContext buildOneWaySslContext(Map<String, Object> parsedConfig) {
-        final String tlsVersion = (String) parsedConfig.get(MarkLogicSinkConfig.TLS_VERSION);
+        final String tlsVersion = (String) parsedConfig.get(MarkLogicConfig.TLS_VERSION);
         TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
         SSLContext sslContext;
         try {

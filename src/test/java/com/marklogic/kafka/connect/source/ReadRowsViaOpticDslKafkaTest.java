@@ -1,11 +1,14 @@
 package com.marklogic.kafka.connect.source;
 
+import com.marklogic.client.document.XMLDocumentManager;
+import com.marklogic.client.io.FileHandle;
 import kafka.server.KafkaConfig$;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Properties;
 
 import static net.mguenther.kafka.junit.EmbeddedConnectConfig.kafkaConnect;
@@ -13,22 +16,14 @@ import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
 
 public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
-
-    private final String ML_OPTIC_DSL = "";
     private final String TOPIC = "test-topic";
 
     private EmbeddedKafkaCluster kafka;
 
     @BeforeEach
-    void setupKafka() {
-        provisionKafkaWithConnectAndMarkLogicConnector();
-        kafka.start();
-    }
-
-    @Override
-    // Until I start adding data, I don't want to delete any data
-    protected String getJavascriptForDeletingDocumentsBeforeTestRuns() {
-        return "declareUpdate(); ";
+    void setup() {
+        loadMarkLogicTestData();
+        setupKafka();
     }
 
     @AfterEach
@@ -37,10 +32,20 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
     }
 
     @Test
-    // Place holder for some test code.
+    // Placeholder for some test code.
     // For now, this test just verifies that the basic Source connector code is in place and is loaded without errors.
     void shouldWaitForKeyedRecordsToBePublished() throws InterruptedException {
         Thread.sleep(5000);
+    }
+
+    void setupKafka() {
+        provisionKafkaWithConnectAndMarkLogicConnector();
+        kafka.start();
+    }
+
+    private void loadMarkLogicTestData() {
+        XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
+        docMgr.write("citations.xml", new FileHandle(new File("src/test/resources/citations.xml")));
     }
 
     private void provisionKafkaWithConnectAndMarkLogicConnector() {
@@ -48,7 +53,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
             newClusterConfig()
                 .configure(
                     kafkaConnect()
-                        .deployConnector(sourceConnectorConfig(TOPIC, ML_OPTIC_DSL))
+                        .deployConnector(sourceConnectorConfig(TOPIC, AUTHORS_OPTIC_DSL))
                         .with(KafkaConfig$.MODULE$.NumPartitionsProp(), "5")
                 )
         );
@@ -60,7 +65,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
             .withDsl(opticDsl)
             .with(MarkLogicSourceConfig.CONNECTION_HOST, testConfig.getHost())
             .with(MarkLogicSourceConfig.CONNECTION_PORT, testConfig.getRestPort())
-            .with(MarkLogicSourceConfig.CONNECTION_USERNAME, testConfig.getPassword())
+            .with(MarkLogicSourceConfig.CONNECTION_USERNAME, testConfig.getUsername())
             .with(MarkLogicSourceConfig.CONNECTION_PASSWORD, testConfig.getPassword())
             .with(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, 1)
             .build();
