@@ -2,7 +2,9 @@ package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.FileHandle;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import kafka.server.KafkaConfig$;
+import net.mguenther.kafka.junit.EmbeddedConnectConfig;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +13,13 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.Properties;
 
-import static net.mguenther.kafka.junit.EmbeddedConnectConfig.kafkaConnect;
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
+import static net.mguenther.kafka.junit.ObserveKeyValues.on;
+import static net.mguenther.kafka.junit.TopicConfig.withName;
+import static org.apache.kafka.common.config.TopicConfig.*;
 
 public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
-    private final String TOPIC = "test-topic";
 
     private EmbeddedKafkaCluster kafka;
 
@@ -32,15 +35,18 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
     }
 
     @Test
-    // Placeholder for some test code.
-    // For now, this test just verifies that the basic Source connector code is in place and is loaded without errors.
     void shouldWaitForKeyedRecordsToBePublished() throws InterruptedException {
-        Thread.sleep(5000);
+        kafka.observe(on(AUTHORS_TOPIC, 15));
     }
 
     void setupKafka() {
         provisionKafkaWithConnectAndMarkLogicConnector();
         kafka.start();
+        kafka.createTopic(
+            withName(AUTHORS_TOPIC)
+            .with(CLEANUP_POLICY_CONFIG, CLEANUP_POLICY_DELETE)
+            .build()
+        );
     }
 
     private void loadMarkLogicTestData() {
@@ -52,8 +58,8 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
         kafka = provisionWith(
             newClusterConfig()
                 .configure(
-                    kafkaConnect()
-                        .deployConnector(sourceConnectorConfig(TOPIC, AUTHORS_OPTIC_DSL))
+                    EmbeddedConnectConfig.kafkaConnect()
+                        .deployConnector(sourceConnectorConfig(AUTHORS_TOPIC, AUTHORS_OPTIC_DSL))
                         .with(KafkaConfig$.MODULE$.NumPartitionsProp(), "5")
                 )
         );

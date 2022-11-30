@@ -77,7 +77,7 @@ class CustomRecommenderAndValidator implements ConfigDef.Recommender, ConfigDef.
     private List<Object> validValues;
 
     public CustomRecommenderAndValidator(String... validValues) {
-        this.validValues = Arrays.asList(validValues);
+        this.validValues = Arrays.asList((Object[]) validValues);
     }
 
     @Override
