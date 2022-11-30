@@ -4,7 +4,10 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.ConfigException;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,13 +30,16 @@ public class MarkLogicConfig extends AbstractConfig {
     public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
     public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
 
+    private static final CustomRecommenderAndValidator SecurityContextTypeRV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "NONE");
+
     public static void addDefinitions(ConfigDef configDef) {
         configDef.define(CONNECTION_HOST, Type.STRING, Importance.HIGH,
             "Required; a MarkLogic host to connect to. By default, the connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster.")
         .define(CONNECTION_PORT, Type.INT, Importance.HIGH,
             "Required; the port of a REST API app server to connect to; if using Bulk Data Services, can be a plain HTTP app server")
-        .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", Importance.HIGH,
-            "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'")
+        .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", SecurityContextTypeRV, Importance.HIGH,
+            "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'",
+            null, -1, ConfigDef.Width.SHORT, CONNECTION_SECURITY_CONTEXT_TYPE, SecurityContextTypeRV)
         .define(CONNECTION_USERNAME, Type.STRING, null, Importance.MEDIUM,
             "MarkLogic username for 'DIGEST' and 'BASIC' authentication")
         .define(CONNECTION_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
@@ -64,5 +70,30 @@ public class MarkLogicConfig extends AbstractConfig {
 
     protected MarkLogicConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
         super(definition, originals, doLog);
+    }
+}
+
+class CustomRecommenderAndValidator implements ConfigDef.Recommender, ConfigDef.Validator {
+    private List<Object> validValues;
+
+    public CustomRecommenderAndValidator(String... validValues) {
+        this.validValues = Arrays.asList(validValues);
+    }
+
+    @Override
+    public List<Object> validValues(String name, Map<String, Object> parsedConfig) {
+        return validValues;
+    }
+
+    @Override
+    public boolean visible(String name, Map<String, Object> parsedConfig) {
+        return true;
+    }
+
+    @Override
+    public void ensureValid(String name, Object value) {
+        if (!validValues.contains(value)) {
+            throw new ConfigException("Invalid value: " + value + "; must be one of: " + validValues);
+        }
     }
 }

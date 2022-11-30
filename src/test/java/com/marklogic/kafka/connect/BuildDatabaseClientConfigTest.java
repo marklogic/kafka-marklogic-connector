@@ -7,7 +7,6 @@ import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.config.types.Password;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BuildDatabaseClientConfigTest {
 
@@ -129,7 +129,6 @@ public class BuildDatabaseClientConfigTest {
         assertEquals(SecurityContextType.BASIC, clientConfig.getSecurityContextType());
         assertNotNull(clientConfig.getSslContext());
         assertEquals(DatabaseClientFactory.SSLHostnameVerifier.ANY, clientConfig.getSslHostnameVerifier());
-        System.out.println(clientConfig.getSslHostnameVerifier());
         assertNotNull(clientConfig.getTrustManager());
     }
 
@@ -161,6 +160,17 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
+    public void testInvalidAuthentication() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.CONNECTION_HOST, "");
+        config.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "IncorrectValue");
+        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(config),
+            "Should throw ConfigException when an invalid authentication type is provided.");
+        assertEquals("Invalid value: IncorrectValue; must be one of: [DIGEST, BASIC, CERTIFICATE, KERBEROS, NONE]", ex.getMessage());
+    }
+
+    @Test
     // This also implicitly verifies that all other sink properties are optional
     public void testMissingRequired() {
         Map<String, Object> allRequiredValuesConfig = new HashMap<>();
@@ -170,7 +180,7 @@ public class BuildDatabaseClientConfigTest {
 
         Set<String> keys = allRequiredValuesConfig.keySet();
         for (String key : keys) {
-            Assertions.assertThrows(ConfigException.class, () -> {
+            assertThrows(ConfigException.class, () -> {
                 HashMap<String, Object> missingSingleValueConfig = new HashMap<>(allRequiredValuesConfig);
                 missingSingleValueConfig.remove(key);
                 MarkLogicSinkConfig.CONFIG_DEF.parse(missingSingleValueConfig);
