@@ -19,7 +19,7 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
     protected SimpleTestConfig testConfig;
 
     protected final String AUTHORS_OPTIC_DSL = "op.fromView(\"Medical\", \"Authors\")";
-
+    protected final String AUTHORS_TOPIC = "Authors";
 
     /**
      * @param configParamNamesAndValues - Configuration values that need to be set for the test.
