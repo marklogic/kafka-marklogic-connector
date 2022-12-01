@@ -5,7 +5,7 @@ plugins {
   id "com.github.jk1.dependency-license-report" version "1.3"
 
   // Only used for testing
-  id 'com.marklogic.ml-gradle' version '4.3.5'
+  id 'com.marklogic.ml-gradle' version '4.3.7'
 }
 
 java {
