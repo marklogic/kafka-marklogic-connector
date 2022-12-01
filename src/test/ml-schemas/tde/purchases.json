@@ -1,0 +1,37 @@
+{
+  "template": {
+    "description": "Projects rows from the purchase documents expected to be written by the datagen connector",
+    "context": "/",
+    "collections": [
+      "purchases"
+    ],
+    "rows": [
+      {
+        "schemaName": "demo",
+        "viewName": "purchases",
+        "columns": [
+          {
+            "name": "id",
+            "scalarType": "long",
+            "val": "id"
+          },
+          {
+            "name": "item_type",
+            "scalarType": "string",
+            "val": "item_type"
+          },
+          {
+            "name": "quantity",
+            "scalarType": "int",
+            "val": "quantity"
+          },
+          {
+            "name": "price_per_unit",
+            "scalarType": "float",
+            "val": "price_per_unit"
+          }
+        ]
+      }
+    ]
+  }
+}

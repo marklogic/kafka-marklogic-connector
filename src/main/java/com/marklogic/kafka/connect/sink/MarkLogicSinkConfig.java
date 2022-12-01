@@ -44,7 +44,9 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
     public static final ConfigDef CONFIG_DEF = getConfigDef();
 
     private static ConfigDef getConfigDef() {
-        ConfigDef configDef = new ConfigDef()
+        ConfigDef configDef = new ConfigDef();
+        MarkLogicConfig.addDefinitions(configDef);
+        return configDef
             .define(BULK_DS_ENDPOINT_URI, Type.STRING, null, Importance.LOW,
                 "Defines the URI of a Bulk Data Services endpoint for writing data. " +
                     "See the user guide for more information on using Bulk Data Services instead of DMSDK for writing data to MarkLogic.")
@@ -98,8 +100,6 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
                 "Comma-delimited list of step numbers in a flow to run")
             .define(DATAHUB_FLOW_LOG_RESPONSE, Type.BOOLEAN, null, Importance.LOW,
                 "Set to true to log at the info level the response data from running a flow");
-        MarkLogicConfig.addDefinitions(configDef);
-        return configDef;
     }
 
     public MarkLogicSinkConfig(final Map<?, ?> originals) {

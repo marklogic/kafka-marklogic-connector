@@ -91,7 +91,7 @@ In the Control Center GUI, you can verify the Datagen connector instance:
 
 1. Click on "Connect" in the left sidebar
 2. Click on the "connect-default" cluster
-3. Click on the "datagen-purchases" connector
+3. Click on the "datagen-purchases-source" connector
 
 Additionally, you can examine the data sent by the Datagen connector to the `purchases` topic:
 
@@ -99,25 +99,24 @@ Additionally, you can examine the data sent by the Datagen connector to the `pur
 2. Click on the "purchases" topic
 3. Click on "Messages" to see the JSON documents being sent by the connector
 
-## Load a MarkLogic Kafka connector instance
+## Load a MarkLogic Kafka sink connector instance
 
 Next, load an instance of the MarkLogic Kafka connector that will read data from the `purchases` topic and write
-it to MarkLogic. The `src/test/resources/confluent/marklogic-purchases-connector.json` file defines the connection
-properties for MarkLogic, and it defaults to writing to the `Documents` database via port 8000. You can adjust this file
-to suit your testing needs.
+it to MarkLogic. The `src/test/resources/confluent/marklogic-purchases-sink.json` file defines the connection
+properties for MarkLogic. You can adjust this file to suit your testing needs.
 
-    ./gradlew loadMarkLogicPurchasesConnector
+    ./gradlew loadMarkLogicPurchasesSinkConnector
 
 In the Control Center GUI, you can verify the MarkLogic Kafka connector instance:
 
 1. Click on "Connect" in the left sidebar
 2. Click on the "connect-default" cluster
-3. Click on the "marklogic-purchases" connector
+3. Click on the "marklogic-purchases-sink" connector
 
 You can then verify that data is being written to MarkLogic by using MarkLogic's qconsole application to inspect the
-contents of the `Documents` database.
+contents of the `kafka-test-content` database.
 
-You can also manually configure an instance of the MarkLogic Kafka connector as well:
+You can also manually configure an instance of the sink connector:
 
 1. Click on "Connect" in the left sidebar
 2. Click on the "connect-default" cluster
@@ -132,6 +131,41 @@ You can also manually configure an instance of the MarkLogic Kafka connector as 
 
 In the list of connectors in Control Center, the connector will initially have a status of "Failed" while it starts up.
 After it starts successfully, it will have a status of "Running". 
+
+## Load a MarkLogic Kafka source connector instance
+
+You can also load an instance of the MarkLogic Kafka source connector that will read rows from the `demo/purchases` 
+view that is created via the TDE template at `src/test/ml-schemas/tde/purchases.json`. 
+The `src/test/reosurces/confluent/marklogic-purchases-source.json` file defines the connection properties for MarkLogic.
+You can adjust this file to suit your testing needs.
+
+    ./gradlew loadMarkLogicPurchasesSourceConnector
+
+In the Control Center GUI, you can verify the MarkLogic Kafka connector instance:
+
+1. Click on "Connect" in the left sidebar
+2. Click on the "connect-default" cluster
+3. Click on the "marklogic-purchases-source" connector
+
+You can verify that data is being read from the `demo/purchases` view and sent to the `marklogic-purchases` topic 
+by clicking on "Topics" in Confluent Platform and then selecting "marklogic-purchases".
+
+You can also manually configure an instance of the source connector:
+
+1. Click on "Connect" in the left sidebar
+2. Click on the "connect-default" cluster
+3. Click on "Add connector"
+4. Click on "MarkLogicSourceConnector"
+5. For "Value converter class", enter `org.apache.kafka.connect.json.JsonConverter`
+6. Under "General", enter values for the required MarkLogic connection fields
+7. Enter an Optic DSL query for `ml.source.optic.dsl` and a Kafka topic name for `ml.source.topic`
+8. Add values for any optional fields that you wish to populate
+9. At the bottom of the page, click "Next"
+10. Click "Launch"
+
+In the list of connectors in Control Center, the connector will initially have a status of "Failed" while it starts up.
+After it starts successfully, it will have a status of "Running".
+
 
 ## Debugging the MarkLogic Kafka connector
 
