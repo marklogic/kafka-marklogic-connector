@@ -66,14 +66,20 @@ public class RowBatcherSourceTask extends SourceTask {
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         List<SourceRecord> newSourceRecords = new Vector<>();
+        logger.info("Temporary log statement for testing; sleeping for " + pollDelayMs + "ms");
         Thread.sleep(pollDelayMs);
 
-        rowBatcher = getNewRowBatcher(newSourceRecords);
-        performPoll();
-        if (newSourceRecords.size() == 0) {
-            newSourceRecords = null;
+        try {
+            rowBatcher = getNewRowBatcher(newSourceRecords);
+        } catch (FailedRequestException ex) {
+            if (rowBatcherErrorIsKnownServerBug(ex)) {
+                return null;
+            }
+            throw new RuntimeException("Unable to poll for source records; cause: " + ex.getMessage(), ex);
         }
-        return newSourceRecords;
+
+        performPoll();
+        return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
     protected RowBatcher<JsonNode> getNewRowBatcher(List<SourceRecord> newSourceRecords) {
@@ -138,12 +144,7 @@ public class RowBatcherSourceTask extends SourceTask {
         String dslPlan = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_PLAN);
         RowManager rowMgr = rowBatcher.getRowManager();
         RawQueryDSLPlan plan = rowMgr.newRawQueryDSLPlan(new StringHandle(dslPlan));
-        try {
-            rowBatcher.withBatchView(plan);
-        } catch (FailedRequestException ex) {
-            throw new RuntimeException("Unable to poll for source records; cause: " + ex.getMessage(), ex);
-        }
-
+        rowBatcher.withBatchView(plan);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         rowBatcher.onFailure(this::onFailureHandler);
     }
@@ -167,5 +168,15 @@ public class RowBatcherSourceTask extends SourceTask {
 
     private void onFailureHandler(RowBatchFailureListener.RowBatchFailureEvent batch, Throwable throwable) {
         logger.warn("batch "+batch.getJobBatchNumber()+" failed with error: "+throwable.getMessage());
+    }
+
+    private boolean rowBatcherErrorIsKnownServerBug(FailedRequestException ex) {
+        String serverMessage = ex.getServerMessage();
+        final String knownBugErrorMessage = "$tableId as xs:string -- Invalid coercion: () as xs:string";
+        if (serverMessage != null && serverMessage.contains(knownBugErrorMessage)) {
+            logger.debug("Catching known bug where an error is thrown when no rows exist; will return no data instead");
+            return true;
+        }
+        return false;
     }
 }

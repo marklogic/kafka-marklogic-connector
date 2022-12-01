@@ -7,7 +7,6 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -15,18 +14,13 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
 
-    @BeforeEach
-    void setup() {
-        loadMarkLogicTestData();
-    }
-
     @Test
     void testRowBatcherTask() throws InterruptedException {
+        loadMarkLogicTestData();
 
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
@@ -41,6 +35,18 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
+    void noRowsReturned() throws InterruptedException {
+        List<SourceRecord> records = startSourceTask(
+            MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+        ).poll();
+
+        assertNull(records, "When no rows exist, null should be returned; an exception should not be thrown. " +
+            "This ensures that bug https://bugtrack.marklogic.com/58240 does not cause an error when a user instead " +
+            "expects no data to be returned.");
+    }
+
+    @Test
     void testDslThatDoesNotStartWithFromView() {
         String fromSqlDsl = "op.fromSQL('SELECT employees.FirstName, employees.LastName FROM employees')";
         RowBatcherSourceTask task = startSourceTask(
@@ -48,14 +54,19 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.DSL_PLAN, fromSqlDsl,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> task.getNewRowBatcher(new Vector<>()));
-        task.stop();
 
-        assertTrue(ex.getMessage().startsWith("Unable to poll for source records;"), "Unexpected message: " + ex);
+        RuntimeException ex = assertThrows(RuntimeException.class, task::poll);
+
+        assertTrue(ex.getMessage().startsWith("Unable to poll for source records; cause: "),
+            "Unexpected message: " + ex.getMessage());
+        assertTrue(ex.getMessage().contains("First operation in Optic plan must be fromView()"),
+            "Unexpected message: " + ex.getMessage());
     }
 
     @Test
     void testBatcherStopDoesNotWaitForCompletion() throws InterruptedException {
+        loadMarkLogicTestData();
+
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL,
