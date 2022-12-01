@@ -69,6 +69,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
         return MarkLogicSourceConnectorConfigBuilder.create()
             .withTopic(topic)
             .withDsl(opticDsl)
+            .with(MarkLogicSourceConfig.WAIT_TIME, 0)
             .with(MarkLogicSourceConfig.CONNECTION_HOST, testConfig.getHost())
             .with(MarkLogicSourceConfig.CONNECTION_PORT, testConfig.getRestPort())
             .with(MarkLogicSourceConfig.CONNECTION_USERNAME, testConfig.getUsername())

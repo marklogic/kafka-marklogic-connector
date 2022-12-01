@@ -17,8 +17,11 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
         config.put(MarkLogicSinkConfig.CONNECTION_HOST, testConfig.getHost());
         config.put(MarkLogicSinkConfig.CONNECTION_PORT, testConfig.getRestPort() + "");
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "DIGEST");
-        config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, testConfig.getUsername());
-        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, testConfig.getPassword());
+
+        // Default to a "bare minimum" user, which is defined in src/test/ml-config
+        config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "kafka-test-user");
+        config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, "kafkatest");
+
         return config;
     }
 }

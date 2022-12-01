@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.source;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.datamovement.RowBatcher;
 import com.marklogic.client.document.XMLDocumentManager;
+import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
@@ -106,6 +107,8 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
 
     private void loadMarkLogicTestData() {
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
-        docMgr.write("citations.xml", new FileHandle(new File("src/test/resources/citations.xml")));
+        docMgr.write("citations.xml",
+            new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
+            new FileHandle(new File("src/test/resources/citations.xml")));
     }
 }

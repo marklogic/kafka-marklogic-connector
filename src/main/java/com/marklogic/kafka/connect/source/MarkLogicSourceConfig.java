@@ -34,7 +34,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 "Controls whether to get an immutable view of the result set")
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
                 "Required; the name of the target topic to publish records to")
-            .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
+            .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
                 "Sets the minimum time (in ms) between polling operations")
 
             .define(DMSDK_BATCH_SIZE, Type.INT, 100, ConfigDef.Range.atLeast(1), Importance.MEDIUM,

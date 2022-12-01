@@ -57,9 +57,9 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
         config.put(MarkLogicSourceConfig.WAIT_TIME, "asdf");
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.WAIT_TIME, 0);
+        config.put(MarkLogicSourceConfig.WAIT_TIME, -1);
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.WAIT_TIME, 1000);
+        config.put(MarkLogicSourceConfig.WAIT_TIME, 0);
         configDef.parse(config);
     }
 

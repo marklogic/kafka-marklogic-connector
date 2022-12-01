@@ -28,6 +28,7 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
      */
     protected RowBatcherSourceTask startSourceTask(String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
+        config.put(MarkLogicSourceConfig.WAIT_TIME, "0");
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }
