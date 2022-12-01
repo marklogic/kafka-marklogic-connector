@@ -1,5 +1,5 @@
 {
-  "name": "datagen-purchases",
+  "name": "datagen-purchases-source",
   "config": {
     "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
     "kafka.topic": "purchases",

@@ -153,12 +153,14 @@ public class RowBatcherSourceTask extends SourceTask {
         logger.debug("JsonNode: \n" + rows.toPrettyString());
 
         String topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
-        Integer rowNumber = 1;
         for (JsonNode row : rows) {
 // We may need to add a switch to include a key in the record depending on how the target topic is configured.
 // If the topic's cleanup policy is set to "compact", then a key is required to be included in the SourceRecord.
 //            String key = event.getJobBatchNumber() + "-" + rowNumber;
-            SourceRecord newRecord = new SourceRecord(null, null, topic, null, row);
+
+            // Calling toString on the JsonNode, as when this is run in Confluent Platform, we get the following
+            // error: org.apache.kafka.connect.errors.DataException: Java class com.fasterxml.jackson.databind.node.ObjectNode does not have corresponding schema type.
+            SourceRecord newRecord = new SourceRecord(null, null, topic, null, row.toString());
             newSourceRecords.add(newRecord);
         }
     }

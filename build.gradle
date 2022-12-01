@@ -189,6 +189,8 @@ task copyConnectorToConfluent(type: Copy, group: confluentTestingGroup, dependsO
 task destroyLocalConfluent(type: Exec, group: confluentTestingGroup) {
   description = "Destroy the local Confluent Platform instance"
   commandLine "confluent", "local", "destroy"
+  // Main reason this will fail is because Confluent is not running, which shouldn't cause a failure
+  ignoreExitValue = true
 }
 
 // See https://docs.confluent.io/confluent-cli/current/command-reference/local/services/confluent_local_services_start.html
@@ -200,20 +202,28 @@ task startLocalConfluent(type: Exec, group: confluentTestingGroup) {
 task loadDatagenPurchasesConnector(type: Exec, group: confluentTestingGroup) {
   description = "Load an instance of the Datagen connector into Confluent Platform for sending JSON documents to " +
     "the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "datagen-purchases", "-c",
-    "src/test/resources/confluent/datagen-purchases-connector.json"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "datagen-purchases-source", "-c",
+    "src/test/resources/confluent/datagen-purchases-source.json"
 }
 
-task loadMarkLogicPurchasesConnector(type: Exec, group: confluentTestingGroup) {
+task loadMarkLogicPurchasesSinkConnector(type: Exec, group: confluentTestingGroup) {
   description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
     "MarkLogic from the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases", "-c",
-    "src/test/resources/confluent/marklogic-purchases-connector.json"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-sink", "-c",
+    "src/test/resources/confluent/marklogic-purchases-sink.json"
+}
+
+task loadMarkLogicPurchasesSourceConnector(type: Exec, group: confluentTestingGroup) {
+  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for reading rows from " +
+    "the demo/purchases view"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-source", "-c",
+    "src/test/resources/confluent/marklogic-purchases-source.json"
 }
 
 task setupLocalConfluent(group: confluentTestingGroup) {
   description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
 }
-setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesConnector
+setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
 loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
-loadMarkLogicPurchasesConnector.mustRunAfter startLocalConfluent
+loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
+loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent

@@ -1,9 +1,8 @@
 # MarkLogic Kafka Connector User Guide
 
 The MarkLogic Kafka connector is a [Kafka Connect](https://docs.confluent.io/platform/current/connect/index.html) 
-sink connector for receiving messages from Kafka topics and writing them to a MarkLogic database. This connector allows
-for data to be gathered by Kafka from a variety of sources and then written to MarkLogic without any coding 
-required. 
+sink and source connector. It supports writing data from a topic to a MarkLogic database as well as reading data from
+a MarkLogic database via an [Optic query](https://docs.marklogic.com/guide/app-dev/OpticAPI) and sending the result to a topic.
 
 This user guide describes how to obtain the MarkLogic Kafka connector and how to use it with either Confluent Platform or Apache Kafka.
 For developing and testing the MarkLogic Kafka connector, please see the [guide on contributing](./CONTRIBUTING.md).
@@ -40,6 +39,8 @@ as many instances of the MarkLogic Kafka connector that you wish.
 
 ### Using the connector with Apache Kafka
 
+TODO Need to update this section for the source connector.
+
 For a regular installation of Apache Kafka, obtain the latest version of the MarkLogic Kafka connector from 
 [this repository's Releases page](https://github.com/marklogic-community/kafka-marklogic-connector/releases). Download
 the jar file - named `kafka-connect-marklogic-(version).jar` - and copy it to the `./libs` directory in your Kafka 
@@ -58,19 +59,17 @@ Connect will instantiate the MarkLogic Kafka connector based on the configuratio
 
 ## Configuring the connector
 
-Using the MarkLogic Kafka connector requires configuring a set of properties to control how Kafka passes data to 
-the connector, how the connector connects to MarkLogic, and how data is written to MarkLogic. 
-
-The manner in which you use the MarkLogic connector will determine how you configure the connector:
+Using the MarkLogic Kafka connector requires configuring a set of properties to control how the connector interacts 
+with MarkLogic. The manner in which you use the MarkLogic connector will determine how you configure the connector:
 
 - If you are using the connector via Confluent Control Center, the Control Center GUI will list all the connector
   properties with inline help showing a description of each property.
 - If you are using the connector by running Kafka Connect from the command line, you'll be configuring a copy of the
-  `./config/marklogic-sink.properties` file in this repository which also lists all the connector properties with a 
-  description for each one.
+  `./config/marklogic-sink.properties` file or `./config/marklogic-source.properties` file in this repository which 
+  lists all the connector properties with a description for each one.
 
-In addition to the properties found in the locations above, you'll also need to configure two Kafka properties that 
-control [how data is serialized](https://www.confluent.io/blog/kafka-connect-deep-dive-converters-serialization-explained/) 
+When using the sink connector, you'll also need to configure two Kafka properties that control
+[how data is serialized](https://www.confluent.io/blog/kafka-connect-deep-dive-converters-serialization-explained/) 
 when it is sent to the MarkLogic connector. These two properties along with their required values are:
 
 - `key.converter=org.apache.kafka.connect.storage.StringConverter`
@@ -142,7 +141,49 @@ If `ml.connection.customSsl.mutualAuth` is set to `true`, you must also configur
 - `ml.connection.certPassword` = password for the PKCS12 key store
 
 
-## Configuring how data is written
+## Configuring how data is read from MarkLogic
+
+TODO This is the main section we'll need to complete for 1.8.0. Just providing the bare minimum for now so that the 
+feature can be QA'ed. 
+
+The MarkLogic Kafka connector uses the [Optic API](https://docs.marklogic.com/guide/app-dev/OpticAPI) to read data from 
+MarkLogic as rows. Each row is converted into a Kafka `SourceRecord` and sent to a user-defined topic. To enable 
+this, the following properties must be configured:
+
+- `ml.source.optic.dsl` = the [Optic DSL query](https://docs.marklogic.com/guide/app-dev/OpticAPI#id_46710) to execute
+- `ml.source.topic` = the name of a Kafka topic to send records to
+
+The following optional properties can also be configured:
+
+- `ml.source.waitTime` = amount of time, in milliseconds, that TODO on this because we're going to change it soon
+- `ml.source.optic.jobName` = name for the job run by the connector; the main use case for this is to 
+enhance logging by having a known job name appear in the logs
+- `ml.source.optic.consistenSnapshot` = enables retrieval of rows that were present in the view at the time that the 
+  first batch is retrieved, ignoring subsequent changes to the view; defaults to true; setting this to false will 
+  result in matching rows inserted or updated after the retrieval of the first batch being included as well
+- `ml.dmsdk.batchSize` = sets the number of rows to be read in a batch from MarkLogic; can adjust this to tune performance
+- `ml.dmsdk.threadCount` = sets the number of threads to use for reading batches of rows from MarkLogic; can adjust 
+  this to tune performance
+
+As an example, consider a [TDE template](https://docs.marklogic.com/guide/app-dev/TDE) in an application's schemas
+database that defines a view with a schema of "demo" and a view name of "purchases". And assume that rows in this view
+should be written to a topic named "marklogic-purchases". A simple configuration for the MarkLogic Kafka connector 
+would be:
+
+    ml.source.optic.dsl=op.fromView('demo', 'purchases')
+    ml.source.topic=marklogic-purchases
+
+(TODO Explain here how the waitTime comes into play; for now, the connector just wants that amount of time before it
+queries, and it defaults to 5s)
+
+For each row returned by MarkLogic, the MarkLogic Kafka connector will publish a Kafka `SourceRecord` with the following 
+data:
+
+- `value` = the JSON row, as a string (TODO We hope to improve this to be an actual JSON object before the 1.8.0 release)
+- `topic` = the topic identified by `ml.source.topic`
+
+
+## Configuring how data is written to MarkLogic
 
 By default, the MarkLogic Kafka connector assumes that the app server associated with the port defined by the `ml.connection.port`
 property is a [REST API app server](https://docs.marklogic.com/guide/rest-dev) - that is, the value of its `url rewriter`

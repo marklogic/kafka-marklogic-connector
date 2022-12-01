@@ -96,8 +96,10 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
         newSourceRecords.forEach(sourceRecord -> {
             Assertions.assertEquals(topic, sourceRecord.topic());
+            assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
+                "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: " + sourceRecord.value().getClass());
             System.out.println(sourceRecord.value());
-            if (expectedValue.equals(sourceRecord.value().toString())) {
+            if (expectedValue.equals(sourceRecord.value())) {
                 foundExpectedValue.set(true);
             }
         });
