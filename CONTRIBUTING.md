@@ -1,11 +1,23 @@
 This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
 develop and test the connector, either via a local install of Confluent Platform or of the regular Kafka distribution.
 
+Before beginning, you will need to install Java (either version 8, 11, or 17) and also have a MarkLogic instance 
+available. It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in Confluent 7.x and is 
+removing it in Confluent 8.x. See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
+for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
+points to your Java installation.
+
+
 # Running the test suite
 
 The test suite for the MarkLogic Kafka connector, found at `src/test/resources`, requires that an application first be
 deployed to a MarkLogic instance. This application is deployed via 
-[ml-gradle](https://github.com/marklogic-community/ml-gradle). Before deploying, first create `gradle-local.properties`
+[ml-gradle](https://github.com/marklogic-community/ml-gradle). 
+
+Note that you do not need to install [Gradle](https://gradle.org/) - the `gradlew` program used below will install the
+appropriate version of Gradle if you do not have it installed already. 
+
+Before deploying, first create `gradle-local.properties`
 if it does not yet exist in the root directory of this project and configure `mlPassword` for your `admin` user - e.g.
 
     mlPassword=changeme
