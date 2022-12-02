@@ -2,7 +2,6 @@ package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.FileHandle;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import kafka.server.KafkaConfig$;
 import net.mguenther.kafka.junit.EmbeddedConnectConfig;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
