@@ -41,21 +41,26 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
     public static final String ID_STRATEGY = "ml.id.strategy";
     public static final String ID_STRATEGY_PATH = "ml.id.strategy.paths";
 
+    private static final CustomRecommenderAndValidator DOCUMENT_FORMAT_RV = new CustomRecommenderAndValidator("JSON", "XML", "BINARY", "TEXT", "UNKNOWN", "");
+    private static final CustomRecommenderAndValidator ID_STRATEGY_RV = new CustomRecommenderAndValidator("JSONPATH", "HASH", "KAFKA_META_HASHED", "KAFKA_META_WITH_SLASH", "");
+
     public static final ConfigDef CONFIG_DEF = getConfigDef();
 
     private static ConfigDef getConfigDef() {
         ConfigDef configDef = new ConfigDef();
         MarkLogicConfig.addDefinitions(configDef);
+
         return configDef
             .define(BULK_DS_ENDPOINT_URI, Type.STRING, null, Importance.LOW,
                 "Defines the URI of a Bulk Data Services endpoint for writing data. " +
                     "See the user guide for more information on using Bulk Data Services instead of DMSDK for writing data to MarkLogic.")
-            .define(BULK_DS_BATCH_SIZE, Type.INT, 100, Importance.LOW,
-                "Sets the number of documents to be sent in a batch to the Bulk Data Services endpoint. The connector will not send any " +
-                    "documents to MarkLogic until it has a number matching this property or until Kafka invokes the 'flush' operation on the connector.")
+            .define(BULK_DS_BATCH_SIZE, Type.INT, 100, ConfigDef.Range.atLeast(1), Importance.LOW,
+                "Sets the number of documents to be sent in a batch to the Bulk Data Services endpoint. The connector will not send any documents to MarkLogic until it " +
+                    "has a number matching this property or until Kafka invokes the 'flush' operation on the connector.")
 
-            .define(DOCUMENT_FORMAT, Type.STRING, null, Importance.MEDIUM,
-                "Specify the format of each document; either 'JSON', 'XML', 'BINARY', 'TEXT', or 'UNKNOWN'. If not set, MarkLogic will determine the document type based on the ml.document.uriSuffix property.")
+            .define(DOCUMENT_FORMAT, Type.STRING, "", DOCUMENT_FORMAT_RV, Importance.MEDIUM,
+                "Specify the format of each document; either 'JSON', 'XML', 'BINARY', 'TEXT', or 'UNKNOWN'. If not set, MarkLogic will determine the document type based on the ml.document.uriSuffix property.",
+                null, -1, ConfigDef.Width.MEDIUM, DOCUMENT_FORMAT, DOCUMENT_FORMAT_RV)
             .define(DOCUMENT_COLLECTIONS, Type.STRING, null, Importance.MEDIUM,
                 "Comma-separated list of collections that each document should be written to")
             .define(DOCUMENT_PERMISSIONS, Type.STRING, null, Importance.MEDIUM,
@@ -71,14 +76,15 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
             .define(DOCUMENT_MIMETYPE, Type.STRING, null, Importance.LOW,
                 "Specify a mime type for each document; typically ml.document.format will be used instead of this")
 
-            .define(ID_STRATEGY, Type.STRING, null, Importance.LOW,
-                "Set the strategy for generating a unique URI for each document written to MarkLogic. Defaults to 'UUID'. Other choices are: 'JSONPATH', 'HASH', 'KAFKA_META_HASHED', and 'KAFKA_META_WITH_SLASH'.")
+            .define(ID_STRATEGY, Type.STRING, "", ID_STRATEGY_RV, Importance.LOW,
+                "Set the strategy for generating a unique URI for each document written to MarkLogic. Defaults to 'UUID'. Other choices are: 'JSONPATH', 'HASH', 'KAFKA_META_HASHED', and 'KAFKA_META_WITH_SLASH'.",
+                null, -1, ConfigDef.Width.SHORT, ID_STRATEGY, ID_STRATEGY_RV)
             .define(ID_STRATEGY_PATH, Type.STRING, "", Importance.LOW,
                 "For use with 'JSONPATH' and 'HASH'; comma-separated list of paths for extracting values for the ID")
 
-            .define(DMSDK_BATCH_SIZE, Type.INT, 100, Importance.MEDIUM,
+            .define(DMSDK_BATCH_SIZE, Type.INT, 100, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
                 "Sets the number of documents to be written in a batch to MarkLogic. This may not have any impact depending on how the connector receives data from Kafka. The connector calls flushAsync on the DMSDK WriteBatcher after processing every collection of records. Thus, if the connector never receives at one time more than the value of this property, then the value of this property will have no impact.")
-            .define(DMSDK_THREAD_COUNT, Type.INT, 8, Importance.MEDIUM,
+            .define(DMSDK_THREAD_COUNT, Type.INT, 8, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
                 "Sets the number of threads used for parallel writes to MarkLogic. Similar to the batch size property above, this may never come into play depending on how many records the connector receives at once.")
             .define(DMSDK_TRANSFORM, Type.STRING, null, Importance.MEDIUM,
                 "Name of a REST transform to use when writing documents")
@@ -105,5 +111,4 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
     public MarkLogicSinkConfig(final Map<?, ?> originals) {
         super(CONFIG_DEF, originals, false);
     }
-
 }
