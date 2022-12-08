@@ -10,15 +10,23 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.DocumentMetadataWriteHandle;
 import com.marklogic.kafka.connect.ConfigUtil;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.connect.runtime.InternalSinkRecord;
+import org.apache.kafka.connect.sink.ErrantRecordReporter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.*;
 
 /**
  * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
@@ -34,6 +42,9 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     protected void onStart(Map<String, Object> parsedConfig) {
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
+        if (errorReporterMethod == null) {
+            errorReporterMethod = getErrorReporter();
+        }
 
         dataMovementManager = databaseClient.newDataMovementManager();
         writeBatcher = dataMovementManager.newWriteBatcher();
@@ -58,7 +69,35 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
 
     @Override
     protected void writeSinkRecord(SinkRecord sinkRecord) {
-        this.writeBatcher.add(this.sinkRecordConverter.convert(sinkRecord));
+        try {
+            this.writeBatcher.add(this.sinkRecordConverter.convert(sinkRecord));
+        } catch (Exception e) {
+            addFailureHeaders(sinkRecord, e, AbstractSinkTask.MARKLOGIC_CONVERSION_FAILURE, null);
+            errorReporterMethod.accept(sinkRecord, e);
+        }
+    }
+
+    static void addFailureHeaders(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+        if (sinkRecord instanceof InternalSinkRecord) {
+            ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).originalRecord();
+            originalRecord.headers().add(MARKLOGIC_MESSAGE_FAILURE_HEADER, getBytesHandleNull(failureHeaderValue));
+            originalRecord.headers().add(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, getBytesHandleNull(e.getMessage()));
+            originalRecord.headers().add(MARKLOGIC_ORIGINAL_TOPIC, getBytesHandleNull(sinkRecord.topic()));
+            if (writeEvent != null) {
+                originalRecord.headers().add(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri().getBytes(StandardCharsets.UTF_8));
+            }
+        } else {
+            sinkRecord.headers().addString(MARKLOGIC_MESSAGE_FAILURE_HEADER, failureHeaderValue);
+            sinkRecord.headers().addString(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, e.getMessage());
+            sinkRecord.headers().addString(MARKLOGIC_ORIGINAL_TOPIC, sinkRecord.topic());
+            if (writeEvent != null) {
+                sinkRecord.headers().addString(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri());
+            }
+        }
+    }
+
+    private static byte[] getBytesHandleNull(String value) {
+        return (value != null) ? value.getBytes(StandardCharsets.UTF_8) : null;
     }
 
     /**
@@ -66,7 +105,9 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
      * anything will need to be flushed here. But just in case, {@code flushAndWait} is used here to ensure that a
      * user expection of all data being flushed is met.
      *
-     * @param currentOffsets
+     * @param currentOffsets– the current offset state as of the last call to put(Collection)}, provided for
+     *                        convenience but could also be determined by tracking all offsets included in the
+     *                        SinkRecords passed to put.
      */
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
@@ -119,7 +160,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         }
 
         writeBatcher.onBatchFailure(new WriteFailureHandler(
-            ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig)));
+            ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig), errorReporterMethod));
     }
 
     /**
@@ -189,14 +230,39 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     protected WriteBatcher getWriteBatcher() {
         return this.writeBatcher;
     }
+    protected void setSinkRecordConverter(SinkRecordConverter sinkRecordConverter) {
+        this.sinkRecordConverter = sinkRecordConverter;
+    }
+
+    private BiConsumer<SinkRecord, Throwable> getErrorReporter() {
+        BiConsumer<SinkRecord, Throwable> errorReporter = this::nopReport;
+        if (context != null) {
+            try {
+                ErrantRecordReporter errantRecordReporter = context.errantRecordReporter();
+                if (errantRecordReporter != null) {
+                    errorReporter = errantRecordReporter::report;
+                } else {
+                    logger.info("Errant record reporter not configured.");
+                }
+            } catch (NoClassDefFoundError | NoSuchMethodError e) {
+                // Will occur in Connect runtimes earlier than 2.6
+                logger.info("Kafka versions prior to 2.6 do not support the errant record reporter.");
+            }
+        }
+        return errorReporter;
+    }
+
+    private void nopReport(SinkRecord record, Throwable e) {}
 }
 
 class WriteFailureHandler extends LoggingObject implements WriteFailureListener {
 
     private final boolean includeKafkaMetadata;
+    private final BiConsumer<SinkRecord, Throwable> errorReporterMethod;
 
-    public WriteFailureHandler(boolean includeKafkaMetadata) {
+    public WriteFailureHandler(boolean includeKafkaMetadata, BiConsumer<SinkRecord, Throwable> errorReporterMethod) {
         this.includeKafkaMetadata = includeKafkaMetadata;
+        this.errorReporterMethod = errorReporterMethod;
     }
 
     @Override
@@ -204,16 +270,29 @@ class WriteFailureHandler extends LoggingObject implements WriteFailureListener 
         logger.error("Batch failed; size: {}; cause: {}", batch.getItems().length, throwable.getMessage());
         if (this.includeKafkaMetadata) {
             logger.error("Logging Kafka record metadata for each failed document");
-            for (WriteEvent event : batch.getItems()) {
-                DocumentMetadataWriteHandle writeHandle = event.getMetadata();
-                if (writeHandle instanceof DocumentMetadataHandle) {
+        }
+        for (WriteEvent writeEvent : batch.getItems()) {
+            DocumentMetadataWriteHandle writeHandle = writeEvent.getMetadata();
+            if (writeHandle instanceof DocumentMetadataHandle) {
+                if (this.includeKafkaMetadata) {
                     DocumentMetadataHandle metadata = (DocumentMetadataHandle) writeHandle;
                     DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
                     if (values != null) {
                         logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
-                            event.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
+                            writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
                             values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
                     }
+                }
+                if (writeHandle instanceof SinkRecordMetadataHandle) {
+                    SinkRecord sinkRecord = ((SinkRecordMetadataHandle) writeHandle).getSinkRecord();
+                    WriteBatcherSinkTask.addFailureHeaders(sinkRecord, throwable, MARKLOGIC_WRITE_FAILURE, writeEvent);
+                    Exception reportedException;
+                    if (throwable instanceof Exception) {
+                        reportedException = (Exception) throwable;
+                    } else {
+                        reportedException = new IOException(throwable.getMessage());
+                    }
+                    errorReporterMethod.accept(sinkRecord, reportedException);
                 }
             }
         }

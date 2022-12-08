@@ -1,0 +1,17 @@
+{
+  "collection": "kafka-data",
+  "permission": [
+    {
+      "role-name": "kafka-test-minimal-user",
+      "capability": "read"
+    },
+    {
+      "role-name": "kafka-test-minimal-user",
+      "capability": "update"
+    },
+    {
+      "role-name": "kafka-test-minimal-user",
+      "capability": "insert"
+    }
+  ]
+}

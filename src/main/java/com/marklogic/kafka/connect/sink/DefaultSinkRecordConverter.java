@@ -75,7 +75,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
     }
 
     private DocumentMetadataHandle buildAdditionalMetadata(SinkRecord sinkRecord) {
-        DocumentMetadataHandle metadata = new DocumentMetadataHandle();
+        SinkRecordMetadataHandle metadata = new SinkRecordMetadataHandle(sinkRecord);
         if (this.addTopicToCollections) {
             metadata.getCollections().add(sinkRecord.topic());
         }
