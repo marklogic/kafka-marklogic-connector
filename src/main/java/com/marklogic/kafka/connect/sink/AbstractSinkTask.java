@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for concrete SinkTask implementations, providing some generic functionality.
@@ -20,6 +21,13 @@ abstract class AbstractSinkTask extends SinkTask {
 
     private boolean logKeys = false;
     private boolean logHeaders = false;
+    protected BiConsumer<SinkRecord, Throwable> errorReporterMethod;
+    static public final String MARKLOGIC_MESSAGE_FAILURE_HEADER = "marklogic-failure-type";
+    static public final String MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE = "marklogic-exception-message";
+    static public final String MARKLOGIC_ORIGINAL_TOPIC = "marklogic-original-topic";
+    static public final String MARKLOGIC_TARGET_URI = "marklogic-target-uri";
+    static public final String MARKLOGIC_WRITE_FAILURE = "Write Failure";
+    static public final String MARKLOGIC_CONVERSION_FAILURE = "Record conversion";
 
     /**
      * Subclasses implement this to pull their necessary config from Kafka. Invoked by the {@code start} method.
@@ -95,13 +103,18 @@ abstract class AbstractSinkTask extends SinkTask {
         }
         if (logHeaders) {
             List<String> headers = new ArrayList<>();
-            record.headers().forEach(header -> {
-                headers.add(String.format("%s:%s", header.key(), header.value().toString()));
-            });
+            record.headers().forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
             logger.info("Record headers: {}", headers);
         }
         if (logger.isDebugEnabled()) {
             logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
         }
+    }
+
+    /**
+     * Exposed for testing.
+     */
+    void setErrorReporterMethod(BiConsumer<SinkRecord, Throwable> errorReporterMethod) {
+        this.errorReporterMethod = errorReporterMethod;
     }
 }

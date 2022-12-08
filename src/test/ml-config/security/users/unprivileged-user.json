@@ -1,0 +1,9 @@
+{
+  "user-name": "kafka-unprivileged-user",
+  "password": "kafkatest",
+  "role": [
+    "rest-reader",
+    "rest-writer",
+    "rest-extension-user"
+  ]
+}

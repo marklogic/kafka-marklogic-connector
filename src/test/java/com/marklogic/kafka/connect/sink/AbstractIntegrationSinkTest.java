@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+
+import static com.marklogic.kafka.connect.sink.MarkLogicSinkConfig.*;
 
 /**
  * Base class for any test that wishes to connect to the "kafka-test-test-content" app server on port 8019.
@@ -23,6 +26,7 @@ public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
 
     private final static long DEFAULT_RETRY_SLEEP_TIME = 250;
     private final static int DEFAULT_RETRY_ATTEMPTS = 10;
+    private Map<String, Object> taskConfig = new HashMap<>();
 
     /**
      * @param configParamNamesAndValues - Configuration values that need to be set for the test.
@@ -30,12 +34,23 @@ public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
      * the caller
      */
     protected AbstractSinkTask startSinkTask(String... configParamNamesAndValues) {
+        return startSinkTask(null, configParamNamesAndValues);
+    }
+
+    protected AbstractSinkTask startSinkTask(BiConsumer<SinkRecord, Throwable> errorReporterMethod, String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
         config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update");
-
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }
+        taskConfig.putAll(config);
+        if (taskConfig.containsKey(DMSDK_INCLUDE_KAFKA_METADATA)) {
+            taskConfig.put(DMSDK_INCLUDE_KAFKA_METADATA, Boolean.valueOf((String) taskConfig.get(DMSDK_INCLUDE_KAFKA_METADATA)));
+        }
+        if (taskConfig.containsKey(DOCUMENT_COLLECTIONS_ADD_TOPIC)) {
+            taskConfig.put(DOCUMENT_COLLECTIONS_ADD_TOPIC, Boolean.valueOf((String) taskConfig.get(DOCUMENT_COLLECTIONS_ADD_TOPIC)));
+        }
+
         MarkLogicSinkConnector connector = new MarkLogicSinkConnector();
         connector.start(config);
         AbstractSinkTask task;
@@ -44,6 +59,10 @@ public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+        if (errorReporterMethod != null) {
+            task.setErrorReporterMethod(errorReporterMethod);
+        }
+
         task.start(config);
         return task;
     }
@@ -80,5 +99,9 @@ public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
                 }
             }
         }
+    }
+
+    protected Map<String, Object> getTaskConfig() {
+        return taskConfig;
     }
 }
