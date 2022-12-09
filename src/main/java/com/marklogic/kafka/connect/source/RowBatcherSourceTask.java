@@ -19,8 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -34,8 +32,7 @@ public class RowBatcherSourceTask extends SourceTask {
     private DataMovementManager dataMovementManager;
     private RowBatcher<JsonNode> rowBatcher = null;
     private Map<String, Object> parsedConfig;
-    private long pollDelayMs = 1000l;
-    private long lastExecutionTime;
+    private long pollDelayMs = 1000L;
 
     /**
      * Required for a Kafka task.
@@ -60,7 +57,6 @@ public class RowBatcherSourceTask extends SourceTask {
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         dataMovementManager = databaseClient.newDataMovementManager();
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
-        lastExecutionTime = 0;
     }
 
     @Override
@@ -70,19 +66,22 @@ public class RowBatcherSourceTask extends SourceTask {
         Thread.sleep(pollDelayMs);
 
         try {
-            rowBatcher = getNewRowBatcher(newSourceRecords);
+            rowBatcher = newRowBatcher(newSourceRecords);
         } catch (FailedRequestException ex) {
-            if (rowBatcherErrorIsKnownServerBug(ex)) {
-                return null;
+            if (!rowBatcherErrorIsKnownServerBug(ex)) {
+                logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
             }
-            throw new RuntimeException("Unable to poll for source records; cause: " + ex.getMessage(), ex);
+            return null;
+        } catch (Exception ex) {
+            logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
+            return null;
         }
 
         performPoll();
         return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
-    protected RowBatcher<JsonNode> getNewRowBatcher(List<SourceRecord> newSourceRecords) {
+    protected RowBatcher<JsonNode> newRowBatcher(List<SourceRecord> newSourceRecords) {
         ContentHandle<JsonNode> jsonHandle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
         rowBatcher =  dataMovementManager.newRowBatcher(jsonHandle);
         configureRowBatcher(parsedConfig, rowBatcher, newSourceRecords);
@@ -90,10 +89,15 @@ public class RowBatcherSourceTask extends SourceTask {
     }
 
     protected void performPoll() {
-        dataMovementManager.startJob(rowBatcher);
-        rowBatcher.awaitCompletion();
-        dataMovementManager.stopJob(rowBatcher);
-        rowBatcher = null;
+        try {
+            dataMovementManager.startJob(rowBatcher);
+            rowBatcher.awaitCompletion();
+            dataMovementManager.stopJob(rowBatcher);
+        } catch (Exception ex) {
+            logger.error("Unable to poll for source records. Job failed to complete successfully; cause: " + ex.getMessage());
+        } finally {
+            rowBatcher = null;
+        }
     }
 
     // Based on https://docs.confluent.io/platform/current/connect/devguide.html#task-example-source-task
@@ -161,13 +165,18 @@ public class RowBatcherSourceTask extends SourceTask {
 
             // Calling toString on the JsonNode, as when this is run in Confluent Platform, we get the following
             // error: org.apache.kafka.connect.errors.DataException: Java class com.fasterxml.jackson.databind.node.ObjectNode does not have corresponding schema type.
-            SourceRecord newRecord = new SourceRecord(null, null, topic, null, row.toString());
-            newSourceRecords.add(newRecord);
+            try {
+                SourceRecord newRecord = new SourceRecord(null, null, topic, null, row.toString());
+                newSourceRecords.add(newRecord);
+            } catch (Exception ex) {
+                logger.error("Failed to create or add SourceRecord from result row; cause: " + ex.getMessage());
+                logger.error("Failed result row: " + row.toString());
+            }
         }
     }
 
     private void onFailureHandler(RowBatchFailureListener.RowBatchFailureEvent batch, Throwable throwable) {
-        logger.warn("batch "+batch.getJobBatchNumber()+" failed with error: "+throwable.getMessage());
+        logger.error("batch "+batch.getJobBatchNumber()+" failed with error: "+throwable.getMessage());
     }
 
     private boolean rowBatcherErrorIsKnownServerBug(FailedRequestException ex) {
