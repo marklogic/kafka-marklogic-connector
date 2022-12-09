@@ -30,16 +30,18 @@ public class MarkLogicConfig extends AbstractConfig {
     public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
     public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
 
-    private static final CustomRecommenderAndValidator SecurityContextTypeRV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "NONE");
+    private static final CustomRecommenderAndValidator CONNECTION_SECURITY_CONTEXT_TYPE_RV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "NONE");
+    private static final CustomRecommenderAndValidator CONNECTION_TYPE_RV = new CustomRecommenderAndValidator("DIRECT", "GATEWAY", "");
+    private static final CustomRecommenderAndValidator SSL_HOST_VERIFIER_RV = new CustomRecommenderAndValidator("ANY", "COMMON", "STRICT");
 
     public static void addDefinitions(ConfigDef configDef) {
-        configDef.define(CONNECTION_HOST, Type.STRING, Importance.HIGH,
-            "Required; a MarkLogic host to connect to. By default, the connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster.")
-        .define(CONNECTION_PORT, Type.INT, Importance.HIGH,
+        configDef.define(CONNECTION_HOST, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
+                "Required; a MarkLogic host to connect to. By default, the connector uses the Data Movement SDK, and thus it will connect to each of the hosts in a cluster.")
+        .define(CONNECTION_PORT, Type.INT, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.Range.atLeast(0), Importance.HIGH,
             "Required; the port of a REST API app server to connect to; if using Bulk Data Services, can be a plain HTTP app server")
-        .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", SecurityContextTypeRV, Importance.HIGH,
+        .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", CONNECTION_SECURITY_CONTEXT_TYPE_RV, Importance.HIGH,
             "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'",
-            null, -1, ConfigDef.Width.SHORT, CONNECTION_SECURITY_CONTEXT_TYPE, SecurityContextTypeRV)
+            null, -1, ConfigDef.Width.SHORT, CONNECTION_SECURITY_CONTEXT_TYPE, CONNECTION_SECURITY_CONTEXT_TYPE_RV)
         .define(CONNECTION_USERNAME, Type.STRING, null, Importance.MEDIUM,
             "MarkLogic username for 'DIGEST' and 'BASIC' authentication")
         .define(CONNECTION_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
@@ -52,8 +54,9 @@ public class MarkLogicConfig extends AbstractConfig {
             "External name for 'KERBEROS' authentication")
         .define(CONNECTION_DATABASE, Type.STRING, null, Importance.LOW,
             "Name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this.")
-        .define(CONNECTION_TYPE, Type.STRING, null, Importance.MEDIUM,
-            "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.")
+        .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
+            "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",
+            null, -1, ConfigDef.Width.SHORT, CONNECTION_TYPE, CONNECTION_TYPE_RV)
         // Boolean fields must have a default value of null; otherwise, Confluent Platform, at least in version 7.2.1,
         // will show a default value of "true"
         .define(CONNECTION_SIMPLE_SSL, Type.BOOLEAN, null, Importance.LOW,
@@ -62,8 +65,9 @@ public class MarkLogicConfig extends AbstractConfig {
             "Set to 'true' to customize how an SSL connection is created. Only supported if securityContextType is 'BASIC' or 'DIGEST'.")
         .define(TLS_VERSION, Type.STRING, "TLSv1.2", Importance.LOW,
             "The TLS version to use for custom SSL")
-        .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", Importance.LOW,
-            "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'")
+        .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", SSL_HOST_VERIFIER_RV, Importance.LOW,
+            "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'",
+            null, -1, ConfigDef.Width.SHORT, SSL_HOST_VERIFIER, SSL_HOST_VERIFIER_RV)
         .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
             "Set this to true for 2-way SSL; defaults to 1-way SSL");
     }
@@ -71,29 +75,31 @@ public class MarkLogicConfig extends AbstractConfig {
     protected MarkLogicConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
         super(definition, originals, doLog);
     }
-}
 
-class CustomRecommenderAndValidator implements ConfigDef.Recommender, ConfigDef.Validator {
-    private List<Object> validValues;
+    public static class CustomRecommenderAndValidator implements ConfigDef.Recommender, ConfigDef.Validator {
 
-    public CustomRecommenderAndValidator(String... validValues) {
-        this.validValues = Arrays.asList((Object[]) validValues);
-    }
+        private List<Object> validValues;
 
-    @Override
-    public List<Object> validValues(String name, Map<String, Object> parsedConfig) {
-        return validValues;
-    }
+        public CustomRecommenderAndValidator(String... validValues) {
+            this.validValues = Arrays.asList(validValues);
+        }
 
-    @Override
-    public boolean visible(String name, Map<String, Object> parsedConfig) {
-        return true;
-    }
+        @Override
+        public List<Object> validValues(String name, Map<String, Object> parsedConfig) {
+            return validValues;
+        }
 
-    @Override
-    public void ensureValid(String name, Object value) {
-        if (!validValues.contains(value)) {
-            throw new ConfigException("Invalid value: " + value + "; must be one of: " + validValues);
+        @Override
+        public boolean visible(String name, Map<String, Object> parsedConfig) {
+            return true;
+        }
+
+        @Override
+        public void ensureValid(String name, Object value) {
+            Object uppercaseValue = value instanceof String ? ((String) value).toUpperCase() : value;
+            if (!validValues.contains(uppercaseValue)) {
+                throw new ConfigException("Invalid value: " + value + "; must be one of: " + validValues);
+            }
         }
     }
 }
