@@ -47,20 +47,14 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
-    void testDslThatDoesNotStartWithFromView() {
+    void testDslThatDoesNotStartWithFromView() throws InterruptedException {
         String fromSqlDsl = "op.fromSQL('SELECT employees.FirstName, employees.LastName FROM employees')";
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.DSL_PLAN, fromSqlDsl,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
-
-        RuntimeException ex = assertThrows(RuntimeException.class, task::poll);
-
-        assertTrue(ex.getMessage().startsWith("Unable to poll for source records; cause: "),
-            "Unexpected message: " + ex.getMessage());
-        assertTrue(ex.getMessage().contains("First operation in Optic plan must be fromView()"),
-            "Unexpected message: " + ex.getMessage());
+        assertNull(task.poll());
     }
 
     @Test
@@ -73,7 +67,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         List<SourceRecord> newSourceRecords = new Vector<>();
-        RowBatcher<JsonNode> rowBatcher = task.getNewRowBatcher(newSourceRecords);
+        RowBatcher<JsonNode> rowBatcher = task.newRowBatcher(newSourceRecords);
 
         // Register our own success listener to look for any onSuccess events
         // and set a variable tracking onSuccess events.
