@@ -12,6 +12,7 @@ import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.ContentHandle;
 import com.marklogic.client.row.RawQueryDSLPlan;
 import com.marklogic.client.row.RowManager;
+import com.marklogic.client.state.KafkaStateSquirrel;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -27,12 +28,16 @@ import java.util.*;
 public class RowBatcherSourceTask extends SourceTask {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    private final static String STATE_TOPIC = "stateTopic";
+    private final static String BOOTSTRAP_SERVERS = "localhost:9092,localhost:9093,localhost:9094";
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
     private RowBatcher<JsonNode> rowBatcher = null;
     private Map<String, Object> parsedConfig;
     private long pollDelayMs = 1000L;
+    private KafkaStateSquirrel stateSquirrel;
+    private String currentState;
 
     /**
      * Required for a Kafka task.
@@ -52,6 +57,13 @@ public class RowBatcherSourceTask extends SourceTask {
     @Override
     public final void start(Map<String, String> config) {
         logger.debug("Starting RowBatcherSourceTask");
+        stateSquirrel = new KafkaStateSquirrel(STATE_TOPIC, BOOTSTRAP_SERVERS);
+        try {
+            currentState = stateSquirrel.getLastState();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         this.parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
@@ -78,6 +90,12 @@ public class RowBatcherSourceTask extends SourceTask {
         }
 
         performPoll();
+        currentState = "{\"LastConstraintValue\":\"" + System.currentTimeMillis() + "\"}";
+        try {
+            stateSquirrel.saveState(currentState);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
