@@ -19,12 +19,10 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
         config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL);
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
         config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
         configDef.parse(config);
-        config.put(MarkLogicSourceConfig.DSL_PLAN, null);
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
     }
 
     @Test
@@ -34,13 +32,22 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
         config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
         config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.DSL_PLAN, null);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, "");
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.DSL_PLAN, 1);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, null);
+        configDef.parse(config);
+    }
+
+    @Test
+    void testSerializedConfig() {
+        ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
+        config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
+        config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
+        config.put(MarkLogicSourceConfig.SERIALIZED_QUERY, "");
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.DSL_PLAN, "");
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL);
+        config.put(MarkLogicSourceConfig.SERIALIZED_QUERY, null);
         configDef.parse(config);
     }
 
@@ -51,7 +58,7 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
         config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
         config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL);
         configDef.parse(config);
         config.put(MarkLogicSourceConfig.WAIT_TIME, null);
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
@@ -70,7 +77,7 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
         config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
         config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL);
         configDef.parse(config);
         config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, null);
         Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
@@ -89,4 +96,25 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "False");
         configDef.parse(config);
     }
+
+    @Test
+    void testQueryTypeXor() {
+        Assertions.assertThrows(ConfigException.class, () -> startSourceTask(
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+        ));
+        Assertions.assertThrows(ConfigException.class, () -> startSourceTask(
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED
+        ));
+        Assertions.assertNotNull(startSourceTask(
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL
+        ));
+        Assertions.assertNotNull(startSourceTask(
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED
+        ));
+    }
+
 }

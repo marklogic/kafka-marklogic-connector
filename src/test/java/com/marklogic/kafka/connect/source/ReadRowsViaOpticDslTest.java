@@ -2,14 +2,10 @@ package com.marklogic.kafka.connect.source;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.datamovement.RowBatcher;
-import com.marklogic.client.document.XMLDocumentManager;
-import com.marklogic.client.io.DocumentMetadataHandle;
-import com.marklogic.client.io.FileHandle;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,24 +16,22 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
 
     @Test
     void testRowBatcherTask() throws InterruptedException {
-        loadMarkLogicTestData();
+        loadFifteenAuthorsIntoMarkLogic();
 
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
-            MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
 
         List<SourceRecord> newSourceRecords = task.poll();
-
-        Assertions.assertEquals(15, newSourceRecords.size());
-        assertTopicAndSingleValue(newSourceRecords, AUTHORS_TOPIC);
+        verifyQueryReturnsFifteenAuthors(newSourceRecords);
     }
 
     @Test
     void noRowsReturned() throws InterruptedException {
         List<SourceRecord> records = startSourceTask(
-            MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         ).poll();
 
@@ -51,19 +45,19 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         String fromSqlDsl = "op.fromSQL('SELECT employees.FirstName, employees.LastName FROM employees')";
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
-            MarkLogicSourceConfig.DSL_PLAN, fromSqlDsl,
+            MarkLogicSourceConfig.DSL_QUERY, fromSqlDsl,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         assertNull(task.poll());
     }
 
     @Test
-    void testBatcherStopDoesNotWaitForCompletion() throws InterruptedException {
-        loadMarkLogicTestData();
+    void testBatcherStopDoesNotWaitForCompletion() {
+        loadFifteenAuthorsIntoMarkLogic();
 
         RowBatcherSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
-            MarkLogicSourceConfig.DSL_PLAN, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         List<SourceRecord> newSourceRecords = new Vector<>();
@@ -72,9 +66,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         // Register our own success listener to look for any onSuccess events
         // and set a variable tracking onSuccess events.
         AtomicReference<Boolean> onSuccessCalled = new AtomicReference<>(false);
-        rowBatcher.onSuccess(event -> {
-            onSuccessCalled.set(true);
-        });
+        rowBatcher.onSuccess(event -> onSuccessCalled.set(true));
 
         // Start a new thread that can be paused before polling
         // to verify that task.stop() prevents any new polling.
@@ -92,30 +84,5 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         Assertions.assertFalse(onSuccessCalled.get(),
             "RowBatcherSourceTask should have stopped before any onSuccess events");
         Assertions.assertEquals(0, newSourceRecords.size());
-    }
-
-    private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String topic) {
-        String expectedValue = "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
-            "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
-            "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}}";
-        AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
-        newSourceRecords.forEach(sourceRecord -> {
-            Assertions.assertEquals(topic, sourceRecord.topic());
-            assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
-                "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: " + sourceRecord.value().getClass());
-            System.out.println(sourceRecord.value());
-            if (expectedValue.equals(sourceRecord.value())) {
-                foundExpectedValue.set(true);
-            }
-        });
-        Assertions.assertTrue(foundExpectedValue.get(),
-            "List of SourceRecords does not contain a record with the expected value");
-    }
-
-    private void loadMarkLogicTestData() {
-        XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
-        docMgr.write("citations.xml",
-            new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
-            new FileHandle(new File("src/test/resources/citations.xml")));
     }
 }

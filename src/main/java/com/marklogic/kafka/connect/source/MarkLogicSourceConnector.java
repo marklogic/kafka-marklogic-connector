@@ -1,14 +1,18 @@
 package com.marklogic.kafka.connect.source;
 
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static java.lang.String.format;
 
 /**
  * Entry point into the MarkLogic source connector for Kafka.
@@ -28,6 +32,14 @@ public class MarkLogicSourceConnector extends SourceConnector {
     @Override
     public void start(final Map<String, String> config) {
         logger.info("Starting MarkLogicSourceConnector");
+        Boolean configuredForDsl = StringUtils.hasText(config.get(MarkLogicSourceConfig.DSL_QUERY));
+        Boolean configuredForSerialized = StringUtils.hasText(config.get(MarkLogicSourceConfig.SERIALIZED_QUERY));
+        if ((!(configuredForDsl || configuredForSerialized)) || (configuredForDsl && configuredForSerialized)) {
+            throw new ConfigException(
+                format("Either a DSL Optic query (%s) or a serialized Optic query (%s), but not both, are required",
+                    MarkLogicSourceConfig.DSL_QUERY, MarkLogicSourceConfig.SERIALIZED_QUERY)
+            );
+        }
         this.config = config;
     }
 
