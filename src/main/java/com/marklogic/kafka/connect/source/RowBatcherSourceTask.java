@@ -10,6 +10,7 @@ import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.io.marker.ContentHandle;
+import com.marklogic.client.row.RawPlanDefinition;
 import com.marklogic.client.row.RawQueryDSLPlan;
 import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
@@ -144,13 +145,24 @@ public class RowBatcherSourceTask extends SourceTask {
             rowBatcher.withConsistentSnapshot();
         }
 
-
-        String dslPlan = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_PLAN);
-        RowManager rowMgr = rowBatcher.getRowManager();
-        RawQueryDSLPlan plan = rowMgr.newRawQueryDSLPlan(new StringHandle(dslPlan));
-        rowBatcher.withBatchView(plan);
+        configureBatchView(parsedConfig, rowBatcher);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         rowBatcher.onFailure(this::onFailureHandler);
+    }
+
+    static private void configureBatchView(Map<String, Object> config, RowBatcher<JsonNode> rowBatcher) {
+        boolean configuredForDsl = StringUtils.hasText((String) config.get(MarkLogicSourceConfig.DSL_QUERY));
+        if (configuredForDsl) {
+            String dslQuery = (String) config.get(MarkLogicSourceConfig.DSL_QUERY);
+            RowManager rowMgr = rowBatcher.getRowManager();
+            RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(dslQuery));
+            rowBatcher.withBatchView(query);
+        } else {
+            String serializedQuery = (String) config.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
+            RowManager rowMgr = rowBatcher.getRowManager();
+            RawPlanDefinition query = rowMgr.newRawPlanDefinition(new StringHandle(serializedQuery));
+            rowBatcher.withBatchView(query);
+        }
     }
 
     private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<JsonNode> event, List<SourceRecord> newSourceRecords) {

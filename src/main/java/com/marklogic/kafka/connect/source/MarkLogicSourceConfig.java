@@ -8,12 +8,15 @@ import org.apache.kafka.common.config.ConfigException;
 
 import java.util.Map;
 
+import static java.lang.String.format;
+
 /**
  * Defines configuration properties for the MarkLogic source connector.
  */
 public class MarkLogicSourceConfig extends MarkLogicConfig {
 
-    public static final String DSL_PLAN = "ml.source.optic.dsl";
+    public static final String DSL_QUERY = "ml.source.optic.dsl";
+    public static final String SERIALIZED_QUERY = "ml.source.optic.serialized";
     public static final String JOB_NAME = "ml.source.optic.jobName";
     public static final String CONSISTENT_SNAPSHOT = "ml.source.optic.consistentSnapshot";
     public static final String TOPIC = "ml.source.topic";
@@ -28,8 +31,10 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
         ConfigDef configDef = new ConfigDef();
         MarkLogicConfig.addDefinitions(configDef);
         return configDef
-            .define(DSL_PLAN, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
-                "Required; the Optic DSL query to execute")
+            .define(DSL_QUERY, Type.STRING, null, new ConfigDef.NonEmptyString(), Importance.HIGH,
+                format("Required (or %s); the Optic DSL query to execute", SERIALIZED_QUERY))
+            .define(SERIALIZED_QUERY, Type.STRING, null, new ConfigDef.NonEmptyString(), Importance.HIGH,
+                format("Required (or %s); the serialized Optic query to execute", DSL_QUERY))
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
                 "Required; the name of a Kafka topic to send records to")
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
