@@ -20,7 +20,7 @@ class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
         );
 
         List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords);
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, ReadRowsViaOpticDslTest.JSON_RESULT);
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.marklogic.kafka.connect.source;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.datamovement.RowBatcher;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +12,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
+    protected static final String JSON_RESULT = "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
+        "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
+        "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}}";
 
     @Test
     void testRowBatcherTask() throws InterruptedException {
@@ -25,7 +27,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         );
 
         List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords);
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, JSON_RESULT);
     }
 
     @Test
@@ -61,7 +63,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         List<SourceRecord> newSourceRecords = new Vector<>();
-        RowBatcher<JsonNode> rowBatcher = task.newRowBatcher(newSourceRecords);
+        RowBatcher<?> rowBatcher = task.newRowBatcher(newSourceRecords);
 
         // Register our own success listener to look for any onSuccess events
         // and set a variable tracking onSuccess events.
