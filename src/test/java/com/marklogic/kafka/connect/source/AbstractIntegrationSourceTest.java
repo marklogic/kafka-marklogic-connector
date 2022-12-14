@@ -32,6 +32,7 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
     protected final String AUTHORS_OPTIC_SERIALIZED = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
     protected final String AUTHORS_TOPIC = "Authors";
 
+
     /**
      * @param configParamNamesAndValues - Configuration values that need to be set for the test.
      * @return a MarkLogicSourceTask based on the default connection config and any optional config params provided by
@@ -62,18 +63,15 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
             new FileHandle(new File("src/test/resources/citations.xml")));
     }
 
-    void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords) {
+    void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue) {
         Assertions.assertEquals(15, sourceRecords.size());
-        assertTopicAndSingleValue(sourceRecords, AUTHORS_TOPIC);
+        assertTopicAndSingleValue(sourceRecords, expectedValue);
     }
 
-    private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String topic) {
-        String expectedValue = "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
-            "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
-            "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}}";
-        AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
+    private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String expectedValue) {
+       AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
         newSourceRecords.forEach(sourceRecord -> {
-            Assertions.assertEquals(topic, sourceRecord.topic());
+            Assertions.assertEquals(AUTHORS_TOPIC, sourceRecord.topic());
             assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
                 "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: " + sourceRecord.value().getClass());
             System.out.println(sourceRecord.value());

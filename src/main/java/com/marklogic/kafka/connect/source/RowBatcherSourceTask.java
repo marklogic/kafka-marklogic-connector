@@ -1,24 +1,15 @@
 package com.marklogic.kafka.connect.source;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.datamovement.*;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
-import com.marklogic.client.io.Format;
-import com.marklogic.client.io.JacksonHandle;
-import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.io.marker.ContentHandle;
-import com.marklogic.client.row.RawPlanDefinition;
-import com.marklogic.client.row.RawQueryDSLPlan;
-import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -31,9 +22,9 @@ public class RowBatcherSourceTask extends SourceTask {
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
-    private RowBatcher<JsonNode> rowBatcher = null;
-    private Map<String, Object> parsedConfig;
+    private RowBatcher<?> rowBatcher = null;
     private long pollDelayMs = 1000L;
+    private RowBatcherBuilder<?> rowBatcherBuilder;
 
     /**
      * Required for a Kafka task.
@@ -53,11 +44,13 @@ public class RowBatcherSourceTask extends SourceTask {
     @Override
     public final void start(Map<String, String> config) {
         logger.debug("Starting RowBatcherSourceTask");
-        this.parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
+        Map<String, Object> parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         dataMovementManager = databaseClient.newDataMovementManager();
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
+
+        rowBatcherBuilder = newRowBatcherBuilder(dataMovementManager, parsedConfig);
     }
 
     @Override
@@ -68,7 +61,7 @@ public class RowBatcherSourceTask extends SourceTask {
 
         try {
             rowBatcher = newRowBatcher(newSourceRecords);
-        } catch (FailedRequestException ex) {
+       } catch (FailedRequestException ex) {
             if (!rowBatcherErrorIsKnownServerBug(ex)) {
                 logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
             }
@@ -82,11 +75,27 @@ public class RowBatcherSourceTask extends SourceTask {
         return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
-    protected RowBatcher<JsonNode> newRowBatcher(List<SourceRecord> newSourceRecords) {
-        ContentHandle<JsonNode> jsonHandle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
-        rowBatcher =  dataMovementManager.newRowBatcher(jsonHandle);
-        configureRowBatcher(parsedConfig, rowBatcher, newSourceRecords);
-        return rowBatcher;
+    protected RowBatcher<?> newRowBatcher(List<SourceRecord> newSourceRecords) {
+        return rowBatcherBuilder.newRowBatcher(newSourceRecords);
+    }
+
+    private RowBatcherBuilder<?> newRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+        MarkLogicSourceConfig.OUTPUT_TYPE outputType = MarkLogicSourceConfig.OUTPUT_TYPE.valueOf((String) parsedConfig.get(MarkLogicSourceConfig.OUTPUT_FORMAT));
+        final RowBatcherBuilder<?> rowBatcherBuilder;
+        switch (outputType) {
+            case JSON :
+                rowBatcherBuilder = new JsonRowBatcherBuilder(dataMovementManager, parsedConfig);
+                break;
+            case XML:
+                rowBatcherBuilder = new XmlRowBatcherBuilder(dataMovementManager, parsedConfig);
+                break;
+            case CSV:
+                rowBatcherBuilder = new CsvRowBatcherBuilder(dataMovementManager, parsedConfig);
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected output type: " + outputType);
+        }
+        return rowBatcherBuilder;
     }
 
     protected void performPoll() {
@@ -112,83 +121,6 @@ public class RowBatcherSourceTask extends SourceTask {
         if (databaseClient != null) {
             databaseClient.release();
         }
-    }
-
-    /**
-     * Configure the given RowBatcher based on DMSDK-related options in the parsedConfig.
-     *
-     * @param parsedConfig - The complete configuration object including any transform parameters.
-     * @param rowBatcher - The RowBatcher object to be configured.
-     */
-    private void configureRowBatcher(Map<String, Object> parsedConfig, RowBatcher<JsonNode> rowBatcher, List<SourceRecord> newSourceRecords) {
-        Integer batchSize = (Integer) parsedConfig.get(MarkLogicSourceConfig.DMSDK_BATCH_SIZE);
-        if (batchSize != null) {
-            logger.debug("DMSDK batch size: " + batchSize);
-            rowBatcher.withBatchSize(batchSize);
-        }
-
-        Integer threadCount = (Integer) parsedConfig.get(MarkLogicSourceConfig.DMSDK_THREAD_COUNT);
-        if (threadCount != null) {
-            logger.debug("DMSDK thread count: " + threadCount);
-            rowBatcher.withThreadCount(threadCount);
-        }
-
-        String jobName = (String) parsedConfig.get(MarkLogicSourceConfig.JOB_NAME);
-        if (StringUtils.hasText(jobName)) {
-            logger.debug("DMSDK Job Name: " + jobName);
-            rowBatcher.withJobName(jobName);
-        }
-
-        Boolean consistentSnapshot = (Boolean) parsedConfig.get(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT);
-        logger.debug("DMSDK Consistent Snapshot: " + consistentSnapshot);
-        if (consistentSnapshot) {
-            rowBatcher.withConsistentSnapshot();
-        }
-
-        configureBatchView(parsedConfig, rowBatcher);
-        rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
-        rowBatcher.onFailure(this::onFailureHandler);
-    }
-
-    static private void configureBatchView(Map<String, Object> config, RowBatcher<JsonNode> rowBatcher) {
-        boolean configuredForDsl = StringUtils.hasText((String) config.get(MarkLogicSourceConfig.DSL_QUERY));
-        if (configuredForDsl) {
-            String dslQuery = (String) config.get(MarkLogicSourceConfig.DSL_QUERY);
-            RowManager rowMgr = rowBatcher.getRowManager();
-            RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(dslQuery));
-            rowBatcher.withBatchView(query);
-        } else {
-            String serializedQuery = (String) config.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
-            RowManager rowMgr = rowBatcher.getRowManager();
-            RawPlanDefinition query = rowMgr.newRawPlanDefinition(new StringHandle(serializedQuery));
-            rowBatcher.withBatchView(query);
-        }
-    }
-
-    private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<JsonNode> event, List<SourceRecord> newSourceRecords) {
-        JsonNode rows = event.getRowsDoc().get("rows");
-        logger.debug("JsonNode: \n" + rows.toPrettyString());
-
-        String topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
-        for (JsonNode row : rows) {
-// We may need to add a switch to include a key in the record depending on how the target topic is configured.
-// If the topic's cleanup policy is set to "compact", then a key is required to be included in the SourceRecord.
-//            String key = event.getJobBatchNumber() + "-" + rowNumber;
-
-            // Calling toString on the JsonNode, as when this is run in Confluent Platform, we get the following
-            // error: org.apache.kafka.connect.errors.DataException: Java class com.fasterxml.jackson.databind.node.ObjectNode does not have corresponding schema type.
-            try {
-                SourceRecord newRecord = new SourceRecord(null, null, topic, null, row.toString());
-                newSourceRecords.add(newRecord);
-            } catch (Exception ex) {
-                logger.error("Failed to create or add SourceRecord from result row; cause: " + ex.getMessage());
-                logger.error("Failed result row: " + row.toString());
-            }
-        }
-    }
-
-    private void onFailureHandler(RowBatchFailureListener.RowBatchFailureEvent batch, Throwable throwable) {
-        logger.error("batch "+batch.getJobBatchNumber()+" failed with error: "+throwable.getMessage());
     }
 
     private boolean rowBatcherErrorIsKnownServerBug(FailedRequestException ex) {
