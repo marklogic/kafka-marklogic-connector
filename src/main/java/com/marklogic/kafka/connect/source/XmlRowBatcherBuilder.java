@@ -11,7 +11,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
@@ -19,7 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 public class XmlRowBatcherBuilder extends AbstractRowBatchBuilder implements RowBatcherBuilder<Document> {
+
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
+
+    // While a Transformer is not thread-safe and must therefore be created for each batch - though we could consider
+    // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
+    private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
     XmlRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         super(dataMovementManager, parsedConfig);
@@ -36,10 +44,10 @@ public class XmlRowBatcherBuilder extends AbstractRowBatchBuilder implements Row
     protected void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<Document> event, List<SourceRecord> newSourceRecords) {
         NodeList rows = extractRowsFromResponse(event);
 
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer;
         try {
             transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         } catch (Exception ex) {
             logBatchError(ex);
             return;
@@ -66,11 +74,8 @@ public class XmlRowBatcherBuilder extends AbstractRowBatchBuilder implements Row
     }
 
     private String documentToString(Node newDoc, Transformer transformer) throws TransformerException {
-        DOMSource domSource = new DOMSource(newDoc);
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         StringWriter sw = new StringWriter();
-        StreamResult sr = new StreamResult(sw);
-        transformer.transform(domSource, sr);
+        transformer.transform(new DOMSource(newDoc), new StreamResult(sw));
         return sw.toString();
     }
 }
