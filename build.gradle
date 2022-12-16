@@ -224,7 +224,11 @@ task loadMarkLogicPurchasesSourceConnector(type: Exec, group: confluentTestingGr
 task setupLocalConfluent(group: confluentTestingGroup) {
   description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
 }
-setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
+
+// Temporarily only loading the source connector to make manual testing easier, will re-enable all of these before 1.8.0
+//setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
+setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicPurchasesSourceConnector
+
 loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent

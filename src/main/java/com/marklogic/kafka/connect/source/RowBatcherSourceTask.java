@@ -43,7 +43,7 @@ public class RowBatcherSourceTask extends SourceTask {
      */
     @Override
     public final void start(Map<String, String> config) {
-        logger.debug("Starting RowBatcherSourceTask");
+        logger.info("Starting RowBatcherSourceTask");
         Map<String, Object> parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
@@ -51,27 +51,30 @@ public class RowBatcherSourceTask extends SourceTask {
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
 
         rowBatcherBuilder = newRowBatcherBuilder(dataMovementManager, parsedConfig);
+        logger.info("Started RowBatcherSourceTask");
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
+        // Temporary logging while testing CP to ensure the correct output format is being used
+        logger.info("Polling; RowBatcherBuilder: " + rowBatcherBuilder.getClass().getName());
+
         List<SourceRecord> newSourceRecords = new Vector<>();
         logger.info("Temporary log statement for testing; sleeping for " + pollDelayMs + "ms");
         Thread.sleep(pollDelayMs);
 
+        long start = System.currentTimeMillis();
         try {
             rowBatcher = newRowBatcher(newSourceRecords);
-       } catch (FailedRequestException ex) {
+       } catch (Exception ex) {
             if (!rowBatcherErrorIsKnownServerBug(ex)) {
                 logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
             }
             return null;
-        } catch (Exception ex) {
-            logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
-            return null;
         }
 
         performPoll();
+        logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + (System.currentTimeMillis() - start));
         return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
@@ -100,7 +103,9 @@ public class RowBatcherSourceTask extends SourceTask {
 
     protected void performPoll() {
         try {
+            logger.info("Starting job");
             dataMovementManager.startJob(rowBatcher);
+            logger.info("Awaiting completion");
             rowBatcher.awaitCompletion();
             dataMovementManager.stopJob(rowBatcher);
         } catch (Exception ex) {
@@ -115,6 +120,7 @@ public class RowBatcherSourceTask extends SourceTask {
     // indefinitely, so they need to be stopped with a call from a different thread in the Worker."
     @Override
     public synchronized void stop() {
+        logger.info("Stop called; stopping job");
         if (rowBatcher != null) {
             dataMovementManager.stopJob(rowBatcher);
         }
@@ -123,12 +129,14 @@ public class RowBatcherSourceTask extends SourceTask {
         }
     }
 
-    private boolean rowBatcherErrorIsKnownServerBug(FailedRequestException ex) {
-        String serverMessage = ex.getServerMessage();
-        final String knownBugErrorMessage = "$tableId as xs:string -- Invalid coercion: () as xs:string";
-        if (serverMessage != null && serverMessage.contains(knownBugErrorMessage)) {
-            logger.debug("Catching known bug where an error is thrown when no rows exist; will return no data instead");
-            return true;
+    private boolean rowBatcherErrorIsKnownServerBug(Exception ex) {
+        if (ex instanceof FailedRequestException) {
+            String serverMessage = ((FailedRequestException)ex).getServerMessage();
+            final String knownBugErrorMessage = "$tableId as xs:string -- Invalid coercion: () as xs:string";
+            if (serverMessage != null && serverMessage.contains(knownBugErrorMessage)) {
+                logger.debug("Catching known bug where an error is thrown when no rows exist; will return no data instead");
+                return true;
+            }
         }
         return false;
     }

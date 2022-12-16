@@ -8,7 +8,7 @@
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter.schemas.enable": "false",
     "value.converter.decimal.format": "NUMERIC",
-    "max.interval": 1000,
+    "max.interval": 5000,
     "tasks.max": "1"
   }
 }

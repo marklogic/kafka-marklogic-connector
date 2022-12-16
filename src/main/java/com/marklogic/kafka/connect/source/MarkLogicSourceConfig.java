@@ -41,7 +41,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             .define(SERIALIZED_QUERY, Type.STRING, null, new ConfigDef.NonEmptyString(), Importance.HIGH,
                 format("Required (or %s); The serialized Optic query to execute", DSL_QUERY))
             .define(OUTPUT_FORMAT, Type.STRING, "JSON", OUTPUT_FORMAT_RV, Importance.HIGH,
-                "The structure of the data in the query response")
+                "The structure of the data in the query response", null, -1, ConfigDef.Width.MEDIUM, OUTPUT_FORMAT, OUTPUT_FORMAT_RV)
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
                 "Required; The name of a Kafka topic to send records to")
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
@@ -53,9 +53,16 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 "Enables retrieval of rows that were present in the view at the time that the " +
                     "first batch is retrieved, ignoring subsequent changes to the view; defaults to true; setting this to false will " +
                     "result in matching rows inserted or updated after the retrieval of the first batch being included as well")
-            .define(DMSDK_BATCH_SIZE, Type.INT, 100, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
+            // Batch size is a bit different for RowBatcher than QueryBatcher, as it - along with the row estimate that
+            // RowBatcher gathers - is used to determine the number of partitions. The more partitions, the more calls
+            // RowBatcher has to make to ML. That's good when there are a lot of matching rows - like hundreds of
+            // thousands - but not good when there's a smaller set of matching rows. From initial testing, 10k seems
+            // like a reasonable default size for batches that provides good performance when there are hundreds of
+            // thousands of matches or more, and also when only a few rows match. Ultimately, it's up a user to perform
+            // their own performance testing to determine a suitable batch size. 
+            .define(DMSDK_BATCH_SIZE, Type.INT, 10000, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
                 "Sets the number of rows to be read in a batch from MarkLogic; can adjust this to tune performance")
-            .define(DMSDK_THREAD_COUNT, Type.INT, 8, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
+            .define(DMSDK_THREAD_COUNT, Type.INT, 16, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
                 "Sets the number of threads to use for reading batches of rows from MarkLogic; can adjust this to tune performance");
     }
 
