@@ -26,32 +26,6 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
-    void testDslConfig() {
-        ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
-        Map<String, Object> config = new HashMap<>();
-        config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
-        config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
-        config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.DSL_QUERY, "");
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.DSL_QUERY, null);
-        configDef.parse(config);
-    }
-
-    @Test
-    void testSerializedConfig() {
-        ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
-        Map<String, Object> config = new HashMap<>();
-        config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
-        config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
-        config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.SERIALIZED_QUERY, "");
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.SERIALIZED_QUERY, null);
-        configDef.parse(config);
-    }
-
-    @Test
     void testWaitTimeConfig() {
         ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
         Map<String, Object> config = new HashMap<>();

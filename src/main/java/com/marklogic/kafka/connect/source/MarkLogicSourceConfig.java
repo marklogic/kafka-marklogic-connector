@@ -36,9 +36,9 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
         ConfigDef configDef = new ConfigDef();
         MarkLogicConfig.addDefinitions(configDef);
         return configDef
-            .define(DSL_QUERY, Type.STRING, null, new ConfigDef.NonEmptyString(), Importance.HIGH,
+            .define(DSL_QUERY, Type.STRING, null, Importance.HIGH,
                 format("Required (or %s); The Optic DSL query to execute", SERIALIZED_QUERY))
-            .define(SERIALIZED_QUERY, Type.STRING, null, new ConfigDef.NonEmptyString(), Importance.HIGH,
+            .define(SERIALIZED_QUERY, Type.STRING, null, Importance.HIGH,
                 format("Required (or %s); The serialized Optic query to execute", DSL_QUERY))
             .define(OUTPUT_FORMAT, Type.STRING, "JSON", OUTPUT_FORMAT_RV, Importance.HIGH,
                 "The structure of the data in the query response", null, -1, ConfigDef.Width.MEDIUM, OUTPUT_FORMAT, OUTPUT_FORMAT_RV)
@@ -59,7 +59,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             // thousands - but not good when there's a smaller set of matching rows. From initial testing, 10k seems
             // like a reasonable default size for batches that provides good performance when there are hundreds of
             // thousands of matches or more, and also when only a few rows match. Ultimately, it's up a user to perform
-            // their own performance testing to determine a suitable batch size. 
+            // their own performance testing to determine a suitable batch size.
             .define(DMSDK_BATCH_SIZE, Type.INT, 10000, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
                 "Sets the number of rows to be read in a batch from MarkLogic; can adjust this to tune performance")
             .define(DMSDK_THREAD_COUNT, Type.INT, 16, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
