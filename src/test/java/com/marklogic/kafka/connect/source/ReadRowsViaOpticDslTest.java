@@ -12,9 +12,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
-    protected static final String JSON_RESULT = "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
+    protected static final String JSON_RESULT =
+        "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
         "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
-        "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}}";
+        "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}," +
+        "\"Medical.Authors.Date\":{\"type\":\"xs:date\",\"value\":\"2022-05-11\"}," +
+        "\"Medical.Authors.DateTime\":{\"type\":\"xs:dateTime\",\"value\":\"2022-05-11T10:00:00\"}}";
 
     @Test
     void testRowBatcherTask() throws InterruptedException {
@@ -63,7 +66,9 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         List<SourceRecord> newSourceRecords = new Vector<>();
-        RowBatcher<?> rowBatcher = task.newRowBatcher(newSourceRecords);
+        task.loadNewQueryContext(newSourceRecords);
+        QueryContext<?> queryContext = task.getQueryContext();
+        RowBatcher<?> rowBatcher = queryContext.getRowBatcher();
 
         // Register our own success listener to look for any onSuccess events
         // and set a variable tracking onSuccess events.

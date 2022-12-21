@@ -16,11 +16,14 @@ public class AbstractRowBatchBuilder extends LoggingObject {
     protected final DataMovementManager dataMovementManager;
     protected final Map<String, Object> parsedConfig;
     protected final String topic;
+    protected final String constraintColumn;
+    protected String currentQuery;
 
     AbstractRowBatchBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         this.dataMovementManager = dataMovementManager;
         this.parsedConfig = parsedConfig;
         this.topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
+        this.constraintColumn = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
     }
 
     void logBatchError(Exception ex, String record) {
@@ -37,7 +40,7 @@ public class AbstractRowBatchBuilder extends LoggingObject {
      * @param parsedConfig - The complete configuration object including any transform parameters.
      * @param rowBatcher - The RowBatcher object to be configured.
      */
-    protected void configureRowBatcher(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher) {
+    protected void configureRowBatcher(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
         Integer batchSize = (Integer) parsedConfig.get(MarkLogicSourceConfig.DMSDK_BATCH_SIZE);
         if (batchSize != null) {
             logger.debug("DMSDK batch size: " + batchSize);
@@ -62,16 +65,20 @@ public class AbstractRowBatchBuilder extends LoggingObject {
             rowBatcher.withConsistentSnapshot();
         }
 
-        configureBatchView(parsedConfig, rowBatcher);
+        configureBatchView(parsedConfig, rowBatcher, previousMaxConstraintColumnValue);
         rowBatcher.onFailure(this::onFailureHandler);
     }
 
-    private void configureBatchView(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher) {
+    private void configureBatchView(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
         boolean configuredForDsl = StringUtils.hasText((String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY));
         if (configuredForDsl) {
-            String dslQuery = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY);
+            currentQuery = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY);
+            if (previousMaxConstraintColumnValue != null) {
+                currentQuery = injectConstraintIntoDslQuery(currentQuery, constraintColumn, previousMaxConstraintColumnValue);
+            }
+            logger.info("constrainedQuery (unless initial run): " + currentQuery);
             RowManager rowMgr = rowBatcher.getRowManager();
-            RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(dslQuery));
+            RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(currentQuery));
             rowBatcher.withBatchView(query);
         } else {
             String serializedQuery = (String) parsedConfig.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
@@ -82,6 +89,50 @@ public class AbstractRowBatchBuilder extends LoggingObject {
     }
 
     private void onFailureHandler(RowBatchFailureListener.RowBatchFailureEvent batch, Throwable throwable) {
-        logger.error("batch "+batch.getJobBatchNumber()+" failed with error: "+throwable.getMessage());
+        String message = throwable.getMessage();
+        String errorString = "Column not found: ";
+        int locationOfErrorString = message.indexOf(errorString);
+        if (locationOfErrorString > -1) {
+            int lengthOfErrorString = errorString.length();
+            int locationOfNextSpace = message.indexOf(" ", locationOfErrorString+lengthOfErrorString);
+            String columnName = message.substring(locationOfErrorString+lengthOfErrorString, locationOfNextSpace);
+            logger.error("batch "+batch.getJobBatchNumber()+" failed due to missing column: " + columnName);
+        } else {
+            logger.error("batch " + batch.getJobBatchNumber() + " failed with error: " + throwable.getMessage());
+        }
+    }
+
+    protected static String injectConstraintIntoDslQuery(String originalDsl, String constraintColumn, String constraintValue) {
+        String constraintPhrase = ".where(op.gt(op.col(\"" + constraintColumn + "\"), " + constraintValue + "))";
+        String constrainedDsl;
+        String regexToRemoveNonQuotedWhitespace = "\\s+(?=(?:[^\\'\"]*[\\'\"][^\\'\"]*[\\'\"])*[^\\'\"]*$)";
+        String originalDslNoWhitespace = originalDsl.replaceAll(regexToRemoveNonQuotedWhitespace, "");
+        if (originalDslNoWhitespace.contains(").")) {
+            int firstClosingParen = originalDslNoWhitespace.indexOf(").");
+            constrainedDsl = originalDslNoWhitespace.substring(0, firstClosingParen+1)
+                + constraintPhrase + originalDslNoWhitespace.substring(firstClosingParen+1);
+        } else {
+            constrainedDsl = originalDsl + constraintPhrase;
+        }
+        return constrainedDsl;
+    }
+
+    public static QueryContextBuilder<?> newQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+        MarkLogicSourceConfig.OUTPUT_TYPE outputType = MarkLogicSourceConfig.OUTPUT_TYPE.valueOf((String) parsedConfig.get(MarkLogicSourceConfig.OUTPUT_FORMAT));
+        final QueryContextBuilder<?> queryContextBuilder;
+        switch (outputType) {
+            case JSON :
+                queryContextBuilder = new JsonQueryContextBuilder(dataMovementManager, parsedConfig);
+                break;
+            case XML:
+                queryContextBuilder = new XmlQueryContextBuilder(dataMovementManager, parsedConfig);
+                break;
+            case CSV:
+                queryContextBuilder = new CsvQueryContextBuilder(dataMovementManager, parsedConfig);
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected output type: " + outputType);
+        }
+        return queryContextBuilder;
     }
 }

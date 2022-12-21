@@ -12,16 +12,22 @@ import org.apache.kafka.connect.source.SourceRecord;
 import java.util.List;
 import java.util.Map;
 
-public class JsonRowBatcherBuilder extends AbstractRowBatchBuilder implements RowBatcherBuilder<JsonNode> {
+public class JsonQueryContextBuilder extends AbstractRowBatchBuilder implements QueryContextBuilder<JsonNode> {
 
-    JsonRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    JsonQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         super(dataMovementManager, parsedConfig);
     }
 
-    public RowBatcher<JsonNode> newRowBatcher(List<SourceRecord> newSourceRecords) {
+    @Override
+    public QueryContext<JsonNode> newQueryContext(List<SourceRecord> newSourceRecords, String getPreviousMaxConstraintColumnValue) {
+        RowBatcher<JsonNode> rowBatcher = newRowBatcher(getPreviousMaxConstraintColumnValue, newSourceRecords);
+        return new QueryContext<>(rowBatcher, this.currentQuery);
+    }
+
+    public RowBatcher<JsonNode> newRowBatcher(String getPreviousMaxConstraintColumnValue, List<SourceRecord> newSourceRecords) {
         ContentHandle<JsonNode> contentHandle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
         RowBatcher<JsonNode> rowBatcher =  dataMovementManager.newRowBatcher(contentHandle);
-        configureRowBatcher(parsedConfig, rowBatcher);
+        configureRowBatcher(parsedConfig, rowBatcher, getPreviousMaxConstraintColumnValue);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         return rowBatcher;
     }

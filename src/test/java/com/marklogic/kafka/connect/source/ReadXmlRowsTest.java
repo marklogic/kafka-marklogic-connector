@@ -10,6 +10,8 @@ class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
         "<t:cell name=\"Medical.Authors.ID\" type=\"xs:integer\">2</t:cell>\n" +
         "<t:cell name=\"Medical.Authors.LastName\" type=\"xs:string\">Pulhoster</t:cell>\n" +
         "<t:cell name=\"Medical.Authors.ForeName\" type=\"xs:string\">Misty</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.Date\" type=\"xs:date\">2022-05-11</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.DateTime\" type=\"xs:dateTime\">2022-05-11T10:00:00</t:cell>\n" +
         "</t:row>";
 
     @Test
