@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
-    protected final String CSV_RESULT = "Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName\n" +
-        "2,Pulhoster,Misty";
+    protected final String CSV_RESULT = "Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Authors.Date,Medical.Authors.DateTime\n" +
+        "2,Pulhoster,Misty,2022-05-11,2022-05-11T10:00:00";
 
     @Test
     void testRowBatcherTask() throws InterruptedException {

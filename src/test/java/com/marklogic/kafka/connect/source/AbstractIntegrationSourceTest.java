@@ -3,13 +3,17 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
+import com.marklogic.client.io.StringHandle;
 import com.marklogic.junit5.spring.SimpleTestConfig;
 import com.marklogic.kafka.connect.AbstractIntegrationTest;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +65,19 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
         docMgr.write("citations.xml",
             new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
             new FileHandle(new File("src/test/resources/citations.xml")));
+    }
+
+    void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String citationTime, String lastName) throws IOException {
+        String templateFilePath = "src/test/resources/singleAuthorSingleCitation.xml";
+        byte[] encoded = Files.readAllBytes(Paths.get(templateFilePath));
+        String template = new String(encoded, StandardCharsets.UTF_8);
+        String documentContents = template.replaceAll("%%TIME%%", citationTime);
+        documentContents = documentContents.replaceAll("%%LASTNAME%%", lastName);
+        XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
+        docMgr.write(uri,
+            new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
+            new StringHandle(documentContents)
+        );
     }
 
     void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue) {

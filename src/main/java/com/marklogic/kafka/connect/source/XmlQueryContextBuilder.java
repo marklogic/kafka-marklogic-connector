@@ -21,7 +21,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
-public class XmlRowBatcherBuilder extends AbstractRowBatchBuilder implements RowBatcherBuilder<Document> {
+public class XmlQueryContextBuilder extends AbstractRowBatchBuilder implements QueryContextBuilder<Document> {
 
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
@@ -29,14 +29,20 @@ public class XmlRowBatcherBuilder extends AbstractRowBatchBuilder implements Row
     // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-    XmlRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    XmlQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         super(dataMovementManager, parsedConfig);
     }
 
-    public RowBatcher<Document> newRowBatcher(List<SourceRecord> newSourceRecords) {
+    @Override
+    public QueryContext<Document> newQueryContext(List<SourceRecord> newSourceRecords, String previousMaxConstraintColumnValue) {
+        RowBatcher<Document> rowBatcher = newRowBatcher(previousMaxConstraintColumnValue, newSourceRecords);
+        return new QueryContext<>(rowBatcher, this.currentQuery);
+    }
+
+    public RowBatcher<Document> newRowBatcher(String previousMaxConstraintColumnValue, List<SourceRecord> newSourceRecords) {
         ContentHandle<Document> domHandle = new DOMHandle().withMimetype("application/xml");
         RowBatcher<Document> rowBatcher = dataMovementManager.newRowBatcher(domHandle);
-        configureRowBatcher(parsedConfig, rowBatcher);
+        configureRowBatcher(parsedConfig, rowBatcher, previousMaxConstraintColumnValue);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         return rowBatcher;
     }

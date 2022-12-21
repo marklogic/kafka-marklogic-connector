@@ -81,7 +81,7 @@ public class MarkLogicConfig extends AbstractConfig {
         private List<Object> validValues;
 
         public CustomRecommenderAndValidator(String... validValues) {
-            this.validValues = Arrays.asList(validValues);
+            this.validValues = Arrays.asList((Object[]) validValues);
         }
 
         @Override
