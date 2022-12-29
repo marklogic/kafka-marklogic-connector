@@ -21,7 +21,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
-public class XmlQueryContextBuilder extends AbstractRowBatchBuilder implements QueryContextBuilder<Document> {
+public class XmlRowBatcherBuilder extends AbstractRowBatcherBuilder<Document> {
 
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
@@ -29,25 +29,19 @@ public class XmlQueryContextBuilder extends AbstractRowBatchBuilder implements Q
     // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-    XmlQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    XmlRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         super(dataMovementManager, parsedConfig);
     }
 
-    @Override
-    public QueryContext<Document> newQueryContext(List<SourceRecord> newSourceRecords, String previousMaxConstraintColumnValue) {
-        RowBatcher<Document> rowBatcher = newRowBatcher(previousMaxConstraintColumnValue, newSourceRecords);
-        return new QueryContext<>(rowBatcher, this.currentQuery);
-    }
-
-    public RowBatcher<Document> newRowBatcher(String previousMaxConstraintColumnValue, List<SourceRecord> newSourceRecords) {
+    public RowBatcher<Document> newRowBatcher(List<SourceRecord> newSourceRecords) {
         ContentHandle<Document> domHandle = new DOMHandle().withMimetype("application/xml");
         RowBatcher<Document> rowBatcher = dataMovementManager.newRowBatcher(domHandle);
-        configureRowBatcher(parsedConfig, rowBatcher, previousMaxConstraintColumnValue);
+        configureRowBatcher(parsedConfig, rowBatcher);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         return rowBatcher;
     }
 
-    protected void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<Document> event, List<SourceRecord> newSourceRecords) {
+    private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<Document> event, List<SourceRecord> newSourceRecords) {
         NodeList rows = extractRowsFromResponse(event);
 
         Transformer transformer;

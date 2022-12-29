@@ -5,7 +5,9 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,14 +68,14 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
         List<SourceRecord> newSourceRecords = new Vector<>();
-        task.loadNewQueryContext(newSourceRecords);
-        QueryContext<?> queryContext = task.getQueryContext();
-        RowBatcher<?> rowBatcher = queryContext.getRowBatcher();
+        RowBatcher<?> rowBatcher = task.getNewRowBatcher(newSourceRecords);
 
         // Register our own success listener to look for any onSuccess events
         // and set a variable tracking onSuccess events.
         AtomicReference<Boolean> onSuccessCalled = new AtomicReference<>(false);
         rowBatcher.onSuccess(event -> onSuccessCalled.set(true));
+
+        Map<String, Object> parsedConfig = new HashMap<>();
 
         // Start a new thread that can be paused before polling
         // to verify that task.stop() prevents any new polling.
@@ -83,7 +85,8 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            task.performPoll();
+            QueryHandler queryHandler = QueryHandler.newQueryHandler(getDatabaseClient(), parsedConfig);
+            task.performPoll(queryHandler);
         });
         t1.start();
 
