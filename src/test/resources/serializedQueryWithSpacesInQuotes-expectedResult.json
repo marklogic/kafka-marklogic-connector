@@ -1,0 +1,72 @@
+{
+  "$optic": {
+    "ns": "op",
+    "fn": "operators",
+    "args": [
+      {
+        "ns": "op",
+        "fn": "from-view",
+        "args": [
+          "Medical",
+          "Authors"
+        ]
+      },
+      {
+        "ns": "op",
+        "fn": "where",
+        "args": [
+          {
+            "ns": "op",
+            "fn": "gt",
+            "args": [
+              {
+                "ns": "op",
+                "fn": "col",
+                "args": [
+                  "lucky_number"
+                ]
+              },
+              "52"
+            ]
+          }
+        ]
+      },
+      {
+        "ns": "op",
+        "fn": "select",
+        "args": [
+          [
+            {
+              "ns": "op",
+              "fn": "as",
+              "args": [
+                "Last Name",
+                {
+                  "ns": "op",
+                  "fn": "col",
+                  "args": [
+                    "LastName"
+                  ]
+                }
+              ]
+            },
+            {
+              "ns": "op",
+              "fn": "as",
+              "args": [
+                "Fore Name",
+                {
+                  "ns": "op",
+                  "fn": "col",
+                  "args": [
+                    "ForeName"
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -4,27 +4,24 @@ import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.RowBatchFailureListener;
 import com.marklogic.client.datamovement.RowBatcher;
 import com.marklogic.client.ext.helper.LoggingObject;
-import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.row.RawPlanDefinition;
-import com.marklogic.client.row.RawQueryDSLPlan;
-import com.marklogic.client.row.RowManager;
+import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Map;
 
-public class AbstractRowBatchBuilder extends LoggingObject {
+public abstract class AbstractRowBatcherBuilder<T> extends LoggingObject {
     protected final DataMovementManager dataMovementManager;
     protected final Map<String, Object> parsedConfig;
     protected final String topic;
-    protected final String constraintColumn;
-    protected String currentQuery;
 
-    AbstractRowBatchBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    AbstractRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         this.dataMovementManager = dataMovementManager;
         this.parsedConfig = parsedConfig;
         this.topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
-        this.constraintColumn = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
     }
+
+    public abstract RowBatcher<T> newRowBatcher(List<SourceRecord> newSourceRecords);
 
     void logBatchError(Exception ex, String record) {
         logger.error("Failed to create or add SourceRecord from result row: " + record + "\n cause: " + ex.getMessage());
@@ -40,7 +37,7 @@ public class AbstractRowBatchBuilder extends LoggingObject {
      * @param parsedConfig - The complete configuration object including any transform parameters.
      * @param rowBatcher - The RowBatcher object to be configured.
      */
-    protected void configureRowBatcher(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
+    protected void configureRowBatcher(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher) {
         Integer batchSize = (Integer) parsedConfig.get(MarkLogicSourceConfig.DMSDK_BATCH_SIZE);
         if (batchSize != null) {
             logger.debug("DMSDK batch size: " + batchSize);
@@ -65,27 +62,7 @@ public class AbstractRowBatchBuilder extends LoggingObject {
             rowBatcher.withConsistentSnapshot();
         }
 
-        configureBatchView(parsedConfig, rowBatcher, previousMaxConstraintColumnValue);
         rowBatcher.onFailure(this::onFailureHandler);
-    }
-
-    private void configureBatchView(Map<String, Object> parsedConfig, RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
-        boolean configuredForDsl = StringUtils.hasText((String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY));
-        if (configuredForDsl) {
-            currentQuery = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY);
-            if (previousMaxConstraintColumnValue != null) {
-                currentQuery = injectConstraintIntoDslQuery(currentQuery, constraintColumn, previousMaxConstraintColumnValue);
-            }
-            logger.info("constrainedQuery (unless initial run): " + currentQuery);
-            RowManager rowMgr = rowBatcher.getRowManager();
-            RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(currentQuery));
-            rowBatcher.withBatchView(query);
-        } else {
-            String serializedQuery = (String) parsedConfig.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
-            RowManager rowMgr = rowBatcher.getRowManager();
-            RawPlanDefinition query = rowMgr.newRawPlanDefinition(new StringHandle(serializedQuery));
-            rowBatcher.withBatchView(query);
-        }
     }
 
     private void onFailureHandler(RowBatchFailureListener.RowBatchFailureEvent batch, Throwable throwable) {
@@ -102,37 +79,22 @@ public class AbstractRowBatchBuilder extends LoggingObject {
         }
     }
 
-    protected static String injectConstraintIntoDslQuery(String originalDsl, String constraintColumn, String constraintValue) {
-        String constraintPhrase = ".where(op.gt(op.col(\"" + constraintColumn + "\"), " + constraintValue + "))";
-        String constrainedDsl;
-        String regexToRemoveNonQuotedWhitespace = "\\s+(?=(?:[^\\'\"]*[\\'\"][^\\'\"]*[\\'\"])*[^\\'\"]*$)";
-        String originalDslNoWhitespace = originalDsl.replaceAll(regexToRemoveNonQuotedWhitespace, "");
-        if (originalDslNoWhitespace.contains(").")) {
-            int firstClosingParen = originalDslNoWhitespace.indexOf(").");
-            constrainedDsl = originalDslNoWhitespace.substring(0, firstClosingParen+1)
-                + constraintPhrase + originalDslNoWhitespace.substring(firstClosingParen+1);
-        } else {
-            constrainedDsl = originalDsl + constraintPhrase;
-        }
-        return constrainedDsl;
-    }
-
-    public static QueryContextBuilder<?> newQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    public static AbstractRowBatcherBuilder<?> newRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         MarkLogicSourceConfig.OUTPUT_TYPE outputType = MarkLogicSourceConfig.OUTPUT_TYPE.valueOf((String) parsedConfig.get(MarkLogicSourceConfig.OUTPUT_FORMAT));
-        final QueryContextBuilder<?> queryContextBuilder;
+        final AbstractRowBatcherBuilder<?> rowBatcherBuilder;
         switch (outputType) {
             case JSON :
-                queryContextBuilder = new JsonQueryContextBuilder(dataMovementManager, parsedConfig);
+                rowBatcherBuilder = new JsonRowBatcherBuilder(dataMovementManager, parsedConfig);
                 break;
             case XML:
-                queryContextBuilder = new XmlQueryContextBuilder(dataMovementManager, parsedConfig);
+                rowBatcherBuilder = new XmlRowBatcherBuilder(dataMovementManager, parsedConfig);
                 break;
             case CSV:
-                queryContextBuilder = new CsvQueryContextBuilder(dataMovementManager, parsedConfig);
+                rowBatcherBuilder = new CsvRowBatcherBuilder(dataMovementManager, parsedConfig);
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected output type: " + outputType);
         }
-        return queryContextBuilder;
+        return rowBatcherBuilder;
     }
 }

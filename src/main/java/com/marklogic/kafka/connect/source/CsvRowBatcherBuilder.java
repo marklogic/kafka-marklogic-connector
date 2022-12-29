@@ -14,27 +14,21 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
-public class CsvQueryContextBuilder extends AbstractRowBatchBuilder implements QueryContextBuilder<String> {
+public class CsvRowBatcherBuilder extends AbstractRowBatcherBuilder<String> {
 
-    CsvQueryContextBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
+    CsvRowBatcherBuilder(DataMovementManager dataMovementManager, Map<String, Object> parsedConfig) {
         super(dataMovementManager, parsedConfig);
     }
 
-    @Override
-    public QueryContext<String> newQueryContext(List<SourceRecord> newSourceRecords, String previousMaxConstraintColumnValue) {
-        RowBatcher<String> rowBatcher = newRowBatcher(previousMaxConstraintColumnValue, newSourceRecords);
-        return new QueryContext<>(rowBatcher, this.currentQuery);
-    }
-
-    public RowBatcher<String> newRowBatcher(String previousMaxConstraintColumnValue, List<SourceRecord> newSourceRecords) {
+    public RowBatcher<String> newRowBatcher(List<SourceRecord> newSourceRecords) {
         ContentHandle<String> contentHandle = new StringHandle().withFormat(Format.TEXT).withMimetype("text/csv");
         RowBatcher<String> rowBatcher =  dataMovementManager.newRowBatcher(contentHandle);
-        configureRowBatcher(parsedConfig, rowBatcher, previousMaxConstraintColumnValue);
+        configureRowBatcher(parsedConfig, rowBatcher);
         rowBatcher.onSuccess(event -> onSuccessHandler(event, newSourceRecords));
         return rowBatcher;
     }
 
-    protected void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<String> event, List<SourceRecord> newSourceRecords) {
+    private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<String> event, List<SourceRecord> newSourceRecords) {
         String document = event.getRowsDoc();
         logger.debug("CSV document: \n" + document);
         BufferedReader reader = new BufferedReader(new StringReader(document));

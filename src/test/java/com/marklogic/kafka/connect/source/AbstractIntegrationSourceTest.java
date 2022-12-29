@@ -67,10 +67,14 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
             new FileHandle(new File("src/test/resources/citations.xml")));
     }
 
+    String loadTestResourceFileIntoString(String filename) throws IOException {
+        String templateFilePath = "src/test/resources/" + filename;
+        byte[] bytes = Files.readAllBytes(Paths.get(templateFilePath));
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
     void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String citationTime, String lastName) throws IOException {
-        String templateFilePath = "src/test/resources/singleAuthorSingleCitation.xml";
-        byte[] encoded = Files.readAllBytes(Paths.get(templateFilePath));
-        String template = new String(encoded, StandardCharsets.UTF_8);
+        String template = loadTestResourceFileIntoString("singleAuthorSingleCitation.xml");
         String documentContents = template.replaceAll("%%TIME%%", citationTime);
         documentContents = documentContents.replaceAll("%%LASTNAME%%", lastName);
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
