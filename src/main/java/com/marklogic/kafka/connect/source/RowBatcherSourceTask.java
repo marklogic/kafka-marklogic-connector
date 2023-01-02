@@ -73,7 +73,7 @@ public class RowBatcherSourceTask extends SourceTask {
         try {
             getNewRowBatcher(newSourceRecords);
             queryHandler.addQueryToRowBatcher(rowBatcher, previousMaxConstraintColumnValue);
-            performPoll(queryHandler);
+            performPoll(queryHandler, newSourceRecords);
         } catch (Exception ex) {
             if (!rowBatcherErrorIsKnownServerBug(ex)) {
                 logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
@@ -85,7 +85,7 @@ public class RowBatcherSourceTask extends SourceTask {
         return newSourceRecords.isEmpty() ? null : newSourceRecords;
     }
 
-    protected void performPoll(QueryHandler queryHandler) {
+    protected void performPoll(QueryHandler queryHandler, List<SourceRecord> newSourceRecords) {
         try {
             logger.info("Starting job");
             dataMovementManager.startJob(rowBatcher);
@@ -93,11 +93,10 @@ public class RowBatcherSourceTask extends SourceTask {
             rowBatcher.awaitCompletion();
             dataMovementManager.stopJob(rowBatcher);
 
-            if (constraintColumn != null) {
+            if (constraintColumn != null && !newSourceRecords.isEmpty()) {
                 long queryStartTimeInMillis = rowBatcher.getServerTimestamp();
                 previousMaxConstraintColumnValue = queryHandler.updatePreviousMaxConstraintColumnValue(queryStartTimeInMillis);
             }
-
         } catch (Exception ex) {
             logger.error("Unable to poll for source records. Job failed to complete successfully; cause: " + ex.getMessage());
         } finally {

@@ -1,5 +1,6 @@
 package com.marklogic.kafka.connect.source;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
@@ -10,13 +11,15 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,6 +47,9 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
      */
     protected RowBatcherSourceTask startSourceTask(String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
+        // Default to a single batch, which is friendly for queries that use limit() and suitable for the small number
+        // of rows returned by tests. Tests can still override this by providing their own desired batch size.
+        config.put(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, Integer.MAX_VALUE + "");
         config.put(MarkLogicSourceConfig.WAIT_TIME, "0");
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
@@ -64,7 +70,7 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
         docMgr.write("citations.xml",
             new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
-            new FileHandle(new File("src/test/resources/citations.xml")));
+            new FileHandle(new File("src/test/ml-data/citations.xml")));
     }
 
     String loadTestResourceFileIntoString(String filename) throws IOException {
@@ -90,7 +96,7 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
     }
 
     private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String expectedValue) {
-       AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
+        AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
         newSourceRecords.forEach(sourceRecord -> {
             Assertions.assertEquals(AUTHORS_TOPIC, sourceRecord.topic());
             assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
@@ -102,5 +108,15 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
         });
         Assertions.assertTrue(foundExpectedValue.get(),
             "List of SourceRecords does not contain a record with the expected value");
+    }
+
+    /**
+     * Convenience for the common use case of wanting to access the value of each record as a JSON object.
+     *
+     * @param records
+     * @return
+     */
+    protected Stream<ObjectNode> recordsToJsonObjects(List<SourceRecord> records) {
+        return records.stream().map(record -> readJsonObject((String) record.value()));
     }
 }

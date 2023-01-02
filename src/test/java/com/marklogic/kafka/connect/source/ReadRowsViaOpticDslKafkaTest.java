@@ -24,7 +24,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
 
     @BeforeEach
     void setup() {
-        loadMarkLogicTestData();
+        loadFifteenAuthorsIntoMarkLogic();
         setupKafka();
     }
 
@@ -48,11 +48,6 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
         );
     }
 
-    private void loadMarkLogicTestData() {
-        XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
-        docMgr.write("citations.xml", new FileHandle(new File("src/test/resources/citations.xml")));
-    }
-
     private void provisionKafkaWithConnectAndMarkLogicConnector() {
         kafka = provisionWith(
             newClusterConfig()
@@ -73,7 +68,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
             .with(MarkLogicSourceConfig.CONNECTION_PORT, testConfig.getRestPort())
             .with(MarkLogicSourceConfig.CONNECTION_USERNAME, testConfig.getUsername())
             .with(MarkLogicSourceConfig.CONNECTION_PASSWORD, testConfig.getPassword())
-            .with(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, 1)
+            .with(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, Integer.MAX_VALUE)
             .build();
     }
 }

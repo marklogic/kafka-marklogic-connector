@@ -44,6 +44,8 @@ dependencies {
   implementation "com.marklogic:marklogic-client-api:6.0.0"
 
   implementation("com.marklogic:marklogic-data-hub:5.7.2") {
+    exclude module: "marklogic-client-api"
+
     // Excluding these because there's no need for them
     exclude module: "spring-boot-autoconfigure"
     exclude module: "spring-integration-http"
@@ -180,7 +182,12 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
   destinationDir(file('build/distro'))
 }
 
-task copyConnectorToConfluent(type: Copy, group: confluentTestingGroup, dependsOn: connectorArchive_BuildDirectory) {
+task deleteConnectorInConfluent(type: Delete) {
+  description = "Must delete the existing connector to ensure no old dependencies are left in the connector folder"
+  delete "${confluentHome}/share/confluent-hub-components/marklogic-kafka-marklogic-connector-${version}"
+}
+
+task copyConnectorToConfluent(type: Copy, group: confluentTestingGroup, dependsOn: [connectorArchive_BuildDirectory, deleteConnectorInConfluent]) {
   description = "Build the connector archive and copy it to your local Confluent Platform"
   from baseArchiveBuildDir
   into "${confluentHome}/share/confluent-hub-components"
@@ -221,14 +228,23 @@ task loadMarkLogicPurchasesSourceConnector(type: Exec, group: confluentTestingGr
     "src/test/resources/confluent/marklogic-purchases-source.json"
 }
 
+task loadMarkLogicAuthorsSourceConnector(type: Exec, group: confluentTestingGroup) {
+  description = "Loads a source connector that retrieves authors from the citations.xml file, which is also used for " +
+    "all the automated tests"
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-authors-source", "-c",
+    "src/test/resources/confluent/marklogic-authors-source.json"
+}
+
 task setupLocalConfluent(group: confluentTestingGroup) {
   description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
 }
 
 // Temporarily only loading the source connector to make manual testing easier, will re-enable all of these before 1.8.0
 //setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
-setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicPurchasesSourceConnector
+setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicAuthorsSourceConnector
 
 loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
+loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
+

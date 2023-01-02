@@ -67,7 +67,6 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}, {\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"asc\", \"args\":[\"" + constraintColumnName + "\"]}]}, {\"ns\":\"op\", \"fn\":\"limit\", \"args\":[3]}]}}";
 
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -91,7 +90,6 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}, {\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"asc\", \"args\":[\"" + constraintColumnName + "\"]}]}, {\"ns\":\"op\", \"fn\":\"limit\", \"args\":[3]}]}}";
 
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
