@@ -14,7 +14,6 @@ class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );

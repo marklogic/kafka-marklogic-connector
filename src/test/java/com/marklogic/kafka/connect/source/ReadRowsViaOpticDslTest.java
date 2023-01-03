@@ -26,7 +26,6 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
@@ -51,7 +50,6 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     void testDslThatDoesNotStartWithFromView() throws InterruptedException {
         String fromSqlDsl = "op.fromSQL('SELECT employees.FirstName, employees.LastName FROM employees')";
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.DSL_QUERY, fromSqlDsl,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
@@ -63,7 +61,6 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "1",
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
@@ -86,7 +83,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
                 throw new RuntimeException(e);
             }
             QueryHandler queryHandler = QueryHandler.newQueryHandler(getDatabaseClient(), parsedConfig);
-            task.performPoll(queryHandler);
+            task.performPoll(queryHandler, newSourceRecords);
         });
         t1.start();
 
