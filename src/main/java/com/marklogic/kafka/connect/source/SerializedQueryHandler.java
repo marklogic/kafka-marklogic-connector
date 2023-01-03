@@ -39,6 +39,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     @Override
     public void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
         currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
+        logger.info("Serialized query: " + currentSerializedQuery);
         RowManager rowMgr = rowBatcher.getRowManager();
         RawPlanDefinition query = rowMgr.newRawPlanDefinition(new StringHandle(currentSerializedQuery));
         rowBatcher.withBatchView(query);
@@ -60,7 +61,6 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
                 throw new RuntimeException("Unable to modify serialized query to include the constraint column, cause: " + e.getMessage(), e);
             }
         }
-        logger.debug("Serialized constrainedQuery (unless initial run): " + constrainedSerialized);
         return constrainedSerialized;
     }
 
@@ -68,10 +68,10 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     public String updatePreviousMaxConstraintColumnValue(long queryStartTimeInMillis) {
         String previousMaxConstraintColumnValue = null;
         try {
-            String currentMaxValueQuery = buildMaxValueSerializedQuery();
-            logger.debug("currentMaxValueQuery: " + currentMaxValueQuery);
+            String maxValueQuery = buildMaxValueSerializedQuery();
+            logger.info("Query for max constraint value: " + maxValueQuery);
             RowManager rowMgr = databaseClient.newRowManager();
-            RawPlanDefinition maxConstraintValueQuery = rowMgr.newRawPlanDefinition(new StringHandle(currentMaxValueQuery));
+            RawPlanDefinition maxConstraintValueQuery = rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery));
             JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
             handle.setPointInTimeQueryTimestamp(queryStartTimeInMillis);
             JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);

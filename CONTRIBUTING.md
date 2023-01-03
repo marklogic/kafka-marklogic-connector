@@ -190,6 +190,14 @@ following:
 See [the log command docs](https://docs.confluent.io/confluent-cli/current/command-reference/local/services/connect/confluent_local_services_connect_log.html)
 for more information.
 
+You can also customize Confluent logging by [adjusting the log4j file for Kafka Connect](https://docs.confluent.io/platform/current/connect/logging.html#viewing-kconnect-logs).
+For example, to prevent some logging from Kafka Connect and from the Java Client DMSDK, add the following to the 
+`$CONFLUENT_HOME/etc/kafka/connect-log4j.properties` file:
+
+    log4j.logger.org.apache.kafka=WARN
+    log4j.logger.com.marklogic.client.datamovement=WARN
+
+
 ## Destroying and setting up the Confluent Platform instance
 
 While developing and testing the MarkLogic Kafka connector, it is common that the "local" instance of Confluent 
