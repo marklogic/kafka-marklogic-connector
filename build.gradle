@@ -35,16 +35,15 @@ dependencies {
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  // The latest jackson libraries can be removed once the marklogic-client is upgraded to include them.
-  implementation 'com.fasterxml.jackson.core:jackson-core:2.13.4'
-  implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
-  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.13.4'
-
   implementation "com.marklogic:marklogic-client-api:6.0.0"
+
+  implementation ("com.marklogic:ml-javaclient-util:4.4.0") {
+    exclude module: "marklogic-client-api"
+  }
 
   implementation("com.marklogic:marklogic-data-hub:5.7.2") {
     exclude module: "marklogic-client-api"
+    exclude module: "ml-javaclient-util"
 
     // Excluding these because there's no need for them
     exclude module: "spring-boot-autoconfigure"
@@ -248,3 +247,10 @@ loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
 loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
 
+task insertAuthor(type: Test) {
+  useJUnitPlatform()
+  systemProperty "AUTHOR_IDS", authorIds
+  description = "Insert a new author into the kafka-test-content database via a new citations XML document; " +
+    "use e.g. -PauthorIds=7,8,9 to insert 3 new authors with IDs of 7, 8, and 9"
+  include "com/marklogic/kafka/connect/source/debug/InsertAuthors.class"
+}

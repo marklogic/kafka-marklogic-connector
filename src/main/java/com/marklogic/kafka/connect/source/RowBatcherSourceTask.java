@@ -62,13 +62,12 @@ public class RowBatcherSourceTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptedException {
         // Temporary logging while testing CP to ensure the correct output format is being used
         QueryHandler queryHandler = QueryHandler.newQueryHandler(databaseClient, parsedConfig);
-        logger.info("Polling RowBatcherBuilder: {}; Polling QueryHandler: {}",
-            rowBatcherBuilder.getClass().getName(), queryHandler.getClass().getName());
+        logger.info("Polling; RowBatcherBuilder: {}; QueryHandler: {}; sleep time: {}ms",
+            rowBatcherBuilder.getClass().getSimpleName(), queryHandler.getClass().getSimpleName(), pollDelayMs);
 
-        List<SourceRecord> newSourceRecords = new Vector<>();
-        logger.info("Temporary log statement for testing; sleeping for " + pollDelayMs + "ms");
         Thread.sleep(pollDelayMs);
 
+        List<SourceRecord> newSourceRecords = new Vector<>();
         long start = System.currentTimeMillis();
         try {
             getNewRowBatcher(newSourceRecords);
@@ -87,15 +86,14 @@ public class RowBatcherSourceTask extends SourceTask {
 
     protected void performPoll(QueryHandler queryHandler, List<SourceRecord> newSourceRecords) {
         try {
-            logger.info("Starting job");
             dataMovementManager.startJob(rowBatcher);
-            logger.info("Awaiting completion");
             rowBatcher.awaitCompletion();
             dataMovementManager.stopJob(rowBatcher);
 
             if (constraintColumn != null && !newSourceRecords.isEmpty()) {
                 long queryStartTimeInMillis = rowBatcher.getServerTimestamp();
                 previousMaxConstraintColumnValue = queryHandler.updatePreviousMaxConstraintColumnValue(queryStartTimeInMillis);
+                logger.info("Storing new max constraint value: " + previousMaxConstraintColumnValue);
             }
         } catch (Exception ex) {
             logger.error("Unable to poll for source records. Job failed to complete successfully; cause: " + ex.getMessage());
