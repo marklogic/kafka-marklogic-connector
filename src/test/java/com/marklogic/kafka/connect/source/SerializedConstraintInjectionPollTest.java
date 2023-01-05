@@ -122,7 +122,7 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         String baseDate = "2022-07-13T";
         String initialTime = "01:01:00";
         String initialDateTime = baseDate + initialTime;
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("firstTime", initialTime, "Initial");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("firstTime", "6", initialTime, "Initial");
 
         //    2) Run the connector, verify the row is returned;
         List<SourceRecord> newRecords = task.poll();
@@ -136,11 +136,11 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         //    3) Insert a second document with a dateTime greater than that of the first row,
         String laterTime = "02:01:00";
         String laterDateTime = baseDate + laterTime;
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("later", laterTime, "Later");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("later", "7", laterTime, "Later");
 
         //    4) and insert a third document with a dateTime less than that of the first row;
         String earlierTime = "00:01:00";
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("earlier", earlierTime, "Earlier");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("earlier", "8", earlierTime, "Earlier");
 
         //    5) Run the connector again,
         newRecords = task.poll();

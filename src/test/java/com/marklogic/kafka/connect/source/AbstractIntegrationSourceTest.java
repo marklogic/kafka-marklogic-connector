@@ -79,9 +79,10 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String citationTime, String lastName) throws IOException {
+    void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String id, String citationTime, String lastName) throws IOException {
         String template = loadTestResourceFileIntoString("singleAuthorSingleCitation.xml");
-        String documentContents = template.replaceAll("%%TIME%%", citationTime);
+        String documentContents = template.replaceAll("%%ID%%", id);
+        documentContents = documentContents.replaceAll("%%TIME%%", citationTime);
         documentContents = documentContents.replaceAll("%%LASTNAME%%", lastName);
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
         docMgr.write(uri,
@@ -113,8 +114,8 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
     /**
      * Convenience for the common use case of wanting to access the value of each record as a JSON object.
      *
-     * @param records
-     * @return
+     * @param records - A list of Kafka SourceRecord objects
+     * @return - A Stream of Jackson ObjectNodes built from the incoming SourceRecords
      */
     protected Stream<ObjectNode> recordsToJsonObjects(List<SourceRecord> records) {
         return records.stream().map(record -> readJsonObject((String) record.value()));
