@@ -234,18 +234,24 @@ task loadMarkLogicAuthorsSourceConnector(type: Exec, group: confluentTestingGrou
     "src/test/resources/confluent/marklogic-authors-source.json"
 }
 
+task loadMarkLogicEmployeesSourceConnector(type: Exec, group: confluentTestingGroup) {
+  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-employees-source", "-c",
+    "src/test/resources/confluent/marklogic-employees-source.json"
+}
+
 task setupLocalConfluent(group: confluentTestingGroup) {
   description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
 }
 
 // Temporarily only loading the source connector to make manual testing easier, will re-enable all of these before 1.8.0
 //setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
-setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicAuthorsSourceConnector
+setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicEmployeesSourceConnector
 
 loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
 loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
 loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
+loadMarkLogicEmployeesSourceConnector.mustRunAfter startLocalConfluent
 
 task insertAuthor(type: Test) {
   useJUnitPlatform()

@@ -1,8 +1,7 @@
 package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.FailedRequestException;
-import com.marklogic.client.datamovement.*;
+import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
 import com.marklogic.kafka.connect.DefaultDatabaseClientConfigBuilder;
@@ -11,7 +10,8 @@ import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
@@ -22,11 +22,9 @@ public class RowBatcherSourceTask extends SourceTask {
 
     private Map<String, Object> parsedConfig;
     private DatabaseClient databaseClient;
-    private DataMovementManager dataMovementManager;
     private long pollDelayMs = 1000L;
-    private AbstractRowBatcherBuilder<?> rowBatcherBuilder;
-    private RowBatcher<?> rowBatcher = null;
     private ConstraintValueStore constraintValueStore = null;
+    private String topic;
 
     /**
      * Required for a Kafka task.
@@ -49,56 +47,35 @@ public class RowBatcherSourceTask extends SourceTask {
         parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
-        dataMovementManager = databaseClient.newDataMovementManager();
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
         constraintValueStore = ConstraintValueStore.newConstraintValueStore(databaseClient, parsedConfig);
-
-        rowBatcherBuilder = AbstractRowBatcherBuilder.newRowBatcherBuilder(dataMovementManager, parsedConfig);
+        this.topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
         logger.info("Started RowBatcherSourceTask");
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        // Temporary logging while testing CP to ensure the correct output format is being used
-        QueryHandler queryHandler = QueryHandler.newQueryHandler(databaseClient, parsedConfig);
-        logger.info("Polling; RowBatcherBuilder: {}; QueryHandler: {}; sleep time: {}ms",
-            rowBatcherBuilder.getClass().getSimpleName(), queryHandler.getClass().getSimpleName(), pollDelayMs);
-
+        logger.info("Polling; sleep time: {}ms", pollDelayMs);
         Thread.sleep(pollDelayMs);
 
-        List<SourceRecord> newSourceRecords = new Vector<>();
-        long start = System.currentTimeMillis();
         try {
-            getNewRowBatcher(newSourceRecords);
-            String previousMaxConstraintColumnValue = null;
-            if (constraintValueStore != null) {
-                previousMaxConstraintColumnValue = constraintValueStore.retrievePreviousMaxConstraintColumnValue();
-            }
-            queryHandler.addQueryToRowBatcher(rowBatcher, previousMaxConstraintColumnValue);
-            performPoll(queryHandler, newSourceRecords);
+            final String previousMaxConstraintColumnValue = constraintValueStore != null ?
+                constraintValueStore.retrievePreviousMaxConstraintColumnValue() : null;
+
+            QueryHandler queryHandler = QueryHandler.newQueryHandler(databaseClient, parsedConfig);
+            PlanBuilder.Plan plan = queryHandler.newPlan(previousMaxConstraintColumnValue);
+            final long start = System.currentTimeMillis();
+            PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan, topic);
+            final long duration = System.currentTimeMillis() - start;
+            List<SourceRecord> newSourceRecords = results.getSourceRecords();
+            logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + duration);
+            updateMaxConstraintValue(results, queryHandler);
+            return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
-            if (!rowBatcherErrorIsKnownServerBug(ex)) {
-                logger.error("Unable to poll for source records; cause: " + ex.getMessage());
-            }
+            // TODO Will include query here soon
+            logger.error("Unable to poll for source records; cause: " + ex.getMessage(), ex);
             return null;
         }
-
-        logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + (System.currentTimeMillis() - start));
-        return newSourceRecords.isEmpty() ? null : newSourceRecords;
-    }
-
-    protected void performPoll(QueryHandler queryHandler, List<SourceRecord> newSourceRecords) {
-        dataMovementManager.startJob(rowBatcher);
-        rowBatcher.awaitCompletion();
-        dataMovementManager.stopJob(rowBatcher);
-
-        if (constraintValueStore != null && !newSourceRecords.isEmpty()) {
-            long queryStartTimeInMillis = rowBatcher.getServerTimestamp();
-            String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(queryStartTimeInMillis);
-            logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
-            constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, newSourceRecords.size());
-        }
-        rowBatcher = null;
     }
 
     // Based on https://docs.confluent.io/platform/current/connect/devguide.html#task-example-source-task
@@ -106,30 +83,19 @@ public class RowBatcherSourceTask extends SourceTask {
     // indefinitely, so they need to be stopped with a call from a different thread in the Worker."
     @Override
     public synchronized void stop() {
-        logger.info("Stop called; stopping job");
-        if (rowBatcher != null) {
-            dataMovementManager.stopJob(rowBatcher);
-        }
+        logger.info("Stop called; releasing DatabaseClient");
         if (databaseClient != null) {
             databaseClient.release();
         }
     }
 
-    private boolean rowBatcherErrorIsKnownServerBug(Exception ex) {
-        if (ex instanceof FailedRequestException) {
-            String serverMessage = ((FailedRequestException) ex).getServerMessage();
-            final String knownBugErrorMessage = "$tableId as xs:string -- Invalid coercion: () as xs:string";
-            if (serverMessage != null && serverMessage.contains(knownBugErrorMessage)) {
-                logger.debug("Catching known bug where an error is thrown when no rows exist; will return no data instead");
-                return true;
-            }
+    private void updateMaxConstraintValue(PlanInvoker.Results results, QueryHandler queryHandler) {
+        if (constraintValueStore != null && !results.getSourceRecords().isEmpty()) {
+            long serverTimestamp = results.getServerTimestamp();
+            String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(serverTimestamp);
+            logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
+            constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, results.getSourceRecords().size());
         }
-        return false;
-    }
-
-    protected RowBatcher<?> getNewRowBatcher(List<SourceRecord> newSourceRecords) {
-        rowBatcher = rowBatcherBuilder.newRowBatcher(newSourceRecords);
-        return rowBatcher;
     }
 
     protected String getPreviousMaxConstraintColumnValue() {

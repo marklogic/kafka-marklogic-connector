@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.RowBatcher;
+import com.marklogic.client.expression.PlanBuilder;
 import org.apache.kafka.common.config.ConfigException;
 import org.springframework.util.StringUtils;
 
@@ -9,10 +10,27 @@ import java.util.Map;
 
 import static java.lang.String.format;
 
+/**
+ * "Handles" a query in terms of modifying it to account for a constraint column and also retrieving the max value for
+ * that constraint column based on the user's query.
+ */
 public interface QueryHandler {
     void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue);
 
-    String getMaxConstraintColumnValue(long queryStartTimeInMillis);
+    /**
+     * @param previousMaxConstraintColumnValue
+     * @return a Plan based on the user's original query which is then modified if the previous max constraint column
+     * value is not null so that the user's query will only retrieve rows higher than that value
+     */
+    PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue);
+
+    /**
+     *
+     * @param serverTimestamp
+     * @return the max value for the user's constraint column based on the given MarkLogic server timestamp,
+     * which is assumed to be the timestamp at which the connector retrieved rows
+     */
+    String getMaxConstraintColumnValue(long serverTimestamp);
 
     static QueryHandler newQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         boolean configuredForDsl = StringUtils.hasText((String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY));

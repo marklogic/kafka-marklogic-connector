@@ -1,0 +1,22 @@
+{
+  "name": "marklogic-employees-source",
+  "config": {
+    "connector.class": "com.marklogic.kafka.connect.source.MarkLogicSourceConnector",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "tasks.max": "1",
+    "ml.connection.host": "localhost",
+    "ml.connection.port": 8018,
+    "ml.connection.username": "admin",
+    "ml.connection.password": "admin",
+    "ml.connection.securityContextType": "DIGEST",
+    "ml.source.optic.dsl": "op.fromView('demo', 'employee').orderBy(op.asc('incrementing_id'))",
+    "ml.source.optic.constraintColumn.name": "incrementing_id",
+    "ml.source.optic.constraintColumn.uri": "/employee-kafka-data.json",
+    "ml.source.optic.constraintColumn.collections": "kafka-config",
+    "ml.source.optic.constraintColumn.permissions": "rest-reader,read,rest-writer,update",
+    "ml.source.topic": "marklogic-employees",
+    "ml.source.waitTime": "3000",
+    "ml.source.optic.outputFormat": "JSON"
+  }
+}

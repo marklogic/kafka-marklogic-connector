@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.RowBatcher;
+import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
@@ -31,6 +32,13 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         }
     }
 
+    @Override
+    public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
+        currentDslQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
+        logger.info("DSL query: " + currentDslQuery);
+        return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
+    }
+
     public void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
         currentDslQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
         logger.info("DSL query: " + currentDslQuery);
@@ -55,13 +63,13 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         return constrainedDsl;
     }
 
-    public String getMaxConstraintColumnValue(long queryStartTimeInMillis) {
+    public String getMaxConstraintColumnValue(long serverTimestamp) {
         String maxValueQuery = buildMaxValueDslQuery();
         logger.info("Query for max constraint value: " + maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();
         RawQueryDSLPlan maxConstraintValueQuery = rowMgr.newRawQueryDSLPlan(new StringHandle(maxValueQuery));
         JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
-        handle.setPointInTimeQueryTimestamp(queryStartTimeInMillis);
+        handle.setPointInTimeQueryTimestamp(serverTimestamp);
         JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
         try {
             String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
