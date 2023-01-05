@@ -30,7 +30,6 @@ public class CsvRowBatcherBuilder extends AbstractRowBatcherBuilder<String> {
 
     private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<String> event, List<SourceRecord> newSourceRecords) {
         String document = event.getRowsDoc();
-        logger.debug("CSV document: \n" + document);
         BufferedReader reader = new BufferedReader(new StringReader(document));
         try {
             String headers = reader.readLine();

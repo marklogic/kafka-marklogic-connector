@@ -28,15 +28,13 @@ public class JsonRowBatcherBuilder extends AbstractRowBatcherBuilder<JsonNode> {
 
     private void onSuccessHandler(RowBatchSuccessListener.RowBatchResponseEvent<JsonNode> event, List<SourceRecord> newSourceRecords) {
         JsonNode rows = event.getRowsDoc().get("rows");
-        logger.debug("JsonNode: \n" + rows.toPrettyString());
-
         for (JsonNode row : rows) {
-// We may need to add a switch to include a key in the record depending on how the target topic is configured.
-// If the topic's cleanup policy is set to "compact", then a key is required to be included in the SourceRecord.
-//            String key = event.getJobBatchNumber() + "-" + rowNumber;
-
-            // Calling toString on the JsonNode, as when this is run in Confluent Platform, we get the following
-            // error: org.apache.kafka.connect.errors.DataException: Java class com.fasterxml.jackson.databind.node.ObjectNode does not have corresponding schema type.
+            /**
+             * Testing has shown that converting the JSON to a string and using
+             * org.apache.kafka.connect.storage.StringConverter as the value converter works well. And a user could
+             * still choose to use org.apache.kafka.connect.json.JsonConverter, though they would most likely want
+             * to set "value.converter.schemas.enable" to "false".
+             */
             try {
                 SourceRecord newRecord = new SourceRecord(null, null, topic, null, row.toString());
                 newSourceRecords.add(newRecord);

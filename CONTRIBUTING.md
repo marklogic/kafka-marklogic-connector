@@ -168,7 +168,7 @@ You can also manually configure an instance of the source connector:
 2. Click on the "connect-default" cluster
 3. Click on "Add connector"
 4. Click on "MarkLogicSourceConnector"
-5. For "Value converter class", enter `org.apache.kafka.connect.json.JsonConverter`
+5. For "Value converter class", enter `org.apache.kafka.connect.storage.StringConverter`
 6. Under "General", enter values for the required MarkLogic connection fields
 7. Enter an Optic DSL query for `ml.source.optic.dsl` and a Kafka topic name for `ml.source.topic`
 8. Add values for any optional fields that you wish to populate
