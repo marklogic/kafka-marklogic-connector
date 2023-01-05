@@ -26,8 +26,7 @@ public class RowBatcherSourceTask extends SourceTask {
     private long pollDelayMs = 1000L;
     private AbstractRowBatcherBuilder<?> rowBatcherBuilder;
     private RowBatcher<?> rowBatcher = null;
-    private String previousMaxConstraintColumnValue = null;
-    private String constraintColumn = null;
+    private ConstraintValueStore constraintValueStore = null;
 
     /**
      * Required for a Kafka task.
@@ -52,7 +51,7 @@ public class RowBatcherSourceTask extends SourceTask {
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         dataMovementManager = databaseClient.newDataMovementManager();
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
-        constraintColumn = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
+        constraintValueStore = ConstraintValueStore.newConstraintValueStore(databaseClient, parsedConfig);
 
         rowBatcherBuilder = AbstractRowBatcherBuilder.newRowBatcherBuilder(dataMovementManager, parsedConfig);
         logger.info("Started RowBatcherSourceTask");
@@ -71,11 +70,15 @@ public class RowBatcherSourceTask extends SourceTask {
         long start = System.currentTimeMillis();
         try {
             getNewRowBatcher(newSourceRecords);
+            String previousMaxConstraintColumnValue = null;
+            if (constraintValueStore != null) {
+                previousMaxConstraintColumnValue = constraintValueStore.retrievePreviousMaxConstraintColumnValue();
+            }
             queryHandler.addQueryToRowBatcher(rowBatcher, previousMaxConstraintColumnValue);
             performPoll(queryHandler, newSourceRecords);
         } catch (Exception ex) {
             if (!rowBatcherErrorIsKnownServerBug(ex)) {
-                logger.error("Unable to poll for source records. Unable to initialize row batcher; cause: " + ex.getMessage());
+                logger.error("Unable to poll for source records; cause: " + ex.getMessage());
             }
             return null;
         }
@@ -85,21 +88,17 @@ public class RowBatcherSourceTask extends SourceTask {
     }
 
     protected void performPoll(QueryHandler queryHandler, List<SourceRecord> newSourceRecords) {
-        try {
-            dataMovementManager.startJob(rowBatcher);
-            rowBatcher.awaitCompletion();
-            dataMovementManager.stopJob(rowBatcher);
+        dataMovementManager.startJob(rowBatcher);
+        rowBatcher.awaitCompletion();
+        dataMovementManager.stopJob(rowBatcher);
 
-            if (constraintColumn != null && !newSourceRecords.isEmpty()) {
-                long queryStartTimeInMillis = rowBatcher.getServerTimestamp();
-                previousMaxConstraintColumnValue = queryHandler.updatePreviousMaxConstraintColumnValue(queryStartTimeInMillis);
-                logger.info("Storing new max constraint value: " + previousMaxConstraintColumnValue);
-            }
-        } catch (Exception ex) {
-            logger.error("Unable to poll for source records. Job failed to complete successfully; cause: " + ex.getMessage());
-        } finally {
-            rowBatcher = null;
+        if (constraintValueStore != null && !newSourceRecords.isEmpty()) {
+            long queryStartTimeInMillis = rowBatcher.getServerTimestamp();
+            String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(queryStartTimeInMillis);
+            logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
+            constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, newSourceRecords.size());
         }
+        rowBatcher = null;
     }
 
     // Based on https://docs.confluent.io/platform/current/connect/devguide.html#task-example-source-task
@@ -134,6 +133,9 @@ public class RowBatcherSourceTask extends SourceTask {
     }
 
     protected String getPreviousMaxConstraintColumnValue() {
-        return previousMaxConstraintColumnValue;
+        if (constraintValueStore != null) {
+            return constraintValueStore.retrievePreviousMaxConstraintColumnValue();
+        }
+        return null;
     }
 }

@@ -53,7 +53,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             MarkLogicSourceConfig.DSL_QUERY, fromSqlDsl,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
-        assertNull(task.poll());
+        Assertions.assertNull(task.poll(), "Invalid DSL should cause poll() to fail");
     }
 
     @Test

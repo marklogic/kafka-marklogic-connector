@@ -34,8 +34,8 @@ public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
      * Convenience for getting a JSON object from a String of JSON without having to worry
      * about the annoying checked exception.
      *
-     * @param json
-     * @return
+     * @param json - A String representation of a JSON object.
+     * @return - An ObjectNode mapped from the incoming String using a Jackson ObjectMapper.
      */
     protected ObjectNode readJsonObject(String json) {
         try {

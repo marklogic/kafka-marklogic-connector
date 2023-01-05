@@ -55,7 +55,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         return constrainedDsl;
     }
 
-    public String updatePreviousMaxConstraintColumnValue(long queryStartTimeInMillis) {
+    public String getMaxConstraintColumnValue(long queryStartTimeInMillis) {
         String maxValueQuery = buildMaxValueDslQuery();
         logger.info("Query for max constraint value: " + maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();

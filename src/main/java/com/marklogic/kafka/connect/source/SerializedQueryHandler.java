@@ -65,7 +65,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     @Override
-    public String updatePreviousMaxConstraintColumnValue(long queryStartTimeInMillis) {
+    public String getMaxConstraintColumnValue(long queryStartTimeInMillis) {
         String previousMaxConstraintColumnValue = null;
         try {
             String maxValueQuery = buildMaxValueSerializedQuery();

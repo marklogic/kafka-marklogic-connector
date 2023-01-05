@@ -12,7 +12,7 @@ import static java.lang.String.format;
 public interface QueryHandler {
     void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue);
 
-    String updatePreviousMaxConstraintColumnValue(long queryStartTimeInMillis);
+    String getMaxConstraintColumnValue(long queryStartTimeInMillis);
 
     static QueryHandler newQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         boolean configuredForDsl = StringUtils.hasText((String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY));

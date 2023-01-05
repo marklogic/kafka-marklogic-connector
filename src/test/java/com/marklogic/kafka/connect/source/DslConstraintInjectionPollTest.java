@@ -93,6 +93,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String authorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
 
         RowBatcherSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, String.valueOf(Integer.MAX_VALUE),
             MarkLogicSourceConfig.DSL_QUERY, authorsDsl,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -102,7 +103,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String baseDate = "2022-07-13T";
         String initialTime = "01:01:00";
         String initialDateTime = baseDate + initialTime;
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("firstTime", initialTime, "Initial");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("firstTime", "6", initialTime, "Initial");
 
         //    2) Run the connector, verify the row is returned;
         List<SourceRecord> newRecords = task.poll();
@@ -116,11 +117,11 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         //    3) Insert a second document with a dateTime greater than that of the first row,
         String laterTime = "02:01:00";
         String laterDateTime = baseDate + laterTime;
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("later", laterTime, "Later");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("later", "7", laterTime, "Later");
 
         //    4) and insert a third document with a dateTime less than that of the first row;
         String earlierTime = "00:01:00";
-        loadSingleAuthorRowIntoMarkLogicWithCustomTime("earlier", earlierTime, "Earlier");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("earlier", "8", earlierTime, "Earlier");
 
         //    5) Run the connector again,
         newRecords = task.poll();

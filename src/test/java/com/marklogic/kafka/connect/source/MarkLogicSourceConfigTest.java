@@ -91,4 +91,27 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
         ));
     }
 
+    @Test
+    void testConstraintPermissions() {
+        ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
+        config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
+        config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
+        configDef.parse(config);
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, null);
+        configDef.parse(config);
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, "testRole,read");
+        configDef.parse(config);
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, "testRole,read,anotherRole,update");
+        configDef.parse(config);
+
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, "asdf");
+        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, "testRole,read,asdf");
+        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
+        config.put(MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, "testRole,read,testRole,red");
+        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
+    }
+
 }
