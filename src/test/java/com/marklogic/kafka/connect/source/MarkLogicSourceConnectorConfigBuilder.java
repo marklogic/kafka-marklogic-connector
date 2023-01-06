@@ -46,8 +46,6 @@ public class MarkLogicSourceConnectorConfigBuilder {
         ifNonExisting(MarkLogicSourceConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "DIGEST");
         ifNonExisting(MarkLogicSourceConfig.CONNECTION_USERNAME, "admin");
         ifNonExisting(MarkLogicSourceConfig.CONNECTION_PASSWORD, "admin");
-        ifNonExisting(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, "100");
-        ifNonExisting(MarkLogicSourceConfig.DMSDK_THREAD_COUNT, "8");
         ifNonExisting("key.converter", "org.apache.kafka.connect.storage.StringConverter");
         ifNonExisting("value.converter", "org.apache.kafka.connect.storage.StringConverter");
         ifNonExisting("errors.log.enable", true);

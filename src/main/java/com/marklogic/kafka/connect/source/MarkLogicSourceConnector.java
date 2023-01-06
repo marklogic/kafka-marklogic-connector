@@ -50,7 +50,7 @@ public class MarkLogicSourceConnector extends SourceConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        return RowBatcherSourceTask.class;
+        return RowManagerSourceTask.class;
     }
 
     @Override

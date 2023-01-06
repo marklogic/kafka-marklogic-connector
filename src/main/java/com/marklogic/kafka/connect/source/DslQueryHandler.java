@@ -1,7 +1,6 @@
 package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.RowBatcher;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.Format;
@@ -37,14 +36,6 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         currentDslQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
         logger.info("DSL query: " + currentDslQuery);
         return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
-    }
-
-    public void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
-        currentDslQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
-        logger.info("DSL query: " + currentDslQuery);
-        RowManager rowMgr = rowBatcher.getRowManager();
-        RawQueryDSLPlan query = rowMgr.newRawQueryDSLPlan(new StringHandle(currentDslQuery));
-        rowBatcher.withBatchView(query);
     }
 
     protected String injectConstraintIntoQuery(String previousMaxConstraintColumnValue) {

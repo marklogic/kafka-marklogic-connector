@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.RowBatcher;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.Format;
@@ -42,15 +41,6 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
         logger.info("Serialized query: " + currentSerializedQuery);
         return databaseClient.newRowManager().newRawPlanDefinition(new StringHandle(currentSerializedQuery));
-    }
-
-    @Override
-    public void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
-        currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
-        logger.info("Serialized query: " + currentSerializedQuery);
-        RowManager rowMgr = rowBatcher.getRowManager();
-        RawPlanDefinition query = rowMgr.newRawPlanDefinition(new StringHandle(currentSerializedQuery));
-        rowBatcher.withBatchView(query);
     }
 
     protected String injectConstraintIntoQuery(String previousMaxConstraintColumnValue) {

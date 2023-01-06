@@ -13,7 +13,7 @@ class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
     void testRowBatcherTask() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );

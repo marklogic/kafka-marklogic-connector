@@ -1,7 +1,5 @@
 package com.marklogic.kafka.connect.source;
 
-import com.marklogic.client.document.XMLDocumentManager;
-import com.marklogic.client.io.FileHandle;
 import kafka.server.KafkaConfig$;
 import net.mguenther.kafka.junit.EmbeddedConnectConfig;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
@@ -9,14 +7,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.util.Properties;
 
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
 import static net.mguenther.kafka.junit.ObserveKeyValues.on;
 import static net.mguenther.kafka.junit.TopicConfig.withName;
-import static org.apache.kafka.common.config.TopicConfig.*;
+import static org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_CONFIG;
+import static org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_DELETE;
 
 public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
 
@@ -68,7 +66,6 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
             .with(MarkLogicSourceConfig.CONNECTION_PORT, testConfig.getRestPort())
             .with(MarkLogicSourceConfig.CONNECTION_USERNAME, testConfig.getUsername())
             .with(MarkLogicSourceConfig.CONNECTION_PASSWORD, testConfig.getPassword())
-            .with(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, Integer.MAX_VALUE)
             .build();
     }
 }

@@ -2,7 +2,6 @@ package com.marklogic.kafka.connect.source;
 
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Test;
-import scala.Int;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
     void testRowBatcherTask() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
             MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString()
@@ -28,7 +27,7 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
 
     @Test
     void noMatchingRows() throws InterruptedException {
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
             MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString()

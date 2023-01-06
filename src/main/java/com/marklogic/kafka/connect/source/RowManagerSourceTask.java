@@ -14,9 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
+ * Uses a RowManager to read rows from MarkLogic in a single call. RowBatcher is not used as it
+ * introduces a significant amount of complexity, along with a limitation where users can only use the
+ * fromView accessor. And the performance benefits associated with RowBatcher and its support for parallel reads
+ * and batches are realized more when a user is reading large numbers of rows - like hundreds of thousands
+ * or more - but at that point, the user runs the risk of running out of memory in Kafka Connect due to a
+ * very large list. The thought then is that users are far more likely to want to read smaller numbers of
+ * rows at one time and use a constraint column to throttle how much is returned at once.
  */
-public class RowBatcherSourceTask extends SourceTask {
+public class RowManagerSourceTask extends SourceTask {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

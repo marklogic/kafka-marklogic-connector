@@ -15,7 +15,6 @@ import static java.lang.String.format;
  * that constraint column based on the user's query.
  */
 public interface QueryHandler {
-    void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue);
 
     /**
      * @param previousMaxConstraintColumnValue

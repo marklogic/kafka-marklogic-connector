@@ -45,33 +45,6 @@ class MarkLogicSourceConfigTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
-    void testConsistentSnapshotConfig() {
-        ConfigDef configDef = MarkLogicSourceConfig.CONFIG_DEF;
-        Map<String, Object> config = new HashMap<>();
-        config.put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
-        config.put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
-        config.put(MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
-        config.put(MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL);
-        configDef.parse(config);
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, null);
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "someNonBooleanValue");
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, 0);
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "1");
-        Assertions.assertThrows(ConfigException.class, () -> configDef.parse(config));
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "true");
-        configDef.parse(config);
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "false");
-        configDef.parse(config);
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "True");
-        configDef.parse(config);
-        config.put(MarkLogicSourceConfig.CONSISTENT_SNAPSHOT, "False");
-        configDef.parse(config);
-    }
-
-    @Test
     void testQueryTypeXor() {
         Assertions.assertThrows(ConfigException.class, () -> startSourceTask(
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC

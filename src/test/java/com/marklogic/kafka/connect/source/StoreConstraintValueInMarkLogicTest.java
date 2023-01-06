@@ -28,7 +28,6 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
     private final String constraintStoragePermissions = roleName + ",read," + roleName + ",update";
     private final String constraintStorageCollections = "kafka,maxValue";
     private final String[] taskConfigStrings = new String[] {
-        MarkLogicSourceConfig.DMSDK_BATCH_SIZE, String.valueOf(Integer.MAX_VALUE),
         MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
         MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
         MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
@@ -42,7 +41,7 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
         }
     }};
     ConstraintValueStore constraintValueStore;
-    RowBatcherSourceTask task;
+    RowManagerSourceTask task;
 
     @BeforeEach
     void givenFifteenAuthors() {
