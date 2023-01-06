@@ -39,7 +39,7 @@ as many instances of the MarkLogic Kafka connector that you wish.
 
 ### Using the connector with Apache Kafka
 
-TODO Need to update this section for the source connector.
+TODO Need to update this section for the source connector. DEVEXP-159 will address this.
 
 For a regular installation of Apache Kafka, obtain the latest version of the MarkLogic Kafka connector from 
 [this repository's Releases page](https://github.com/marklogic-community/kafka-marklogic-connector/releases). Download
@@ -68,9 +68,9 @@ with MarkLogic. The manner in which you use the MarkLogic connector will determi
   `./config/marklogic-sink.properties` file or `./config/marklogic-source.properties` file in this repository which 
   lists all the connector properties with a description for each one.
 
-When using the sink connector, you'll also need to configure two Kafka properties that control
+When using either the sink or source connector, you'll need to configure two Kafka properties that control
 [how data is serialized](https://www.confluent.io/blog/kafka-connect-deep-dive-converters-serialization-explained/) 
-when it is sent to the MarkLogic connector. These two properties along with their required values are:
+when it is sent to the MarkLogic connector. These two properties along with their recommended values are:
 
 - `key.converter=org.apache.kafka.connect.storage.StringConverter`
 - `value.converter=org.apache.kafka.connect.storage.StringConverter`
@@ -143,27 +143,22 @@ If `ml.connection.customSsl.mutualAuth` is set to `true`, you must also configur
 
 ## Configuring how data is read from MarkLogic
 
-TODO This is the main section we'll need to complete for 1.8.0. Just providing the bare minimum for now so that the 
-feature can be QA'ed. 
-
 The MarkLogic Kafka connector uses the [Optic API](https://docs.marklogic.com/guide/app-dev/OpticAPI) to read data from 
 MarkLogic as rows. Each row is converted into a Kafka `SourceRecord` and sent to a user-defined topic. To enable 
 this, the following properties must be configured:
 
-- `ml.source.optic.dsl` = the [Optic DSL query](https://docs.marklogic.com/guide/app-dev/OpticAPI#id_46710) to execute
 - `ml.source.topic` = the name of a Kafka topic to send records to
+- And either `ml.source.optic.dsl` = the [Optic DSL query](https://docs.marklogic.com/guide/app-dev/OpticAPI#id_46710) to execute
+- Or `ml.source.optic.serialized` = the [serialized Optic query](https://docs.marklogic.com/guide/app-dev/OpticAPI#id_11208) to execute
 
 The following optional properties can also be configured:
 
-- `ml.source.waitTime` = amount of time, in milliseconds, that TODO on this because we're going to change it soon
-- `ml.source.optic.jobName` = name for the job run by the connector; the main use case for this is to 
-enhance logging by having a known job name appear in the logs
-- `ml.source.optic.consistenSnapshot` = enables retrieval of rows that were present in the view at the time that the 
-  first batch is retrieved, ignoring subsequent changes to the view; defaults to true; setting this to false will 
-  result in matching rows inserted or updated after the retrieval of the first batch being included as well
-- `ml.dmsdk.batchSize` = sets the number of rows to be read in a batch from MarkLogic; can adjust this to tune performance
-- `ml.dmsdk.threadCount` = sets the number of threads to use for reading batches of rows from MarkLogic; can adjust 
-  this to tune performance
+- `ml.source.waitTime` = amount of time, in milliseconds, that the connector will wait on each poll before running the Optic query; defaults to 5000
+- `ml.source.optic.outputFormat` = the format of rows returned by the Optic query; defaults to "JSON", and can instead be "XML" or "CSV"
+- `ml.source.optic.constraintColumn.name` = name of a column returned by the Optic query to use for constraining results on subsequent runs
+- `ml.source.optic.constraintColumn.uri` = URI of a document that the connector will write after each run that uses a constraint column; the document will contain the highest value in the constraint column
+- `ml.source.optic.constraintColumn.collections` = comma-separated list of collection names to assign to the document identified by the URI
+- `ml.source.optic.constraintColumn.permissions` = comma-separated list of roles and capabilities to assign to the document identified by the URI
 
 As an example, consider a [TDE template](https://docs.marklogic.com/guide/app-dev/TDE) in an application's schemas
 database that defines a view with a schema of "demo" and a view name of "purchases". And assume that rows in this view
@@ -173,14 +168,166 @@ would be:
     ml.source.optic.dsl=op.fromView('demo', 'purchases')
     ml.source.topic=marklogic-purchases
 
-(TODO Explain here how the waitTime comes into play; for now, the connector just wants that amount of time before it
-queries, and it defaults to 5s)
-
 For each row returned by MarkLogic, the MarkLogic Kafka connector will publish a Kafka `SourceRecord` with the following 
 data:
 
-- `value` = the JSON row, as a string (TODO We hope to improve this to be an actual JSON object before the 1.8.0 release)
+- `value` = the row as a string
 - `topic` = the topic identified by `ml.source.topic`
+
+The same query can also be executed by defining a serialized version of the plan; this can be useful when the plan has
+been constructed already via the MarkLogic Java Client:
+
+    ml.source.optic.serialized={"$optic": {"ns": "op", "fn": "operators", "args": [{"ns": "op", "fn": "from-view", "args": ["demo", "purchases"]}]}}
+
+### Selecting an output type
+
+By default, the connector will return each row as JSON. As mentioned above, it is recommended to configure the Kafka
+`value.converter` property with a value of `org.apache.kafka.connect.storage.StringConverter`, which results in the JSON
+object being captured as a String in the Kafka `SourceRecord`. You may instead choose to configure the value converter
+with a value of `org.apache.kafka.connect.json.JsonConverter`. If you do this, you will either need to configure a 
+schema for the connector or configure the Kafka `value.converter.schemas.enable` property with a value of "false".
+
+Each row is represented as a JSON object, with each column represented as an object that defines the type and value of 
+the column; example:
+
+```
+{
+    "Medical.Authors.ID": {
+        "type": "xs:integer",
+        "value": 2
+    },
+    "Medical.Authors.LastName": {
+        "type": "xs:string",
+        "value": "Smith"
+    },
+    "Medical.Authors.ForeName": {
+        "type": "xs:string",
+        "value": "Jane"
+    },
+    "Medical.Authors.Date": {
+        "type": "xs:date",
+        "value": "2022-05-11"
+    },
+    "Medical.Authors.DateTime": {
+        "type": "xs:dateTime",
+        "value": "2022-05-11T10:00:00"
+    }
+}
+```
+
+Note that because the query used the Optic `fromView` accessor with a schema and view name, those schema and view names
+are included in the name of each column as well. 
+
+You may instead configure the `ml.source.optic.outputFormat` option and select either "XML" or "CSV". When XML is 
+chosen, each row will be an XML element stored as a String in the Kafka `SourceRecord`; example:
+
+```
+<t:row xmlns:t="http://marklogic.com/table">
+  <t:cell name="Medical.Authors.ID" type="xs:integer">2</t:cell>
+  <t:cell name="Medical.Authors.LastName" type="xs:string">Smith</t:cell>
+  <t:cell name="Medical.Authors.ForeName" type="xs:string">Jane</t:cell>
+  <t:cell name="Medical.Authors.Date" type="xs:date">2022-05-11</t:cell>
+  <t:cell name="Medical.Authors.DateTime" type="xs:dateTime">2022-05-11T10:00:00</t:cell>
+</t:row>
+```
+
+If you choose CSV, each row will be a two-line String, with the first line being the header row, and the second line
+containing the values for the row; example:
+
+```
+Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Authors.Date,Medical.Authors.DateTime
+2,Smith,Jane,2022-05-11,2022-05-11T10:00:00
+```
+
+### Limiting how many rows are returned
+
+When a Kafka source connector is run, it is required to return an in-memory list of source records. Thus, connector 
+users have to be careful to ensure that any given run will not return so many source records that the Kafka Connect 
+process runs out of memory. The MarkLogic Kafka connector is no different in this regard. While MarkLogic can 
+efficiently return millions of rows or more in a single call, that amount of data being stored in an in-memory list
+in the Kafka Connect process is likely to cause memory issues. 
+
+Users can leverage the [Optic limit function](https://docs.marklogic.com/AccessPlan.prototype.limit) to control 
+how many rows are returned at once. In conjunction with the `ml.source.waitTime` configuration option, a user can 
+control how frequently the connector runs and how much data it returns at once. For example, a user may wish to 
+limit their query to the first 1000 rows in a view, ordered by purchase ID, and queried every 2 seconds:
+
+    ml.source.optic.query=op.fromView('demo', 'purchases').orderBy(op.asc('id')).limit(1000)
+    ml.source.waitTime=2000
+
+For some users, returning up to 200k rows each time and only running every hour may suffice. For other users, 
+returning up to 10k rows and running every 5 seconds may be the right fit. Whatever limit and wait time are chosen, it 
+is recommended to test the configuration with realistic data to ensure that the connector performs well and that 
+there is no risk of the Kafka Connect process trying to fit too much data into memory.
+
+### Configuring a constraint column
+
+A common use case when retrieving data from any data store is to only retrieve data that is new or modified since data
+was previously retrieved. For example, if an Optic query returns 10k rows on its first run, it is typical that on the 
+second run, those same 10k rows should not be returned again. Instead, only rows that are considered to be new or 
+modified since the first run should be returned. 
+
+The MarkLogic Kafka connector supports this use case via a "constraint column". When the `ml.source.optic.constraintColumn.name`
+column is configured, the connector will perform the on each run:
+
+1. If a maximum value for the constraint column exists from a previous run, the user's query (regardless of whether it's a 
+   DSL query or a serialized query) will be enhanced to constrain on only rows whose value for that column is greater 
+   than the previously captured max value.
+2. After the query returns all of its rows, the connector will immediately query for the new maximum value of the column 
+   at the same [MarkLogic server timestamp](https://docs.marklogic.com/guide/rest-dev/intro#id_68993) at which the initial 
+   query was run. This value is then used on the next run to constrain the user's query. 
+   
+A user can choose any column returned by their query. In practice, this will often be a dateTime column or a column with
+incrementing numbers, but the feature will work as long a "greater than" operation can be performed on the column. 
+Users should note the following guidelines though:
+
+1. It is recommended for the column to contain unique values. For example, if the column contains numbers, an initial 
+   query may find that the highest value in the column is 50. If it is possible for future rows to be inserted with a 
+   value of 50, those rows will not be returned because the connector will constrain on rows with a value greater than 50.
+   Note that a "last updated" dateTime column does not need to contain unique values, assuming that any new row would 
+   always have a value greater than any existing row. 
+2. A query can make use of the Optic `limit()` modifier to limit how many rows are returned in conjunction with a 
+   constraint column as well. This may be useful in situations where the number of "new" rows can be high enough to cause
+   the Kafka Connect process to run out of memory. When doing so though, the user will typically want to order the 
+   results by the same column used as the constraint column to ensure that no rows are missed. 
+   
+Consider the following example of using a constraint column and a limit together:
+
+    ml.source.optic.query=op.fromView('demo', 'purchases').where(op.sqlCondition('price_per_unit > 10')).orderBy(op.asc('id')).limit(1000)
+    ml.source.optic.constraintColumn.name=id
+
+With this configuration, each run of the source connector will return no more than 1000 purchase rows, where each 
+purchase row has an ID greater than any of the purchase rows returned by the previous run.
+
+### Configuring storage of a constraint column value
+
+When using the constraint column feature, the MarkLogic Kafka connector defaults to storing the maximum value for 
+the constraint column in memory. This can be sufficient for development and test purposes, but it presents a risk where 
+if the connector is ever shut down in production, it will retrieve all rows the next time it is run.
+
+To ensure that the constraint column feature works as expected, regardless of what is done to the connector itself, the
+connector should be configured to store the maximum constraint column value in MarkLogic itself. To do so, the following
+properties (described above) should be configured:
+
+- `ml.source.optic.constraintColumn.uri` = must be configured to enable the feature
+- `ml.source.optic.constraintColumn.collections` = optional
+- `ml.source.optic.constraintColumn.permissions` = optional, but recommended
+
+When the "uri" property is configured, the connector will store the maximum constraint column value in MarkLogic and 
+retrieve it from MarkLogic as well. A user can choose any URI value, though because the connector will store the value
+in a JSON document, it is recommended (though not required) to use a suffix of ".json" for the URI. 
+
+Collections can be assigned to the URI if desired via a comma-separated string. 
+
+Unless the Kafka connector is running as an admin user (generally not recommended for security reasons), permissions 
+should be configured for the URI to ensure that the appropriate users can read and update the document. Permissions are 
+defined as a comma-separated string with alternating roles and capabilities - e.g. 
+
+    ml.source.optic.constraintColumn.permissions=rest-reader,read,rest-writer,update
+
+The document written by the connector will include the maximum constraint column value along with some other metadata
+that is intended to be helpful for debugging any problems that arise. However, as of the 1.8.0 release, the contents 
+of this document are considered private and thus subject to change with any release. 
 
 
 ## Configuring how data is written to MarkLogic
