@@ -15,7 +15,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String constraintColumnName = "ID";
         String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\")).limit(3)";
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -47,7 +47,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String constraintColumnName = "Date";
         String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\")).limit(3)";
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -68,7 +68,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String constraintColumnName = "DateTime";
         String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\")).limit(3)";
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -92,8 +92,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         String constraintColumnName = "DateTime";
         String authorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
 
-        RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DMSDK_BATCH_SIZE, String.valueOf(Integer.MAX_VALUE),
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, authorsDsl,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
@@ -139,7 +138,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
     void secondPollReturnsNoRows() throws Exception {
         loadFifteenAuthorsIntoMarkLogic();
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "ID",
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC

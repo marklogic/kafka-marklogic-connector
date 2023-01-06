@@ -45,20 +45,17 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
      * @return a MarkLogicSourceTask based on the default connection config and any optional config params provided by
      * the caller
      */
-    protected RowBatcherSourceTask startSourceTask(String... configParamNamesAndValues) {
+    protected RowManagerSourceTask startSourceTask(String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
-        // Default to a single batch, which is friendly for queries that use limit() and suitable for the small number
-        // of rows returned by tests. Tests can still override this by providing their own desired batch size.
-        config.put(MarkLogicSourceConfig.DMSDK_BATCH_SIZE, Integer.MAX_VALUE + "");
         config.put(MarkLogicSourceConfig.WAIT_TIME, "0");
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
             config.put(configParamNamesAndValues[i], configParamNamesAndValues[i + 1]);
         }
         MarkLogicSourceConnector connector = new MarkLogicSourceConnector();
         connector.start(config);
-        RowBatcherSourceTask task;
+        RowManagerSourceTask task;
         try {
-            task = (RowBatcherSourceTask) connector.taskClass().getDeclaredConstructor().newInstance();
+            task = (RowManagerSourceTask) connector.taskClass().getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

@@ -29,13 +29,8 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
     enum OUTPUT_TYPE {JSON, XML, CSV}
     private static final CustomRecommenderAndValidator OUTPUT_FORMAT_RV =
         new CustomRecommenderAndValidator(Arrays.stream(MarkLogicSourceConfig.OUTPUT_TYPE.values()).map(Enum::toString).toArray(String[]::new));
-    public static final String JOB_NAME = "ml.source.optic.jobName";
-    public static final String CONSISTENT_SNAPSHOT = "ml.source.optic.consistentSnapshot";
     public static final String TOPIC = "ml.source.topic";
     public static final String WAIT_TIME = "ml.source.waitTime";
-
-    public static final String DMSDK_BATCH_SIZE = "ml.dmsdk.batchSize";
-    public static final String DMSDK_THREAD_COUNT = "ml.dmsdk.threadCount";
 
     public static final ConfigDef CONFIG_DEF = getConfigDef();
     private static final DefaultDocumentPermissionsParser permissionsParser = new DefaultDocumentPermissionsParser();
@@ -63,37 +58,11 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
                 "Required; The name of a Kafka topic to send records to")
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
-                "TBD, we're changing this soon")
-            .define(JOB_NAME, Type.STRING, "", new ConfigDef.NonNullValidator(), Importance.MEDIUM,
-                "Name for the job run by the connector; the main use case for this is to " +
-                    "enhance logging by having a known job name appear in the logs")
-            .define(CONSISTENT_SNAPSHOT, Type.BOOLEAN, true, new BooleanValidator(), Importance.MEDIUM,
-                "Enables retrieval of rows that were present in the view at the time that the " +
-                    "first batch is retrieved, ignoring subsequent changes to the view; defaults to true; setting this to false will " +
-                    "result in matching rows inserted or updated after the retrieval of the first batch being included as well")
-            // Batch size is a bit different for RowBatcher than QueryBatcher, as it - along with the row estimate that
-            // RowBatcher gathers - is used to determine the number of partitions. The more partitions, the more calls
-            // RowBatcher has to make to ML. That's good when there are a lot of matching rows - like hundreds of
-            // thousands - but not good when there's a smaller set of matching rows. From initial testing, 10k seems
-            // like a reasonable default size for batches that provides good performance when there are hundreds of
-            // thousands of matches or more, and also when only a few rows match. Ultimately, it's up a user to perform
-            // their own performance testing to determine a suitable batch size.
-            .define(DMSDK_BATCH_SIZE, Type.INT, 10000, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
-                "Sets the number of rows to be read in a batch from MarkLogic; can adjust this to tune performance")
-            .define(DMSDK_THREAD_COUNT, Type.INT, 16, ConfigDef.Range.atLeast(1), Importance.MEDIUM,
-                "Sets the number of threads to use for reading batches of rows from MarkLogic; can adjust this to tune performance");
+                "TBD, we're changing this soon");
     }
 
     private MarkLogicSourceConfig(final Map<?, ?> originals) {
         super(CONFIG_DEF, originals, false);
-    }
-
-    static public class BooleanValidator implements ConfigDef.Validator {
-        public void ensureValid(String name, Object value) {
-            if (!(value instanceof Boolean)) {
-                throw new ConfigException(name + " must be either 'true' or 'false'");
-            }
-        }
     }
 
     static public class PermissionsValidator implements ConfigDef.Validator {

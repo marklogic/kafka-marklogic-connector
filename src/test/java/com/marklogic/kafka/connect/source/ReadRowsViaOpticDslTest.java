@@ -19,7 +19,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     void testRowBatcherTask() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
-        RowBatcherSourceTask task = startSourceTask(
+        RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
         );
