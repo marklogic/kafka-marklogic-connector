@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
     protected final String XML_RESULT = "<t:row xmlns:t=\"http://marklogic.com/table\">\n" +
         "<t:cell name=\"Medical.Authors.ID\" type=\"xs:integer\">2</t:cell>\n" +
@@ -26,5 +28,17 @@ class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
 
         List<SourceRecord> newSourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(newSourceRecords, XML_RESULT);
+    }
+
+    @Test
+    void noMatchingRows() throws InterruptedException {
+        List<SourceRecord> records = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, "op.fromDocUris(cts.documentQuery('no-such-document'))",
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.XML.toString()
+        ).poll();
+
+        assertNull(records, "Should get null back when no rows match; also, check the logging to ensure that " +
+            "no exception was thrown");
     }
 }

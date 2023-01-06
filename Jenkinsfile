@@ -14,7 +14,7 @@ pipeline{
   stages{
     stage('tests'){
       steps{
-        copyRPM 'Release','10.0-9.4'
+        copyRPM 'Latest','11.0'
         setUpML '$WORKSPACE/xdmp/src/Mark*.rpm'
         sh label:'setup', script: '''#!/bin/bash
         cd kafka-connector

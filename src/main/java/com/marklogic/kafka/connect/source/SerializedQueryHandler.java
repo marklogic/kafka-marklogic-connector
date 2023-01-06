@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.RowBatcher;
+import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
@@ -37,6 +38,13 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     @Override
+    public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
+        currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
+        logger.info("Serialized query: " + currentSerializedQuery);
+        return databaseClient.newRowManager().newRawPlanDefinition(new StringHandle(currentSerializedQuery));
+    }
+
+    @Override
     public void addQueryToRowBatcher(RowBatcher<?> rowBatcher, String previousMaxConstraintColumnValue) {
         currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
         logger.info("Serialized query: " + currentSerializedQuery);
@@ -65,7 +73,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     @Override
-    public String getMaxConstraintColumnValue(long queryStartTimeInMillis) {
+    public String getMaxConstraintColumnValue(long serverTimestamp) {
         String previousMaxConstraintColumnValue = null;
         try {
             String maxValueQuery = buildMaxValueSerializedQuery();
@@ -73,7 +81,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             RowManager rowMgr = databaseClient.newRowManager();
             RawPlanDefinition maxConstraintValueQuery = rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery));
             JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
-            handle.setPointInTimeQueryTimestamp(queryStartTimeInMillis);
+            handle.setPointInTimeQueryTimestamp(serverTimestamp);
             JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
             String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
             previousMaxConstraintColumnValue = QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);

@@ -1,25 +1,19 @@
 package com.marklogic.kafka.connect.source;
 
-import com.marklogic.client.datamovement.RowBatcher;
 import org.apache.kafka.connect.source.SourceRecord;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     protected static final String JSON_RESULT =
         "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
-        "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
-        "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}," +
-        "\"Medical.Authors.Date\":{\"type\":\"xs:date\",\"value\":\"2022-05-11\"}," +
-        "\"Medical.Authors.DateTime\":{\"type\":\"xs:dateTime\",\"value\":\"2022-05-11T10:00:00\"}}";
+            "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
+            "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}," +
+            "\"Medical.Authors.Date\":{\"type\":\"xs:date\",\"value\":\"2022-05-11\"}," +
+            "\"Medical.Authors.DateTime\":{\"type\":\"xs:dateTime\",\"value\":\"2022-05-11T10:00:00\"}}";
 
     @Test
     void testRowBatcherTask() throws InterruptedException {
@@ -47,49 +41,49 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
-    void testDslThatDoesNotStartWithFromView() throws InterruptedException {
-        String fromSqlDsl = "op.fromSQL('SELECT employees.FirstName, employees.LastName FROM employees')";
-        RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, fromSqlDsl,
+    void fromSql() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        List<SourceRecord> records = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, "op.fromSQL('select LastName, ForeName from medical.authors')",
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
-        );
-        Assertions.assertNull(task.poll(), "Invalid DSL should cause poll() to fail");
+        ).poll();
+
+        assertEquals(15, records.size());
+
+        recordsToJsonObjects(records).forEach(row -> {
+            assertEquals(2, row.size(), "Expecting 2 columns for LastName and ForeName");
+        });
     }
 
     @Test
-    void testBatcherStopDoesNotWaitForCompletion() {
+    void fromDocUris() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
-        RowBatcherSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+        List<SourceRecord> records = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, "op.fromDocUris(cts.documentQuery('citations.xml')).joinDoc(op.col('doc'), op.col('uri'))",
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
-        );
-        List<SourceRecord> newSourceRecords = new Vector<>();
-        RowBatcher<?> rowBatcher = task.getNewRowBatcher(newSourceRecords);
+        ).poll();
 
-        // Register our own success listener to look for any onSuccess events
-        // and set a variable tracking onSuccess events.
-        AtomicReference<Boolean> onSuccessCalled = new AtomicReference<>(false);
-        rowBatcher.onSuccess(event -> onSuccessCalled.set(true));
-
-        Map<String, Object> parsedConfig = new HashMap<>();
-
-        // Start a new thread that can be paused before polling
-        // to verify that task.stop() prevents any new polling.
-        Thread t1 = new Thread(() -> {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            QueryHandler queryHandler = QueryHandler.newQueryHandler(getDatabaseClient(), parsedConfig);
-            task.performPoll(queryHandler, newSourceRecords);
+        assertEquals(1, records.size());
+        recordsToJsonObjects(records).forEach(row -> {
+            assertEquals("xs:string", row.get("uri").get("type").asText());
+            assertEquals("citations.xml", row.get("uri").get("value").asText());
+            assertEquals("element", row.get("doc").get("type").asText());
+            String xmlDoc = row.get("doc").get("value").asText();
+            assertTrue(xmlDoc.contains("<Citations>"), "Unexpected doc content: " + xmlDoc);
         });
-        t1.start();
+    }
 
-        task.stop();
-        Assertions.assertFalse(onSuccessCalled.get(),
-            "RowBatcherSourceTask should have stopped before any onSuccess events");
-        Assertions.assertEquals(0, newSourceRecords.size());
+    @Test
+    void noMatchingRows() throws InterruptedException {
+        List<SourceRecord> records = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, "op.fromDocUris(cts.documentQuery('no-such-document'))",
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString()
+        ).poll();
+
+        assertNull(records, "Should get null back when no rows match; also, check the logging to ensure that " +
+            "no exception was thrown");
     }
 }
