@@ -64,12 +64,14 @@ public class RowManagerSourceTask extends SourceTask {
         logger.info("Polling; sleep time: {}ms", pollDelayMs);
         Thread.sleep(pollDelayMs);
 
+        String currentQuery = "<Not Built Yet>";
         try {
             final String previousMaxConstraintColumnValue = constraintValueStore != null ?
                 constraintValueStore.retrievePreviousMaxConstraintColumnValue() : null;
 
             QueryHandler queryHandler = QueryHandler.newQueryHandler(databaseClient, parsedConfig);
             PlanBuilder.Plan plan = queryHandler.newPlan(previousMaxConstraintColumnValue);
+            currentQuery = queryHandler.getCurrentQuery();
             final long start = System.currentTimeMillis();
             PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan, topic);
             final long duration = System.currentTimeMillis() - start;
@@ -78,8 +80,8 @@ public class RowManagerSourceTask extends SourceTask {
             updateMaxConstraintValue(results, queryHandler);
             return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
-            // TODO Will include query here soon
-            logger.error("Unable to poll for source records; cause: " + ex.getMessage(), ex);
+            logger.error("Unable to poll for source records; cause: " + ex.getMessage() +
+                "; Current Query: " + currentQuery, ex);
             return null;
         }
     }
