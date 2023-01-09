@@ -95,4 +95,8 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         rootArgsArray.add(constraintColumnNode);
         return mapper.writeValueAsString(queryRoot);
     }
+
+    public String getCurrentQuery() {
+        return currentSerializedQuery;
+    }
 }

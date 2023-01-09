@@ -76,4 +76,8 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     private String buildMaxValueDslQuery() {
         return String.format("%s.orderBy(op.desc(\"%s\")).limit(1).select([op.as(\"constraint\", op.col(\"%s\"))])", currentDslQuery, constraintColumnName, constraintColumnName);
     }
+
+    public String getCurrentQuery() {
+        return currentDslQuery;
+    }
 }

@@ -1,7 +1,6 @@
 package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.RowBatcher;
 import com.marklogic.client.expression.PlanBuilder;
 import org.apache.kafka.common.config.ConfigException;
 import org.springframework.util.StringUtils;
@@ -17,7 +16,8 @@ import static java.lang.String.format;
 public interface QueryHandler {
 
     /**
-     * @param previousMaxConstraintColumnValue
+     * @param previousMaxConstraintColumnValue contains the maximum value of the constrain column from the previous call
+     * to the poll() method
      * @return a Plan based on the user's original query which is then modified if the previous max constraint column
      * value is not null so that the user's query will only retrieve rows higher than that value
      */
@@ -25,11 +25,18 @@ public interface QueryHandler {
 
     /**
      *
-     * @param serverTimestamp
+     * @param serverTimestamp contains the timestamp of the most recent execution of the query
      * @return the max value for the user's constraint column based on the given MarkLogic server timestamp,
      * which is assumed to be the timestamp at which the connector retrieved rows
      */
     String getMaxConstraintColumnValue(long serverTimestamp);
+
+    /**
+     *
+     * @return the String representation of the current query. The current query is the original user query, but possibly
+     * with a constraint value injected.
+     */
+    String getCurrentQuery();
 
     static QueryHandler newQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         boolean configuredForDsl = StringUtils.hasText((String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY));
