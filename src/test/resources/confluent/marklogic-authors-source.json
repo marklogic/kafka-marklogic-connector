@@ -14,9 +14,6 @@
     "ml.source.optic.constraintColumn.name": "ID",
     "ml.source.topic": "marklogic-authors",
     "ml.source.waitTime": "5000",
-    "ml.source.optic.jobName": "test-job",
-    "ml.source.optic.outputFormat": "JSON",
-    "ml.dmsdk.batchSize": "100000",
-    "ml.dmsdk.threadCount": "16"
+    "ml.source.optic.outputFormat": "JSON"
   }
 }
