@@ -259,15 +259,21 @@ and
 
     bin/kafka-server-start.sh config/server.properties
 
-Next, start the Kafka connector in standalone mode (also from the Kafka home directory):
+Next, start the Kafka connector in standalone mode (also from the Kafka home directory). To run the sink connector, 
+use the following command:
 
     bin/connect-standalone.sh config/marklogic-connect-standalone.properties config/marklogic-sink.properties
 
-You'll see a fair amount of logging from Kafka itself; near the end of the logging, look for messages from
-`MarkLogicSinkTask` and MarkLogic Java Client classes such as `WriteBatcherImpl` to ensure that the connector has
-started up correctly.
+To run the source connector, the command is:
 
-To test out the connector, you can use the following command to enter a CLI that allows you to manually send 
+    bin/connect-standalone.sh config/marklogic-connect-standalone.properties config/marklogic-source.properties
+
+You'll see a fair amount of logging from Kafka itself; near the end of the logging, look for messages from
+`MarkLogicSinkTask` or `MarkLogicSourceTask` and MarkLogic Java Client classes such as `WriteBatcherImpl` or
+`RowManagerSourceTask` to ensure that the connector has started up correctly.
+
+## Sink Connector Testing
+To test out the sink connector, you can use the following command to enter a CLI that allows you to manually send 
 messages to the `marklogic` topic that the connector is configured by default to read from:
 
     bin/kafka-console-producer.sh --broker-list localhost:9092 --topic marklogic
@@ -280,3 +286,26 @@ When a document is received and written by the connector, you'll see logging lik
 ```
 [2018-12-20 12:54:13,561] INFO flushing 1 queued docs (com.marklogic.client.datamovement.impl.WriteBatcherImpl:549)
 ```
+
+## Source Connector Testing
+To test out the source connector, you can insert documents into MarkLogic that contain data that matches TDE templates
+to generate Optic rows that match your query. For example, if your TDE template defines an "Authors" view in the
+"Medical" schema, the source configuration file might have the following properties.
+
+    ml.source.optic.dsl=op.fromView("Medical", "Authors")
+    ml.source.topic=Authors
+
+Then, after the connector is running, monitor the "Authors" topic. When a document is retrieved from MarkLogic and
+delivered by the connector to the topic, you'll see logging like this:
+
+    [2023-01-10 09:58:23,326] INFO [marklogic-source|task-0] DSL query: op.fromView("Medical", "Authors") (com.marklogic.kafka.connect.source.DslQueryHandler:37)
+    [2023-01-10 09:58:23,395] INFO [marklogic-source|task-0] Source record count: 3; duration: 66 (com.marklogic.kafka.connect.source.RowManagerSourceTask:79)
+
+You can monitor the number of records in the target Topic using a tool included with Kafka in the bin directory:
+
+    bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic Authors
+
+You can also use a Kafka tool to pull messages from the Topic. If you run this command while loading records from MarkLogic,
+it will monitor the topic and output the records as they are delivered:
+
+    bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic Authors
