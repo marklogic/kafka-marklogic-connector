@@ -84,6 +84,27 @@ two properties in the "Common" section
 copy of the `./config/marklogic-connect-standalone.properties` file. This file already has the two properties set to the
   correct values, so you should not need to do anything further with them.
 
+### Dead Letter Configuration
+
+Starting with version 1.8.0, the sink connector makes use of the dead letter queue (DLQ) if the user has configured
+Kafka appropriately. [Please see the Kafka documentation](https://www.confluent.io/blog/kafka-connect-deep-dive-error-handling-dead-letter-queues/)
+for more information on configuring the dead letter queue in Kafka.
+
+When Kafka has been configured to use the DLQ, there are two events in the sink connector that will cause a record to be
+sent to the DLQ.
+- "Record conversion" : If a specific record cannot be converted into the target format to be delivered to MarkLogic,
+then that record will be sent to the DLQ.
+- "Write failure" : If a batch of documents (converted Kafka records from the source topic) fails to be written to
+MarkLogic then each of the records in the batch will be sent to the DLQ. The entire batch must be sent to the DLQ since
+the connector is unable to determine the cause of the failure.
+
+When a record is sent to the DLQ, the connector first adds headers to the record providing information about the cause
+of the failure in order to assist with troubleshooting and potential routing.
+- "marklogic-failure-type" : Either "Write failure" or "Record conversion"
+- "marklogic-exception-message" : Information from MarkLogic when there is a write failure
+- "marklogic-original-topic" : The name of the topic that this record came from
+- "marklogic-target-uri" : For write failures, this contains the target URI for the document
+
 
 ## Configuring the connection
 
