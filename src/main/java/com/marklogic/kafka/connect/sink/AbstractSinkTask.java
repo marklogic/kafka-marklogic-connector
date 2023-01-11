@@ -26,7 +26,7 @@ abstract class AbstractSinkTask extends SinkTask {
     static public final String MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE = "marklogic-exception-message";
     static public final String MARKLOGIC_ORIGINAL_TOPIC = "marklogic-original-topic";
     static public final String MARKLOGIC_TARGET_URI = "marklogic-target-uri";
-    static public final String MARKLOGIC_WRITE_FAILURE = "Write Failure";
+    static public final String MARKLOGIC_WRITE_FAILURE = "Write failure";
     static public final String MARKLOGIC_CONVERSION_FAILURE = "Record conversion";
 
     /**
