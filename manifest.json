@@ -1,6 +1,7 @@
 {
   "component_types": [
-    "sink"
+    "sink",
+    "source"
   ],
 
   "description": "This is a Kafka connector for subscribing to Apache Kafka topics, receiving messages from the topics, and loading the messages into MarkLogic.\nIt is built off of the Kafka Connect framework, and therefore automatically supports pluggable encoding converters, single message transforms, and other useful features.\nMarkLogic 9+ is required.",
@@ -36,13 +37,14 @@
   },
 
   "requirements": [
-    "MarkLogic 9+"
+    "MarkLogic 9+ for the sink connector",
+    "MarkLogic 10+ for the source connector"
   ],
 
   "support": {
     "logo": "assets/MarkLogic_logo.jpg",
     "provider_name": "MarkLogic Corporation",
-    "summary": "This connector is provided 'as-is'. Support may be available from community members who contribute to it as an open-source project.",
+    "summary": "For technical support information, please see https://docs.marklogic.com/11.0/guide/release-notes/en/technical-support.html and http://help.marklogic.com.",
     "url": "https://www.marklogic.com/"
   },
 
