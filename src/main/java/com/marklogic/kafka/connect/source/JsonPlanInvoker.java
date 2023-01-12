@@ -8,13 +8,16 @@ import org.apache.kafka.connect.source.SourceRecord;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class JsonPlanInvoker implements PlanInvoker {
 
     private DatabaseClient client;
+    private KeyGenerator keyGenerator;
 
-    public JsonPlanInvoker(DatabaseClient client) {
+    public JsonPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
+        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
     }
 
     @Override
@@ -30,8 +33,11 @@ class JsonPlanInvoker implements PlanInvoker {
          */
         JsonNode doc = result.get();
         if (doc != null && doc.has("rows")) {
+            long rowNumber = 1;
             for (JsonNode row : doc.get("rows")) {
-                records.add(new SourceRecord(null, null, topic, null, row.toString()));
+                String key = keyGenerator.generateKey(rowNumber);
+                rowNumber++;
+                records.add(new SourceRecord(null, null, topic, null, key,null, row.toString()));
             }
         }
         return new Results(records, baseHandle.getServerTimestamp());

@@ -11,13 +11,17 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 class CsvPlanInvoker implements PlanInvoker {
 
     private DatabaseClient client;
+    private KeyGenerator keyGenerator;
 
-    public CsvPlanInvoker(DatabaseClient client) {
+    public CsvPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
+        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
     }
 
     @Override
@@ -29,9 +33,11 @@ class CsvPlanInvoker implements PlanInvoker {
         if (result.get() != null) {
             try (BufferedReader reader = new BufferedReader(new StringReader(result.get()))) {
                 String headers = reader.readLine();
+                AtomicLong rowNumber = new AtomicLong(1);
                 reader.lines().forEach(line -> {
+                    String key = keyGenerator.generateKey(rowNumber.getAndIncrement());
                     String newDocument = headers + "\n" + line;
-                    SourceRecord newRecord = new SourceRecord(null, null, topic, null, newDocument);
+                    SourceRecord newRecord = new SourceRecord(null, null, topic, null, key, null, newDocument);
                     records.add(newRecord);
                 });
             } catch (IOException ex) {

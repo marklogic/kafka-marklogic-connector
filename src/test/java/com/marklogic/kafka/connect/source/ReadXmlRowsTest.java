@@ -31,6 +31,38 @@ class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
+    void testRowBatcherTaskWithUuidKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        String keyStrategy = "uuid";
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.XML.toString(),
+            MarkLogicSourceConfig.KEY_STRATEGY, keyStrategy
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, XML_RESULT, keyStrategy);
+    }
+
+    @Test
+    void testRowBatcherTaskWithTimestampKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        String keyStrategy = "timestamp";
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.XML.toString(),
+            MarkLogicSourceConfig.KEY_STRATEGY, keyStrategy
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, XML_RESULT, keyStrategy);
+    }
+
+    @Test
     void noMatchingRows() throws InterruptedException {
         List<SourceRecord> records = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, "op.fromDocUris(cts.documentQuery('no-such-document'))",
