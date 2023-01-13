@@ -41,9 +41,9 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
         MarkLogicConfig.addDefinitions(configDef);
         return configDef
             .define(DSL_QUERY, Type.STRING, null, Importance.HIGH,
-                format("Required (or %s); The Optic DSL query to execute", SERIALIZED_QUERY))
+                format("Required (or %s); the Optic DSL query to execute", SERIALIZED_QUERY))
             .define(SERIALIZED_QUERY, Type.STRING, null, Importance.HIGH,
-                format("Required (or %s); The serialized Optic query to execute", DSL_QUERY))
+                format("Required (or %s); the serialized Optic query to execute", DSL_QUERY))
             .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
                 "The name of the column which should be used to constrain the Optic query")
             .define(CONSTRAINT_STORAGE_URI, Type.STRING, null, Importance.MEDIUM,
@@ -56,9 +56,11 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             .define(OUTPUT_FORMAT, Type.STRING, "JSON", OUTPUT_FORMAT_RV, Importance.HIGH,
                 "The structure of the data in the query response", null, -1, ConfigDef.Width.MEDIUM, OUTPUT_FORMAT, OUTPUT_FORMAT_RV)
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
-                "Required; The name of a Kafka topic to send records to")
+                "Required; the name of a Kafka topic to send records to")
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
-                "TBD, we're changing this soon");
+                "Required, must be zero or higher; the amount of time in milliseconds to wait, on each poll call, " +
+                    "before querying MarkLogic. Kafka will continually call poll on the source connector, so this " +
+                    "can be used to control how frequently the connector queries MarkLogic.");
     }
 
     private MarkLogicSourceConfig(final Map<?, ?> originals) {

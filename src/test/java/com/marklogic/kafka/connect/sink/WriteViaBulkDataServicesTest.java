@@ -39,7 +39,8 @@ public class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
 
         task.flush(null);
 
-        assertCollectionSize("All 4 records should have been written, as the flush call will TBD", TEST_COLLECTION, 4);
+        assertCollectionSize("All 4 records should have been written, as the flush call will ensure that " +
+            "any records waiting to be written will be written", TEST_COLLECTION, 4);
     }
 
     @Test
