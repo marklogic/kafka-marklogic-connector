@@ -66,10 +66,8 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
             String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
             return QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);
         } catch (Exception ex) {
-            // TODO Should this propagate up, resulting in no data being returned?? Figure out before releasing 1.8.0
-            logger.warn("Unable to get max constraint value; query: " + maxConstraintValueQuery +
+            throw new RuntimeException("Unable to get max constraint value; query: " + maxConstraintValueQuery +
                     "; response: " + result + "; cause: " + ex.getMessage());
-            return null;
         }
     }
 
