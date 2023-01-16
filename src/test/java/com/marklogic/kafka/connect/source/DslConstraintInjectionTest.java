@@ -113,4 +113,40 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
         verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
     }
+
+    @Test
+    void valueWithSingleQuotes() {
+        String expectedQuery = "op.fromView('Medical', 'Authors')" +
+            ".where(op.gt(op.col('ID'), 'my odd value'))" +
+            ".orderBy(op.asc('ID'))";
+        assertEquals(expectedQuery, injectValue("my 'odd' value"),
+            "To prevent the modified query from breaking, single quotes are removed from the previous max value");
+    }
+
+    @Test
+    void valueWithDoubleQuotes() {
+        String expectedQuery = "op.fromView('Medical', 'Authors')" +
+            ".where(op.gt(op.col('ID'), 'my odd value'))" +
+            ".orderBy(op.asc('ID'))";
+        assertEquals(expectedQuery, injectValue("my \"odd\" value"),
+            "To prevent the modified query from breaking, double quotes are removed from the previous max value");
+    }
+
+    @Test
+    void valueWithParens() {
+        String expectedQuery = "op.fromView('Medical', 'Authors')" +
+            ".where(op.gt(op.col('ID'), 'my odd value'))" +
+            ".orderBy(op.asc('ID'))";
+        assertEquals(expectedQuery, injectValue("my (odd) value"),
+            "To prevent the modified query from breaking, parentheses are removed from the previous max value");
+    }
+
+    private String injectValue(String value) {
+        String originalDsl = "op.fromView('Medical', 'Authors')";
+        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
+            put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
+            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
+        }};
+        return appendConstraintOntoQuery(originalDsl, parsedConfig, value);
+    }
 }

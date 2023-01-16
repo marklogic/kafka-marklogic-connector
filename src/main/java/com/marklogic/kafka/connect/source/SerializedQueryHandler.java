@@ -29,12 +29,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     public SerializedQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         this.databaseClient = databaseClient;
         this.userSerializedQuery = (String) parsedConfig.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
-        String rawConstraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
-        if (!StringUtils.hasText(rawConstraintColumnName)) {
-            constraintColumnName = null;
-        } else {
-            constraintColumnName = QueryHandlerUtil.sanitize(rawConstraintColumnName);
-        }
+        this.constraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
@@ -94,8 +89,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
             handle.setPointInTimeQueryTimestamp(serverTimestamp);
             JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
-            String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
-            previousMaxConstraintColumnValue = QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);
+            previousMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
         } catch (Exception ex) {
             logger.warn("Failed to get a valid Maximum Constraint value: " + ex.getMessage());
         }
