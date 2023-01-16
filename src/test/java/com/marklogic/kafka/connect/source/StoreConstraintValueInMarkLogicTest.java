@@ -119,8 +119,10 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
 
     private void assertOnlyRowsWithIdsAfterTheCurrentMaxValueGetDelivered(List<SourceRecord> newRecords) {
         assertEquals(2, newRecords.size(), "Only 2 of the 3 new records should be returned");
-        assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":6}"));
-        assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":7}"));
+        assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":6}"),
+            newRecords.toString() + " did not contain the expected value");
+        assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":7}"),
+            newRecords.toString() + " did not contain the expected value");
     }
 
     private void storeBadConstraintState() {

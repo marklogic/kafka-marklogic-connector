@@ -33,6 +33,22 @@
       "namespace-uri": "",
       "range-value-positions": false,
       "scalar-type": "dateTime"
+    },
+    {
+      "collation": "",
+      "invalid-values": "reject",
+      "localname": "ID",
+      "namespace-uri": "",
+      "range-value-positions": false,
+      "scalar-type": "int"
+    },
+    {
+      "collation": "http://marklogic.com/collation/",
+      "invalid-values": "reject",
+      "localname": "LastName",
+      "namespace-uri": "",
+      "range-value-positions": false,
+      "scalar-type": "string"
     }
   ]
 }

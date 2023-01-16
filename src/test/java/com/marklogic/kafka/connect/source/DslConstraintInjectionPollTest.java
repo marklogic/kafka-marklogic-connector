@@ -114,7 +114,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
             "The max value after polling once should be equal to the initial time");
         assertEquals(1, newRecords.size());
         String initialRow = (String) newRecords.get(0).value();
-        assertTrue(initialRow.contains("Initial"));
+        assertTrue(initialRow.contains("Initial"), "Did not find 'Initial' in: " + initialRow);
 
         //    3) Insert a second document with a dateTime greater than that of the first row,
         String laterTime = "02:01:00";
@@ -134,7 +134,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
             "The max value after polling once should be equal to the initial time");
         assertEquals(1, newRecords.size());
         String laterRow = (String) newRecords.get(0).value();
-        assertTrue(laterRow.contains("Later"));
+        assertTrue(laterRow.contains("Later"), "Did not find 'Later' in: " + laterRow);
     }
 
     @Test

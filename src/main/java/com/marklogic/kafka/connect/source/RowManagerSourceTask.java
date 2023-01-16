@@ -112,4 +112,14 @@ public class RowManagerSourceTask extends SourceTask {
         }
         return null;
     }
+
+
+    /**
+     * Exists only for testing.
+     *
+     * @param constraintValueStore
+     */
+    protected void setConstraintValueStore(ConstraintValueStore constraintValueStore) {
+        this.constraintValueStore = constraintValueStore;
+    }
 }
