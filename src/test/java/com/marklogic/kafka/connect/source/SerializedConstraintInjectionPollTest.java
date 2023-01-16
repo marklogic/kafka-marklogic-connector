@@ -16,12 +16,13 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
     void testMaxValueRetrievalWithConstraintInjection() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "ID";
-        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}, {\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"asc\", \"args\":[\"" + constraintColumnName + "\"]}]}, {\"ns\":\"op\", \"fn\":\"limit\", \"args\":[3]}]}}";
+        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.ROW_LIMIT, "3"
         );
 
         List<SourceRecord> newRecords = task.poll();
@@ -63,12 +64,13 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
     void testMaxValueRetrievalWithDateConstraint() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "Date";
-        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}, {\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"asc\", \"args\":[\"" + constraintColumnName + "\"]}]}, {\"ns\":\"op\", \"fn\":\"limit\", \"args\":[3]}]}}";
+        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.ROW_LIMIT, "3"
         );
 
         task.poll();
@@ -86,12 +88,13 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
     void testMaxValueRetrievalWithDateTimeConstraint() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "DateTime";
-        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}, {\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"asc\", \"args\":[\"" + constraintColumnName + "\"]}]}, {\"ns\":\"op\", \"fn\":\"limit\", \"args\":[3]}]}}";
+        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
             MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.ROW_LIMIT, "3"
         );
 
         task.poll();

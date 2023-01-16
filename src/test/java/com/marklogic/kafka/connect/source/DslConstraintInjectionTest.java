@@ -18,44 +18,22 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
         }};
         DslQueryHandler dslQueryHandler = new DslQueryHandler(null, parsedConfig);
-        String expectedValue = "op.fromView(\"Medical\", \"Authors\").where(op.gt(op.col(\"" + constraintColumn + "\"), \"" + constraintValue + "\"))";
-        Assertions.assertEquals(expectedValue, dslQueryHandler.injectConstraintIntoQuery(constraintValue));
+        String expectedValue = "op.fromView(\"Medical\", \"Authors\").where(op.gt(op.col('" + constraintColumn + "'), '" + constraintValue + "')).orderBy(op.asc('" + constraintColumn + "'))";
+        Assertions.assertEquals(expectedValue, dslQueryHandler.appendConstraintAndOrderByToQuery(constraintValue));
     }
 
     @Test
     void testQueryWithLimit() {
-        String originalDsl = "op.fromView(\"Medical\", \"Authors\").limit(1000)";
+        String originalDsl = "op.fromView(\"Medical\", \"Authors\")";
         Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
             put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
+            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
         }};
         DslQueryHandler dslQueryHandler = new DslQueryHandler(null, parsedConfig);
-        String expectedValue = "op.fromView(\"Medical\",\"Authors\").where(op.gt(op.col(\"" + constraintColumn + "\"), \"" + constraintValue + "\")).limit(1000)";
-        Assertions.assertEquals(expectedValue, dslQueryHandler.injectConstraintIntoQuery(constraintValue));
-    }
-
-    @Test
-    void testQueryWithLineFeed() {
-        String originalDsl = "op.fromView(\"Medical\", \"Authors\")  \n    .limit(1000)";
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
-        }};
-        DslQueryHandler dslQueryHandler = new DslQueryHandler(null, parsedConfig);
-        String expectedValue = "op.fromView(\"Medical\",\"Authors\").where(op.gt(op.col(\"" + constraintColumn + "\"), \"" + constraintValue + "\")).limit(1000)";
-        Assertions.assertEquals(expectedValue, dslQueryHandler.injectConstraintIntoQuery(constraintValue));
-    }
-
-    @Test
-    void testQueryWithSpacesInSingleQuotes() {
-        String originalDsl = "op.fromView(\"Medical\", \"Authors\").select([op.as(\"Last Name\", op.col(\"LastName\"), op.as(\'Fore Name\', op.col(\'ForeName\')])";
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
-        }};
-        DslQueryHandler dslQueryHandler = new DslQueryHandler(null, parsedConfig);
-        String expectedValue = "op.fromView(\"Medical\",\"Authors\").where(op.gt(op.col(\"" + constraintColumn + "\"), \"" +
-            constraintValue + "\")).select([op.as(\"Last Name\",op.col(\"LastName\"),op.as(\'Fore Name\',op.col(\'ForeName\')])";
-        Assertions.assertEquals(expectedValue, dslQueryHandler.injectConstraintIntoQuery(constraintValue));
+        String expectedValue = "op.fromView(\"Medical\", \"Authors\").where(op.gt(op.col('" + constraintColumn + "'), '" + constraintValue + "')).orderBy(op.asc('" + constraintColumn + "')).limit(1000)";
+        String actualValue = dslQueryHandler.appendConstraintAndOrderByToQuery(constraintValue);
+        actualValue = dslQueryHandler.appendLimitToQuery(actualValue);
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 }

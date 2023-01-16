@@ -17,6 +17,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     private final DatabaseClient databaseClient;
     private final String userDslQuery;
     private final String constraintColumnName;
+    private final Integer rowLimit;
 
     private String currentDslQuery;
 
@@ -29,27 +30,29 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         } else {
             constraintColumnName = QueryHandlerUtil.sanitize(rawConstraintColumnName);
         }
+        rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
     @Override
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
-        currentDslQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
+        currentDslQuery = appendConstraintAndOrderByToQuery(previousMaxConstraintColumnValue);
+        if (rowLimit > 0) {
+            currentDslQuery = appendLimitToQuery(currentDslQuery);
+        }
         logger.info("DSL query: " + currentDslQuery);
         return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
     }
 
-    protected String injectConstraintIntoQuery(String previousMaxConstraintColumnValue) {
+    protected String appendLimitToQuery(String currentDslQuery) {
+        return currentDslQuery + ".limit(" + rowLimit + ")";
+    }
+
+    protected String appendConstraintAndOrderByToQuery(String previousMaxConstraintColumnValue) {
         String constrainedDsl = userDslQuery;
         if (previousMaxConstraintColumnValue != null) {
-            String constraintPhrase = ".where(op.gt(op.col(\"" + constraintColumnName + "\"), \"" + previousMaxConstraintColumnValue + "\"))";
-            String originalDslNoWhitespace = QueryHandlerUtil.removeWhitespace(userDslQuery);
-            if (originalDslNoWhitespace.contains(").")) {
-                int firstClosingParen = originalDslNoWhitespace.indexOf(").");
-                constrainedDsl = originalDslNoWhitespace.substring(0, firstClosingParen + 1)
-                    + constraintPhrase + originalDslNoWhitespace.substring(firstClosingParen + 1);
-            } else {
-                constrainedDsl = userDslQuery + constraintPhrase;
-            }
+            String constraintPhrase = ".where(op.gt(op.col('" + constraintColumnName + "'), '" + previousMaxConstraintColumnValue + "'))"
+                + ".orderBy(op.asc('" + constraintColumnName + "'))";
+            constrainedDsl = userDslQuery + constraintPhrase;
         }
         return constrainedDsl;
     }

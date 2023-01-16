@@ -8,9 +8,4 @@ public class RegexTest {
     void testRemovingQuotes() {
         Assertions.assertEquals("remove quotes", QueryHandlerUtil.sanitize("remo've quo\"tes"));
     }
-
-    @Test
-    void testRemovingUnquotedWhitespace() {
-        Assertions.assertEquals("a' b 'c\" d \"ef", QueryHandlerUtil.removeWhitespace("a ' b ' c \" d \" e \n f"));
-    }
 }
