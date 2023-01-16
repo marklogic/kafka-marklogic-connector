@@ -21,6 +21,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
 
     public static final String DSL_QUERY = "ml.source.optic.dsl";
     public static final String SERIALIZED_QUERY = "ml.source.optic.serialized";
+    public static final String ROW_LIMIT = "ml.source.optic.row.limit";
     public static final String CONSTRAINT_COLUMN_NAME = "ml.source.optic.constraintColumn.name";
     public static final String CONSTRAINT_STORAGE_URI = "ml.source.optic.constraintColumn.uri";
     public static final String CONSTRAINT_STORAGE_PERMISSIONS = "ml.source.optic.constraintColumn.permissions";
@@ -44,6 +45,8 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 format("Required (or %s); the Optic DSL query to execute", SERIALIZED_QUERY))
             .define(SERIALIZED_QUERY, Type.STRING, null, Importance.HIGH,
                 format("Required (or %s); the serialized Optic query to execute", DSL_QUERY))
+            .define(ROW_LIMIT, Type.INT, 0, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
+                "The maximum number of rows to retrieve per poll")
             .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
                 "The name of the column which should be used to constrain the Optic query")
             .define(CONSTRAINT_STORAGE_URI, Type.STRING, null, Importance.MEDIUM,

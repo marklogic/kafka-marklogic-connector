@@ -10,13 +10,6 @@
           "Medical",
           "Authors"
         ]
-      },
-      {
-        "ns": "op",
-        "fn": "limit",
-        "args": [
-          1000
-        ]
       }
     ]
   }

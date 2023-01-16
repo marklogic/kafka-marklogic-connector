@@ -22,6 +22,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     private final DatabaseClient databaseClient;
     private final String userSerializedQuery;
     private final String constraintColumnName;
+    private final Integer rowLimit;
 
     private String currentSerializedQuery = null;
 
@@ -34,26 +35,46 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         } else {
             constraintColumnName = QueryHandlerUtil.sanitize(rawConstraintColumnName);
         }
+        rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
     @Override
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
-        currentSerializedQuery = injectConstraintIntoQuery(previousMaxConstraintColumnValue);
+        currentSerializedQuery = appendConstraintAndOrderByToQuery(userSerializedQuery, previousMaxConstraintColumnValue);
+        if (rowLimit > 0) {
+            currentSerializedQuery = appendLimitToQuery(currentSerializedQuery);
+        }
         logger.info("Serialized query: " + currentSerializedQuery);
         return databaseClient.newRowManager().newRawPlanDefinition(new StringHandle(currentSerializedQuery));
     }
 
-    protected String injectConstraintIntoQuery(String previousMaxConstraintColumnValue) {
-        String constrainedSerialized = userSerializedQuery;
-        if (previousMaxConstraintColumnValue != null) {
-            String constraintNodeString = "{\"ns\":\"op\", \"fn\":\"where\", \"args\":[{\"ns\":\"op\", \"fn\":\"gt\", \"args\":[{\"ns\":\"op\", \"fn\":\"col\", \"args\":[\"" + constraintColumnName + "\"]}, \"" + previousMaxConstraintColumnValue + "\"]}]}";
-            try {
-                ObjectNode constraintNode = (ObjectNode) mapper.readTree(constraintNodeString);
+    protected String appendLimitToQuery(String currentSerializedQuery) {
+        ObjectNode limitNode = buildLimitNode(rowLimit);
+        try {
+            ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
+            ArrayNode rootArgsArray = (ArrayNode) queryRoot.get("$optic").get("args");
 
-                ObjectNode queryRoot = (ObjectNode) mapper.readTree(userSerializedQuery);
+            rootArgsArray.add(limitNode);
+            return mapper.writeValueAsString(queryRoot);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Unable to modify serialized query to include the constraint column, cause: " + e.getMessage(), e);
+        }
+    }
+
+    protected String appendConstraintAndOrderByToQuery(String currentSerializedQuery, String previousMaxConstraintColumnValue) {
+        String constrainedSerialized = currentSerializedQuery;
+        if (constraintColumnName != null) {
+            try {
+                ObjectNode orderByNode = buildOrderByNode(true);
+                ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
                 ArrayNode rootArgsArray = (ArrayNode) queryRoot.get("$optic").get("args");
 
-                rootArgsArray.insert(1, constraintNode);
+                if (previousMaxConstraintColumnValue != null) {
+                    ObjectNode constraintNode = buildConstraintNode(previousMaxConstraintColumnValue);
+                    rootArgsArray.add(constraintNode);
+                }
+
+                rootArgsArray.add(orderByNode);
                 constrainedSerialized = mapper.writeValueAsString(queryRoot);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Unable to modify serialized query to include the constraint column, cause: " + e.getMessage(), e);
@@ -82,18 +103,75 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     private String buildMaxValueSerializedQuery() throws JsonProcessingException {
-        String orderByDescendingPhrase = "{\"ns\":\"op\", \"fn\":\"order-by\", \"args\":[{\"ns\":\"op\", \"fn\":\"desc\", \"args\":[\"" + constraintColumnName + "\"]}]}";
-        ObjectNode orderByDescendingNode = (ObjectNode) mapper.readTree(orderByDescendingPhrase);
-        String limitOnePhase = "{\"ns\":\"op\", \"fn\":\"limit\", \"args\":[1]}";
-        ObjectNode limitOneNode = (ObjectNode) mapper.readTree(limitOnePhase);
-        String constraintColumnPhase = "{\"ns\":\"op\", \"fn\":\"select\", \"args\":[[{\"ns\":\"op\", \"fn\":\"as\", \"args\":[\"constraint\", {\"ns\":\"op\", \"fn\":\"col\", \"args\":[\"" + constraintColumnName + "\"]}]}]]}";
-        ObjectNode constraintColumnNode = (ObjectNode) mapper.readTree(constraintColumnPhase);
+        ObjectNode orderByDescendingNode = buildOrderByNode(false);
+        ObjectNode limitOneNode = buildLimitNode(1);
+        ObjectNode constraintColumnNode = buildMaxValueQueryConstraintNode();
+
         ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
         ArrayNode rootArgsArray = (ArrayNode) queryRoot.get("$optic").get("args");
         rootArgsArray.add(orderByDescendingNode);
         rootArgsArray.add(limitOneNode);
         rootArgsArray.add(constraintColumnNode);
         return mapper.writeValueAsString(queryRoot);
+    }
+
+    private ObjectNode buildMaxValueQueryConstraintNode() {
+        return mapper.createObjectNode()
+            .put("ns", "op")
+            .put("fn", "select")
+            .set("args", mapper.createArrayNode()
+                .add(mapper.createArrayNode()
+                    .add(mapper.createObjectNode()
+                        .put("ns", "op")
+                        .put("fn", "as")
+                        .set("args", mapper.createArrayNode()
+                            .add("constraint")
+                            .add(mapper.createObjectNode()
+                                .put("ns", "op")
+                                .put("fn", "col")
+                                .set("args", mapper.createArrayNode().add(constraintColumnName))
+                            )
+                        )
+                )
+            ));
+    }
+
+    private ObjectNode buildLimitNode(Integer limit) {
+        return mapper.createObjectNode()
+            .put("ns", "op")
+            .put("fn", "limit")
+            .set("args", mapper.createArrayNode().add(limit));
+    }
+
+    private ObjectNode buildOrderByNode(boolean ascending) {
+        return mapper.createObjectNode()
+            .put("ns", "op")
+            .put("fn", "order-by")
+            .set("args", mapper.createArrayNode()
+                .add(mapper.createObjectNode()
+                    .put("ns", "op")
+                    .put("fn", ascending ? "asc" : "desc")
+                    .set("args", mapper.createArrayNode().add(constraintColumnName))
+            ));
+    }
+
+    private ObjectNode buildConstraintNode(String previousMaxConstraintColumnValue) {
+        return mapper.createObjectNode()
+            .put("ns", "op")
+            .put("fn", "where")
+            .set("args", mapper.createArrayNode()
+                .add(mapper.createObjectNode()
+                    .put("ns", "op")
+                    .put("fn", "gt")
+                    .set("args", mapper.createArrayNode()
+                        .add(mapper.createObjectNode()
+                            .put("ns", "op")
+                            .put("fn", "col")
+                            .set("args", mapper.createArrayNode().add(constraintColumnName))
+                        )
+                        .add(previousMaxConstraintColumnValue)
+                    )
+            ));
     }
 
     public String getCurrentQuery() {
