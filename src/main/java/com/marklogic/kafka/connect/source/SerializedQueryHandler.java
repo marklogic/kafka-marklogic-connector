@@ -83,9 +83,16 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         return constrainedSerialized;
     }
 
+    /**
+     *
+     * @param serverTimestamp contains the timestamp of the most recent execution of the query
+     * @param previousMaxConstraintColumnValue ignored since the serialized query that was previously constructed
+     *                                         already has this value within it
+     * @return
+     */
     @Override
-    public String getMaxConstraintColumnValue(long serverTimestamp) {
-        String previousMaxConstraintColumnValue = null;
+    public String getMaxConstraintColumnValue(long serverTimestamp, String previousMaxConstraintColumnValue) {
+        String newMaxConstraintColumnValue = null;
         try {
             String maxValueQuery = buildMaxValueSerializedQuery();
             logger.info("Query for max constraint value: " + maxValueQuery);
@@ -95,11 +102,11 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             handle.setPointInTimeQueryTimestamp(serverTimestamp);
             JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
             String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
-            previousMaxConstraintColumnValue = QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);
+            newMaxConstraintColumnValue = QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);
         } catch (Exception ex) {
-            logger.warn("Failed to get a valid Maximum Constraint value: " + ex.getMessage());
+            throw new RuntimeException("Unable to get new max constraint column value: " + ex.getMessage(), ex);
         }
-        return previousMaxConstraintColumnValue;
+        return newMaxConstraintColumnValue;
     }
 
     private String buildMaxValueSerializedQuery() throws JsonProcessingException {

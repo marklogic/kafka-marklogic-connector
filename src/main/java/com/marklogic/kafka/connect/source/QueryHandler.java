@@ -12,6 +12,9 @@ import static java.lang.String.format;
 /**
  * "Handles" a query in terms of modifying it to account for a constraint column and also retrieving the max value for
  * that constraint column based on the user's query.
+ *
+ * Note that implementations are expected to NOT be thread-safe; these are intended to be single-use objects that
+ * maintain state and should not be reused.
  */
 public interface QueryHandler {
 
@@ -29,7 +32,7 @@ public interface QueryHandler {
      * @return the max value for the user's constraint column based on the given MarkLogic server timestamp,
      * which is assumed to be the timestamp at which the connector retrieved rows
      */
-    String getMaxConstraintColumnValue(long serverTimestamp);
+    String getMaxConstraintColumnValue(long serverTimestamp, String previousMaxConstraintColumnValue);
 
     /**
      *

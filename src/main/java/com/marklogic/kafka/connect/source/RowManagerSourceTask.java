@@ -77,7 +77,7 @@ public class RowManagerSourceTask extends SourceTask {
             final long duration = System.currentTimeMillis() - start;
             List<SourceRecord> newSourceRecords = results.getSourceRecords();
             logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + duration);
-            updateMaxConstraintValue(results, queryHandler);
+            updateMaxConstraintValue(results, queryHandler, previousMaxConstraintColumnValue);
             return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
             logger.error("Unable to poll for source records; cause: " + ex.getMessage() +
@@ -97,10 +97,10 @@ public class RowManagerSourceTask extends SourceTask {
         }
     }
 
-    private void updateMaxConstraintValue(PlanInvoker.Results results, QueryHandler queryHandler) {
+    private void updateMaxConstraintValue(PlanInvoker.Results results, QueryHandler queryHandler, String previousMaxConstraintColumnValue) {
         if (constraintValueStore != null && !results.getSourceRecords().isEmpty()) {
             long serverTimestamp = results.getServerTimestamp();
-            String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(serverTimestamp);
+            String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(serverTimestamp, previousMaxConstraintColumnValue);
             logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
             constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, results.getSourceRecords().size());
         }

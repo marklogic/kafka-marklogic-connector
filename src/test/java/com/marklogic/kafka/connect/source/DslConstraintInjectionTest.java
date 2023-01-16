@@ -20,14 +20,14 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void testAccessorOnlyQuery() {
         String userDsl = "op.fromView('Medical','Authors')";
-        String expectedValue = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedValue = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedValue, appendConstraintOntoQuery(userDsl, parsedConfig, "2"));
     }
 
     @Test
     void wordQueryWithPhraseAndFollowOnFunction() {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase').joinDoc('abc'))";
-        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, parsedConfig, "2"),
             "The where clause should have been injected just after the closing paren of the fromDocUris function");
     }
@@ -35,11 +35,10 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void wordQueryWithOrderBy() {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase'))";
-        String expectedResult = userDsl + ".where(op.gt(op.col('uri'), '2')).orderBy(op.asc('uri'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('uri'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('uri')))";
         Map<String, Object> localParsedConfig = new HashMap<String, Object>() {{
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
             put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
-            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
         }};
         assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, localParsedConfig, "2"),
             "The where clause should have been injected just after the closing paren of the fromDocUris function");
@@ -48,7 +47,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void wordQueryWithOrderByNoConstraintValue() {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase'))";
-        String expectedResult = userDsl + ".orderBy(op.asc('uri'))";
+        String expectedResult = userDsl + ".orderBy(op.asc(op.col('uri')))";
         Map<String, Object> localParsedConfig = new HashMap<String, Object>() {{
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
             put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
@@ -63,7 +62,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         loadThreeAuthorDocuments();
 
         String userDsl = "op.fromLexicons({ID:cts.elementReference(xs.QName('ID')),LastName:cts.elementReference(xs.QName('LastName')),})";
-        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
 
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
         assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the fromLexicons function");
@@ -75,7 +74,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void pullDataUsingFromLiterals() {
         String userDsl = "op.fromLiterals([{LastName:'Second',ID:2},{LastName:'Third',ID:3},{LastName:'First',ID:1}])";
-        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
 
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
         assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the fromLiterals function");
@@ -89,7 +88,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         loadThreeAuthorDocuments();
 
         String userDsl = "op.fromSQL('SELECT Authors.ID, Authors.LastName FROM Authors')";
-        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
 
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
         assertEquals(expectedResult, result,
@@ -104,7 +103,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         loadThreeAuthorDocuments();
 
         String userDsl = "op.fromView('Medical','Authors')";
-        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc('ID'))";
+        String expectedResult = userDsl + ".where(op.gt(op.col('ID'), op.param('PREVIOUS_MAX_VALUE'))).orderBy(op.asc(op.col('ID')))";
 
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
         assertEquals(expectedResult, result,
