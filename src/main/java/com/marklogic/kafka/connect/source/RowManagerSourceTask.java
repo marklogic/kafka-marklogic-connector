@@ -61,7 +61,9 @@ public class RowManagerSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        logger.info("Polling; sleep time: {}ms", pollDelayMs);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Polling; sleep time: {}ms", pollDelayMs);
+        }
         Thread.sleep(pollDelayMs);
 
         String currentQuery = "<Not Built Yet>";
@@ -76,7 +78,11 @@ public class RowManagerSourceTask extends SourceTask {
             PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan, topic);
             final long duration = System.currentTimeMillis() - start;
             List<SourceRecord> newSourceRecords = results.getSourceRecords();
-            logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + duration);
+            if (!newSourceRecords.isEmpty()) {
+                logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + duration);
+            } else if (logger.isDebugEnabled()) {
+                logger.debug("No records found; duration: " + duration);
+            }
             updateMaxConstraintValue(results, queryHandler);
             return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
@@ -101,7 +107,9 @@ public class RowManagerSourceTask extends SourceTask {
         if (constraintValueStore != null && !results.getSourceRecords().isEmpty()) {
             long serverTimestamp = results.getServerTimestamp();
             String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(serverTimestamp);
-            logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Storing new max constraint value: " + newMaxConstraintColumnValue);
+            }
             constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, results.getSourceRecords().size());
         }
     }

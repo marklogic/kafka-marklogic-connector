@@ -44,7 +44,9 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         if (rowLimit > 0) {
             currentSerializedQuery = appendLimitToQuery(currentSerializedQuery);
         }
-        logger.info("Serialized query: " + currentSerializedQuery);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Serialized query: " + currentSerializedQuery);
+        }
         return databaseClient.newRowManager().newRawPlanDefinition(new StringHandle(currentSerializedQuery));
     }
 
@@ -88,7 +90,9 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         String previousMaxConstraintColumnValue = null;
         try {
             String maxValueQuery = buildMaxValueSerializedQuery();
-            logger.info("Query for max constraint value: " + maxValueQuery);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Query for max constraint value: " + maxValueQuery);
+            }
             RowManager rowMgr = databaseClient.newRowManager();
             RawPlanDefinition maxConstraintValueQuery = rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery));
             JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");

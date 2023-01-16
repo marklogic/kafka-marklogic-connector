@@ -14,6 +14,8 @@ import java.util.Map;
 
 public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
+    private final static String VALUE_SANITIZATION_PATTERN = "[\"'\\(\\)]";
+
     private final DatabaseClient databaseClient;
     private final String userDslQuery;
     private final String constraintColumnName;
@@ -35,31 +37,49 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
     @Override
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
-        currentDslQuery = appendConstraintAndOrderByToQuery(previousMaxConstraintColumnValue);
-        if (rowLimit > 0) {
-            currentDslQuery = appendLimitToQuery(currentDslQuery);
+        this.currentDslQuery = constrainUserQuery(previousMaxConstraintColumnValue);
+        if (logger.isDebugEnabled()) {
+            logger.debug("DSL query: " + currentDslQuery);
         }
-        logger.info("DSL query: " + currentDslQuery);
         return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
     }
 
-    protected String appendLimitToQuery(String currentDslQuery) {
-        return currentDslQuery + ".limit(" + rowLimit + ")";
-    }
-
-    protected String appendConstraintAndOrderByToQuery(String previousMaxConstraintColumnValue) {
+    /**
+     * Constrains the original user query based on the existence of constraint column and row limit parameters.
+     *
+     * Unfortunately, string concatenation is currently required here. The query cannot be modified programmatically
+     * since the RawPlan hierarchy is separate from the ModifyPlan hierarchy. It would be feasible to use bindParam if
+     * we ask the user to define the type of the column. Based on what bindParam supports, that type would be one of:
+     * byte, int, long, short, float, double, boolean, String. String would be a sensible default since it's expected
+     * that date/dateTime columns will be most frequently used. But the UX of this is a bit awkward, particularly
+     * since a user only needs to specify this when using a DSL and not a serialized plan (as the value can be safely
+     * stored within the JSON document, and so there's no need for bindParam). Instead, the user's value is being
+     * sanitized to avoid breaking the modifying the original user query.
+     *
+     * @param previousMaxConstraintColumnValue
+     * @return
+     */
+    protected String constrainUserQuery(String previousMaxConstraintColumnValue) {
         String constrainedDsl = userDslQuery;
         if (previousMaxConstraintColumnValue != null) {
-            String constraintPhrase = ".where(op.gt(op.col('" + constraintColumnName + "'), '" + previousMaxConstraintColumnValue + "'))"
-                + ".orderBy(op.asc('" + constraintColumnName + "'))";
-            constrainedDsl = userDslQuery + constraintPhrase;
+            String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
+            constrainedDsl = String.format("%s" +
+                    ".where(op.gt(op.col('%s'), '%s'))" +
+                    ".orderBy(op.asc(op.col('%s')))",
+                userDslQuery, constraintColumnName, sanitizedValue, constraintColumnName
+            );
+        }
+        if (rowLimit != null && rowLimit > 0) {
+            constrainedDsl += String.format(".limit(%d)", rowLimit);
         }
         return constrainedDsl;
     }
 
     public String getMaxConstraintColumnValue(long serverTimestamp) {
         String maxValueQuery = buildMaxValueDslQuery();
-        logger.info("Query for max constraint value: " + maxValueQuery);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Query for max constraint value: " + maxValueQuery);
+        }
         RowManager rowMgr = databaseClient.newRowManager();
         RawQueryDSLPlan maxConstraintValueQuery = rowMgr.newRawQueryDSLPlan(new StringHandle(maxValueQuery));
         JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
@@ -75,7 +95,11 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     }
 
     private String buildMaxValueDslQuery() {
-        return String.format("%s.orderBy(op.desc(\"%s\")).limit(1).select([op.as(\"constraint\", op.col(\"%s\"))])", currentDslQuery, constraintColumnName, constraintColumnName);
+        return String.format("%s" +
+                ".orderBy(op.desc(op.col('%s')))" +
+                ".limit(1)" +
+                ".select([op.as('constraint', op.col('%s'))])",
+            currentDslQuery, constraintColumnName, constraintColumnName);
     }
 
     public String getCurrentQuery() {
