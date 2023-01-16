@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest {
 
     private final String constraintColumnName = "ID";
-    private final String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
+    private final String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
     private final String constraintStorageUri = "/kafka/currentConstrainInfo";
     private final String roleName = "kafka-test-minimal-user";
     private final String constraintStoragePermissions = roleName + ",read," + roleName + ",update";
