@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.source;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.document.XMLDocumentManager;
+import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.FileHandle;
 import com.marklogic.client.io.StringHandle;
@@ -16,11 +17,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -116,5 +119,58 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
      */
     protected Stream<ObjectNode> recordsToJsonObjects(List<SourceRecord> records) {
         return records.stream().map(record -> readJsonObject((String) record.value()));
+    }
+
+    protected String appendConstraintOntoQuery(String userDsl, Map<String, Object> parsedConfig, String CONSTRAINT_VALUE) {
+        parsedConfig.put(MarkLogicSourceConfig.DSL_QUERY, userDsl);
+        return new DslQueryHandler(null, parsedConfig).appendConstraintAndOrderByToQuery(CONSTRAINT_VALUE);
+    }
+
+    protected void verifyQueryReturnsExpectedRows(String constraintValue, int expectedRowCount, String stringInFirstRecord, Map<String, Object> parsedConfig) {
+        parsedConfig.put(MarkLogicSourceConfig.TOPIC, "Authors");
+        List<String> params = new ArrayList<>();
+        parsedConfig.keySet().forEach(key -> {
+            params.add(key);
+            params.add(parsedConfig.get(key).toString());
+        });
+
+        RowManagerSourceTask task = startSourceTask(params.toArray(new String[]{}));
+        task.setConstraintValueStore(new TestConstraintValueStore((String)parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME), constraintValue));
+        try {
+            List<SourceRecord> newRecords = task.poll();
+            assertEquals(expectedRowCount, newRecords.size());
+            assertTrue(((String) newRecords.get(0).value()).contains(stringInFirstRecord),
+                "Did not find " + stringInFirstRecord + " in " + ((String) newRecords.get(0).value()));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void loadThreeAuthorDocuments() throws IOException {
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("first", "1", "01:00:00", "First");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("second", "2", "02:00:00", "Second");
+        loadSingleAuthorRowIntoMarkLogicWithCustomTime("Third", "3", "03:00:00", "Third");
+    }
+
+    /**
+     * Supports tests that want to simulate an existing max value for a constraint column.
+     */
+    class TestConstraintValueStore extends ConstraintValueStore {
+
+        private String testValue;
+
+        public TestConstraintValueStore(String constraintColumn, String testValue) {
+            super(constraintColumn);
+            this.testValue = testValue;
+        }
+
+        @Override
+        public void storeConstraintState(String previousMaxConstraintColumnValue, int lastRowCount) {
+        }
+
+        @Override
+        public String retrievePreviousMaxConstraintColumnValue() {
+            return testValue;
+        }
     }
 }

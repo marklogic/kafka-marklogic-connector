@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
+
 public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
     private final DatabaseClient databaseClient;
@@ -49,9 +50,12 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
     protected String appendConstraintAndOrderByToQuery(String previousMaxConstraintColumnValue) {
         String constrainedDsl = userDslQuery;
-        if (previousMaxConstraintColumnValue != null) {
-            String constraintPhrase = ".where(op.gt(op.col('" + constraintColumnName + "'), '" + previousMaxConstraintColumnValue + "'))"
-                + ".orderBy(op.asc('" + constraintColumnName + "'))";
+        if (constraintColumnName != null) {
+            String constraintPhrase = "";
+            if (previousMaxConstraintColumnValue != null) {
+                constraintPhrase += ".where(op.gt(op.col('" + constraintColumnName + "'), '" + previousMaxConstraintColumnValue + "'))";
+            }
+            constraintPhrase += ".orderBy(op.asc('" + constraintColumnName + "'))";
             constrainedDsl = userDslQuery + constraintPhrase;
         }
         return constrainedDsl;

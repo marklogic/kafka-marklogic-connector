@@ -36,7 +36,8 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
             try {
                 JsonNode authorJson = mapper.readTree((String) sourceRecord.value());
                 int recordId = authorJson.findPath("Medical.Authors.ID").findPath("value").intValue();
-                Assertions.assertTrue(recordId <= firstMaxConstraintColumnValueInteger);
+                Assertions.assertTrue(recordId <= firstMaxConstraintColumnValueInteger,
+                    recordId + " should be less than or equal to " + firstMaxConstraintColumnValueInteger);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -52,8 +53,10 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
             try {
                 JsonNode authorJson = mapper.readTree((String) sourceRecord.value());
                 int recordId = authorJson.findPath("Medical.Authors.ID").findPath("value").intValue();
-                Assertions.assertTrue(recordId > firstMaxConstraintColumnValueInteger);
-                Assertions.assertTrue(recordId <= secondMaxConstraintColumnValueInteger);
+                Assertions.assertTrue(recordId > firstMaxConstraintColumnValueInteger,
+                    recordId + " should be less than or equal to " + firstMaxConstraintColumnValueInteger);
+                Assertions.assertTrue(recordId <= secondMaxConstraintColumnValueInteger,
+                    recordId + " should be less than or equal to " + secondMaxConstraintColumnValueInteger);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -132,7 +135,7 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
             "The max value after polling once should be equal to the initial time");
         Assertions.assertEquals(1, newRecords.size());
         String initialRow = (String) newRecords.get(0).value();
-        Assertions.assertTrue(initialRow.contains("Initial"));
+        Assertions.assertTrue(initialRow.contains("Initial"), "Did not find 'Initial' in: " + initialRow);
 
         //    3) Insert a second document with a dateTime greater than that of the first row,
         String laterTime = "02:01:00";
@@ -152,6 +155,6 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
             "The max value after polling once should be equal to the initial time");
         Assertions.assertEquals(1, newRecords.size());
         String laterRow = (String) newRecords.get(0).value();
-        Assertions.assertTrue(laterRow.contains("Later"));
+        Assertions.assertTrue(laterRow.contains("Later"), "Did not find 'Later' in: " + laterRow);
     }
 }
