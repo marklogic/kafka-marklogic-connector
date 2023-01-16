@@ -121,9 +121,9 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
         return records.stream().map(record -> readJsonObject((String) record.value()));
     }
 
-    protected String appendConstraintOntoQuery(String userDsl, Map<String, Object> parsedConfig, String CONSTRAINT_VALUE) {
+    protected String appendConstraintOntoQuery(String userDsl, Map<String, Object> parsedConfig, String constraintValue) {
         parsedConfig.put(MarkLogicSourceConfig.DSL_QUERY, userDsl);
-        return new DslQueryHandler(null, parsedConfig).appendConstraintAndOrderByToQuery(CONSTRAINT_VALUE);
+        return new DslQueryHandler(null, parsedConfig).appendConstraintAndOrderByToQuery(constraintValue);
     }
 
     protected void verifyQueryReturnsExpectedRows(String constraintValue, int expectedRowCount, String stringInFirstRecord, Map<String, Object> parsedConfig) {

@@ -1,5 +1,6 @@
 package com.marklogic.kafka.connect.source;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
@@ -15,6 +16,8 @@ import java.util.Map;
 
 public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
+    private final static String VALUE_SANITIZATION_PATTERN = "[\"'\\(\\)]";
+
     private final DatabaseClient databaseClient;
     private final String userDslQuery;
     private final String constraintColumnName;
@@ -25,12 +28,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     public DslQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         this.databaseClient = databaseClient;
         this.userDslQuery = (String) parsedConfig.get(MarkLogicSourceConfig.DSL_QUERY);
-        String rawConstraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
-        if (!StringUtils.hasText(rawConstraintColumnName)) {
-            constraintColumnName = null;
-        } else {
-            constraintColumnName = QueryHandlerUtil.sanitize(rawConstraintColumnName);
-        }
+        this.constraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
@@ -53,7 +51,8 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         if (constraintColumnName != null) {
             String constraintPhrase = "";
             if (previousMaxConstraintColumnValue != null) {
-                constraintPhrase += ".where(op.gt(op.col('" + constraintColumnName + "'), '" + previousMaxConstraintColumnValue + "'))";
+                String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
+                constraintPhrase = String.format(".where(op.gt(op.col('%s'), '%s'))", constraintColumnName, sanitizedValue);
             }
             constraintPhrase += ".orderBy(op.asc('" + constraintColumnName + "'))";
             constrainedDsl = userDslQuery + constraintPhrase;
@@ -61,6 +60,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         return constrainedDsl;
     }
 
+    @Override
     public String getMaxConstraintColumnValue(long serverTimestamp) {
         String maxValueQuery = buildMaxValueDslQuery();
         logger.info("Query for max constraint value: " + maxValueQuery);
@@ -70,11 +70,10 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         handle.setPointInTimeQueryTimestamp(serverTimestamp);
         JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
         try {
-            String rawMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
-            return QueryHandlerUtil.sanitize(rawMaxConstraintColumnValue);
+            return result.get().get("rows").get(0).get("constraint").get("value").asText();
         } catch (Exception ex) {
             throw new RuntimeException("Unable to get max constraint value; query: " + maxConstraintValueQuery +
-                    "; response: " + result + "; cause: " + ex.getMessage());
+                "; response: " + result + "; cause: " + ex.getMessage());
         }
     }
 
