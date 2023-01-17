@@ -5,7 +5,7 @@ import java.util.UUID;
 public class UuidKeyGenerator implements KeyGenerator {
 
     @Override
-    public String generateKey(long rowNumber) {
+    public String generateKey() {
         return UUID.randomUUID().toString();
     }
 }

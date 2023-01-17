@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -100,7 +101,15 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
     void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue, String keyStrategy) {
         assertEquals(15, sourceRecords.size());
         assertTopicAndSingleValue(sourceRecords, expectedValue);
-        assertRecordKeys(sourceRecords, keyStrategy);
+
+        if (keyStrategy.equalsIgnoreCase("uuid")) {
+            assertRecordKeysAreUuids(sourceRecords);
+        } else if (keyStrategy.equalsIgnoreCase("timestamp")) {
+            assertRecordKeysAreTimestamps(sourceRecords);
+        } else {
+            sourceRecords.forEach(sourceRecord -> assertNull(sourceRecord.key(),
+                "If no key generator strategy is specified, then the key should be null"));
+        }
     }
 
     private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String expectedValue) {
@@ -109,7 +118,6 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
             assertEquals(AUTHORS_TOPIC, sourceRecord.topic());
             assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
                 "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: " + sourceRecord.value().getClass());
-            System.out.println(sourceRecord.value());
             if (expectedValue.equals(sourceRecord.value())) {
                 foundExpectedValue.set(true);
             }
@@ -118,18 +126,28 @@ public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
             "List of SourceRecords does not contain a record with the expected value");
     }
 
-    private void assertRecordKeys(List<SourceRecord> newSourceRecords, String keyStrategy) {
-        if(keyStrategy.equalsIgnoreCase("uuid")) {
-            newSourceRecords.forEach(sourceRecord -> assertEquals(UUID.fromString(sourceRecord.key().toString()).toString(), sourceRecord.key().toString()));
-        } else if(keyStrategy.equalsIgnoreCase("timestamp")) {
-            AtomicLong rowNumber = new AtomicLong(1);
-            newSourceRecords.forEach(sourceRecord -> {
-                String[] keys = sourceRecord.key().toString().split("-");
-                assertDoesNotThrow(() -> Long.parseLong(keys[0]));
-                assertEquals(rowNumber.getAndIncrement(), Long.parseLong(keys[1]));
-            });
-        } else {
-            newSourceRecords.forEach(sourceRecord -> assertNull(sourceRecord.key()));
+    private void assertRecordKeysAreUuids(List<SourceRecord> records) {
+        records.forEach(record -> {
+            String key = record.key().toString();
+            assertEquals(UUID.fromString(key).toString(), key, "The key should be a valid UUID");
+        });
+    }
+
+    private void assertRecordKeysAreTimestamps(List<SourceRecord> records) {
+        String serverTimestamp = null;
+        int rowCounter = 1;
+        for (SourceRecord record : records) {
+            String[] keys = record.key().toString().split("-");
+            assertDoesNotThrow(() -> Long.parseLong(keys[0]), "The key is expected to begin with a MarkLogic " +
+                "server timestamp, which should be parseable as a long");
+            if (serverTimestamp == null) {
+                serverTimestamp = keys[0];
+            } else {
+                assertEquals(serverTimestamp, keys[0], "Each key is expected to begin with the same MarkLogic " +
+                    "server timestamp");
+            }
+            assertEquals(rowCounter++, Integer.parseInt(keys[1]), "Each key is expected to end in a row number, which " +
+                "along with the ML server timestamp guarantees a unique key");
         }
     }
 
