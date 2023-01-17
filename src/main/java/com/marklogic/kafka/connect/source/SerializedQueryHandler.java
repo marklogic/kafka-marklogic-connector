@@ -1,18 +1,17 @@
 package com.marklogic.kafka.connect.source;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
-import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.row.RawPlanDefinition;
 import com.marklogic.client.row.RowManager;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -80,20 +79,16 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
 
     @Override
     public String getMaxConstraintColumnValue(long serverTimestamp) {
-        String previousMaxConstraintColumnValue = null;
+        String maxValueQuery;
         try {
-            String maxValueQuery = buildMaxValueSerializedQuery();
-            logger.debug("Query for max constraint value: {}", maxValueQuery);
-            RowManager rowMgr = databaseClient.newRowManager();
-            RawPlanDefinition maxConstraintValueQuery = rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery));
-            JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
-            handle.setPointInTimeQueryTimestamp(serverTimestamp);
-            JacksonHandle result = rowMgr.resultDoc(maxConstraintValueQuery, handle);
-            previousMaxConstraintColumnValue = result.get().get("rows").get(0).get("constraint").get("value").asText();
-        } catch (Exception ex) {
-            logger.warn("Failed to get a valid Maximum Constraint value: {}", ex.getMessage());
+            maxValueQuery = buildMaxValueSerializedQuery();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Unable to build max value query: " + e.getMessage(), e);
         }
-        return previousMaxConstraintColumnValue;
+        logger.debug("Query for max constraint value: {}", maxValueQuery);
+        RowManager rowMgr = databaseClient.newRowManager();
+        return QueryHandlerUtil.executeMaxValuePlan(rowMgr, rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery)),
+            serverTimestamp, maxValueQuery);
     }
 
     private String buildMaxValueSerializedQuery() throws JsonProcessingException {
