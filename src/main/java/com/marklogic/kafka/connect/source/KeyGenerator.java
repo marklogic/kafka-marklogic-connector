@@ -28,7 +28,7 @@ public interface KeyGenerator {
      */
     static KeyGenerator newKeyGenerator(Map<String, Object> parsedConfig, long serverTimestamp) {
         Object value = parsedConfig.get(MarkLogicSourceConfig.KEY_STRATEGY);
-        final String keyStrategy = value != null ? value.toString().toUpperCase() : null;
+        final String keyStrategy = value != null ? value.toString().toUpperCase() : "";
         switch (keyStrategy) {
             case "UUID":
                 return new UuidKeyGenerator();

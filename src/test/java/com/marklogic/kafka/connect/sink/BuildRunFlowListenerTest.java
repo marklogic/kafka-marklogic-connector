@@ -10,7 +10,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class BuildRunFlowListenerTest {
+class BuildRunFlowListenerTest {
 
     WriteBatcherSinkTask task = new WriteBatcherSinkTask();
     Map<String, Object> config = new HashMap<>();

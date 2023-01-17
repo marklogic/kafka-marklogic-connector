@@ -18,7 +18,7 @@ import static com.marklogic.kafka.connect.sink.MarkLogicSinkConfig.*;
  * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
-public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
+public abstract class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired
@@ -81,6 +81,7 @@ public class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
         retryIfNotSuccessful(r, DEFAULT_RETRY_SLEEP_TIME, DEFAULT_RETRY_ATTEMPTS);
     }
 
+    @SuppressWarnings("java:S2925") // We're fine with the sleep call here, due to the nature of testing with kafka-junit
     protected final void retryIfNotSuccessful(Runnable r, long sleepTime, int attempts) {
         for (int i = 1; i <= attempts; i++) {
             logger.info("Trying assertion, attempt " + i + " out of " + attempts);

@@ -18,7 +18,8 @@ import static java.lang.String.format;
  * Entry point into the MarkLogic source connector for Kafka.
  */
 public class MarkLogicSourceConnector extends SourceConnector {
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     static final String MARKLOGIC_SOURCE_CONNECTOR_VERSION = MarkLogicSourceConnector.class.getPackage().getImplementationVersion();
 

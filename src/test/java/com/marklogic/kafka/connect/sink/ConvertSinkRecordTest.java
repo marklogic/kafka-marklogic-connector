@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Verifies that a DocumentWriteOperation is created correctly based on a SinkRecord.
  */
-public class ConvertSinkRecordTest {
+class ConvertSinkRecordTest {
 
     private DefaultSinkRecordConverter converter;
 
@@ -147,7 +147,7 @@ public class ConvertSinkRecordTest {
         DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
 
         assertNotNull(op.getUri());
-        assertEquals(32, op.getUri().length()); //Checking the length. Alternative is to create a MD5 of 100200 and check asserton the values.
+        assertEquals(128, op.getUri().length(), "Length should be 128 since SHA-512 is used");
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         assertTrue(metadata.getCollections().isEmpty());
@@ -163,7 +163,7 @@ public class ConvertSinkRecordTest {
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
         assertNotNull(op.getUri());
-        assertEquals(32, op.getUri().length()); //Checking the length. Alternative is to create a MD5 of 100200 and check asserton the values.
+        assertEquals(128, op.getUri().length(), "Length should be 128 since SHA-512 is used");
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         assertTrue(metadata.getCollections().isEmpty());

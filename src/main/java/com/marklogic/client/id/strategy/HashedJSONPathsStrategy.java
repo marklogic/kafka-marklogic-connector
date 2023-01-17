@@ -25,15 +25,14 @@ public class HashedJSONPathsStrategy implements IdStrategy {
     @Override
     public String generateId(AbstractWriteHandle content, String topic, Integer partition, long offset) {
         ObjectMapper om = new ObjectMapper();
-        String valueString = "";
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
             JsonNode node = om.readTree(content.toString());
+            StringBuilder id = new StringBuilder();
             for (int i = 0; i < paths.length; i++) {
-                valueString = valueString + node.at(paths[i].trim()).asText();
+                id.append(node.at(paths[i].trim()).asText());
             }
-            String id = bytesToHex(md.digest(valueString.getBytes()));
-            return id;
+            return bytesToHex(md.digest(id.toString().getBytes()));
         } catch (IOException e) {
             logger.warn("IOException. Not creating MD5 URI, instead generating UUID");
             return UUID.randomUUID().toString();

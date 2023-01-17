@@ -135,12 +135,9 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
      */
     private ObjectNode buildEndpointConstants(Map<String, Object> parsedConfig) {
         ObjectNode endpointConstants = this.objectMapper.createObjectNode();
-        for (String key : parsedConfig.keySet()) {
-            if (key.startsWith("ml.document")) {
-                Object value = parsedConfig.get(key);
-                if (value != null) {
-                    endpointConstants.put(key, value.toString());
-                }
+        for (Map.Entry<String,Object> entry : parsedConfig.entrySet()) {
+            if (entry.getKey().startsWith("ml.document") && entry.getValue() != null) {
+                endpointConstants.put(entry.getKey(), entry.getValue().toString());
             }
         }
         return endpointConstants;

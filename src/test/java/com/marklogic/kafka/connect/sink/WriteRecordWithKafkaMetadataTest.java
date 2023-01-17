@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationSinkTest {
+class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationSinkTest {
 
     /**
      * Verifies that when the option is set for including Kafka metadata, that metadata is present in the document

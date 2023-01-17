@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
-public class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
+public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired

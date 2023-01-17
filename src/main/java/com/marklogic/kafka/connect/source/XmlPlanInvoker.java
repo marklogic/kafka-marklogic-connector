@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.DOMHandle;
+import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -54,7 +55,7 @@ class XmlPlanInvoker implements PlanInvoker {
             transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         } catch (Exception ex) {
-            throw new RuntimeException("Unable to create XML transformer: " + ex.getMessage(), ex);
+            throw new MarkLogicConnectorException("Unable to create XML transformer: " + ex.getMessage(), ex);
         }
 
         KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(this.parsedConfig, serverTimestamp);
@@ -72,7 +73,7 @@ class XmlPlanInvoker implements PlanInvoker {
             transformer.transform(new DOMSource(newDoc), new StreamResult(sw));
             return sw.toString();
         } catch (TransformerException ex) {
-            throw new RuntimeException("Unable to transform XML to string: " + ex.getMessage(), ex);
+            throw new MarkLogicConnectorException("Unable to transform XML to string: " + ex.getMessage(), ex);
         }
     }
 }

@@ -16,13 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Convenience program for inserting a new author into the kafka-test-content database to facilitate testing the
  * source connector on the authors TDE. This reuses the test plumbing so we don't have to collect host/port/etc
  * information, but it adjusts the DatabaseClient config to use port 8018 instead of 8019 so that documents are
  * inserted into the kafka-test-content database instead of kafka-test-test-content.
  */
-public class InsertAuthors extends AbstractIntegrationTest {
+class InsertAuthorsTest extends AbstractIntegrationTest {
 
     // Only intended for inserting new authors with a user-provided ID. Can easily expand this to make the data more
     // random and/or controlled by the user.
@@ -57,6 +59,7 @@ public class InsertAuthors extends AbstractIntegrationTest {
     SimpleTestConfig testConfig;
 
     @Test
+    @SuppressWarnings("java:S2699") // No assertions needed for this
     void insertAuthors() {
         final String authorIds = System.getProperty("AUTHOR_IDS");
         if (authorIds == null || authorIds.trim().length() < 1) {

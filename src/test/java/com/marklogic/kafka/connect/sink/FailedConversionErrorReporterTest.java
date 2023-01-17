@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FailedConversionErrorReporterTest extends AbstractIntegrationSinkTest {
+class FailedConversionErrorReporterTest extends AbstractIntegrationSinkTest {
 
     Throwable reportedException = null;
     SinkRecord reportedSinkRecord = null;

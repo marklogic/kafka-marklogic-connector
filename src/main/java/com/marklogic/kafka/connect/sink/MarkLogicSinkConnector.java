@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.sink;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
@@ -16,6 +17,8 @@ import java.util.Map;
  */
 public class MarkLogicSinkConnector extends SinkConnector {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     static final String MARKLOGIC_SINK_CONNECTOR_VERSION = MarkLogicSinkConnector.class.getPackage().getImplementationVersion();
 
     private Map<String, String> config;
@@ -27,11 +30,13 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
     @Override
     public void start(final Map<String, String> config) {
+        logger.info("Starting MarkLogicSinkConnector");
         this.config = config;
     }
 
     @Override
     public void stop() {
+        logger.info("Stopping MarkLogicSinkConnector");
     }
 
     @Override
@@ -39,7 +44,7 @@ public class MarkLogicSinkConnector extends SinkConnector {
         Class<? extends Task> clazz = StringUtils.hasText(this.config.get(MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI)) ?
             BulkDataServicesSinkTask.class :
             WriteBatcherSinkTask.class;
-        LoggerFactory.getLogger(getClass()).info("Task class: " + clazz);
+        LoggerFactory.getLogger(getClass()).info("Task class: {}", clazz);
         return clazz;
     }
 

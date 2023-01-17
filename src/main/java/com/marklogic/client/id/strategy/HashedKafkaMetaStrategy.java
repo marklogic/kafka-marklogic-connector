@@ -14,12 +14,10 @@ public class HashedKafkaMetaStrategy implements IdStrategy {
 
     @Override
     public String generateId(AbstractWriteHandle content, String topic, Integer partition, long offset) {
-        String id = "";
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            String tmp = topic + partition.toString() + String.valueOf(offset);
-            id = bytesToHex(md.digest(tmp.getBytes()));
-            return id;
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            String tmp = topic + partition.toString() + offset;
+            return bytesToHex(md.digest(tmp.getBytes()));
         } catch (NoSuchAlgorithmException e) {
             logger.warn("NoSuchAlgorithmException. Not creating MD5 URI, instead generating UUID");
             return UUID.randomUUID().toString();

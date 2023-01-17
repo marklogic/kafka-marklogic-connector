@@ -1,6 +1,5 @@
 package com.marklogic.client.id.strategy;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import org.slf4j.Logger;
@@ -23,9 +22,7 @@ public class JSONPathStrategy implements IdStrategy {
     public String generateId(AbstractWriteHandle content, String topic, Integer partition, long offset) {
         ObjectMapper om = new ObjectMapper();
         try {
-            JsonNode node = om.readTree(content.toString());
-            String id = node.at(path).asText();
-            return id;
+            return om.readTree(content.toString()).at(path).asText();
         } catch (IOException e) {
             logger.warn("IOException. Not creating JSONPATH URI, instead generating UUID");
             return UUID.randomUUID().toString();

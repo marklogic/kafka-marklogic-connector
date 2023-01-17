@@ -108,7 +108,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         try {
             clientKeyStore = KeyStore.getInstance("PKCS12");
         } catch (KeyStoreException e) {
-            throw new RuntimeException("Unable to get default SSLContext: " + e.getMessage(), e);
+            throw new MarkLogicConnectorException("Unable to get default SSLContext: " + e.getMessage(), e);
         }
 
         KeyManagerFactory keyManagerFactory;
@@ -124,7 +124,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             sslContext.init(key, trust, null);
             return sslContext;
         } catch (Exception e) {
-            throw new RuntimeException("Unable to configure custom SSL connection: " + e.getMessage(), e);
+            throw new MarkLogicConnectorException("Unable to configure custom SSL connection: " + e.getMessage(), e);
         }
     }
 
@@ -137,7 +137,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             sslContext.init(null, trust, null);
             return sslContext;
         } catch (Exception e) {
-            throw new RuntimeException("Unable to configure custom SSL connection:" + e.getMessage(), e);
+            throw new MarkLogicConnectorException("Unable to configure custom SSL connection:" + e.getMessage(), e);
         }
     }
 }

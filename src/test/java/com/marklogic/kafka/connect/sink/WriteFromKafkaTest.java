@@ -4,19 +4,24 @@ import com.marklogic.client.io.SearchHandle;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
 import kafka.server.KafkaConfig$;
-import net.mguenther.kafka.junit.*;
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
+import net.mguenther.kafka.junit.KeyValue;
+import net.mguenther.kafka.junit.SendKeyValues;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.UUID;
 
-import java.util.*;
 import static net.mguenther.kafka.junit.EmbeddedConnectConfig.kafkaConnect;
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class WriteFromKafkaTest extends AbstractIntegrationSinkTest {
+class WriteFromKafkaTest extends AbstractIntegrationSinkTest {
 
     private final String ML_COLLECTION = "kafka-data";
     private final String TOPIC = "test-topic";

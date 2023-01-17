@@ -15,9 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.util.AssertionErrors.assertNotNull;
 
-public class HandleWriteFailureTest extends AbstractIntegrationSinkTest {
+class HandleWriteFailureTest extends AbstractIntegrationSinkTest {
 
     final private List<ErrRecord> reportedSinkRecords = new ArrayList<>();
+
     /**
      * This test is expected to log the URI of each failed document. We don't yet have a way to capture logging output
      * to inspect it, so that part has to be done manually. The test does verify that the failed document contains
@@ -64,12 +65,12 @@ public class HandleWriteFailureTest extends AbstractIntegrationSinkTest {
         assertEquals(offset, Long.parseLong(values.get("kafka-offset")));
         assertEquals(timestamp, Long.parseLong(values.get("kafka-timestamp")));
 
-        Assertions.assertEquals(2, reportedSinkRecords.size(),
+        assertEquals(2, reportedSinkRecords.size(),
             "The mock error reporter should have been called with 2 SinkRecords");
         reportedSinkRecords.forEach((reportedSinkRecord) -> {
-            Assertions.assertEquals(reportedSinkRecord.reportedException.getMessage(),
+            assertEquals(
                 "Local message: failed to apply resource at documents: Bad Request. Server Message: XDMP-JSONDOC: xdmp:get-request-part-body(\"json\") -- Document is not JSON",
-                "The reported exception message does not match the expected message");
+                reportedSinkRecord.reportedException.getMessage());
             Headers headers = reportedSinkRecord.sinkRecord.headers();
             assertEquals(4, headers.size());
             assertEquals(AbstractSinkTask.MARKLOGIC_WRITE_FAILURE, headers.lastWithName(AbstractSinkTask.MARKLOGIC_MESSAGE_FAILURE_HEADER).value());
