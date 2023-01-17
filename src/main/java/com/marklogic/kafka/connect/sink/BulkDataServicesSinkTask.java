@@ -196,8 +196,8 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
             // The stacktrace is not included here, as it will only contain references to Bulk Data Services code and
             // connector code, which won't help with debugging. The MarkLogic error log will be of much more value,
             // along with seeing the error message here.
-            logger.error("Skipping failed write; cause: " + throwable.getMessage() + "; check the MarkLogic error " +
-                "log file for additional information as to the cause of the failed write");
+            logger.error("Skipping failed write; cause: {}; check the MarkLogic error " +
+                "log file for additional information as to the cause of the failed write", throwable.getMessage());
             return IOEndpoint.BulkIOEndpointCaller.ErrorDisposition.SKIP_CALL;
         });
     }

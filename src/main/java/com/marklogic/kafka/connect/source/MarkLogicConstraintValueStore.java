@@ -76,7 +76,7 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
             databaseClient.newJSONDocumentManager().read(constraintStorageUri, resultHandle);
             return resultHandle.get().findPath("marklogicKafkaConstraintLastValue").textValue();
         } else {
-            logger.info("Did not find constraint value document at URI: " + constraintStorageUri);
+            logger.info("Did not find constraint value document at URI: {}", constraintStorageUri);
             return null;
         }
     }

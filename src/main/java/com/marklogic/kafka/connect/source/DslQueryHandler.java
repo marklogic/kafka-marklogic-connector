@@ -38,7 +38,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         if (rowLimit > 0) {
             currentDslQuery += ".limit(" + rowLimit + ")";
         }
-        logger.info("DSL query: " + currentDslQuery);
+        logger.debug("DSL query: {}", currentDslQuery);
         return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
     }
 
@@ -59,7 +59,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     @Override
     public String getMaxConstraintColumnValue(long serverTimestamp) {
         String maxValueQuery = buildMaxValueDslQuery();
-        logger.info("Query for max constraint value: " + maxValueQuery);
+        logger.debug("Query for max constraint value: {}", maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();
         RawQueryDSLPlan maxConstraintValueQuery = rowMgr.newRawQueryDSLPlan(new StringHandle(maxValueQuery));
         JacksonHandle handle = new JacksonHandle().withFormat(Format.JSON).withMimetype("application/json");
