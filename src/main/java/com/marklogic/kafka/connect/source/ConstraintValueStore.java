@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.Map;
 
 public abstract class ConstraintValueStore extends LoggingObject {
-    private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    protected final String constraintColumn;
+    private final String constraintColumn;
 
     ConstraintValueStore(String constraintColumn) {
         this.constraintColumn = constraintColumn;
@@ -49,7 +49,7 @@ public abstract class ConstraintValueStore extends LoggingObject {
         private final String marklogicKafkaConstraintRowCount;
 
         ConstraintState(String constraintColumn, String lastValue, Integer lastRowCount) {
-            marklogicKafkaConstraintLastUpdated = DATE_TIME_FORMAT.format(new Date());
+            marklogicKafkaConstraintLastUpdated = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date());
             marklogicKafkaConstraintColumnName = constraintColumn;
             marklogicKafkaConstraintLastValue = lastValue;
             marklogicKafkaConstraintRowCount = lastRowCount.toString();
