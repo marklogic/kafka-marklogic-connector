@@ -600,6 +600,9 @@ Starting with version 1.8.0, the sink connector makes use of the dead letter que
 Kafka appropriately. [Please see the Kafka documentation](https://www.confluent.io/blog/kafka-connect-deep-dive-error-handling-dead-letter-queues/)
 for more information on configuring the dead letter queue in Kafka.
 
+Note that the DLQ is only supported when using DMSDK to write documents to MarkLogic; DLQ support for Bulk Data Services
+will be supported in a future release.
+
 When Kafka has been configured to use the DLQ, there are two events in the sink connector that will cause a record to be
 sent to the DLQ.
 - "Record conversion" : If a specific record cannot be converted into the target format to be delivered to MarkLogic,
