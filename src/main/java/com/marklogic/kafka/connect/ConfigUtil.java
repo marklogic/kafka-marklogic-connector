@@ -2,7 +2,7 @@ package com.marklogic.kafka.connect;
 
 import java.util.Map;
 
-public abstract class ConfigUtil {
+public interface ConfigUtil {
 
     /**
      * Convenience method for getting a boolean value from the parsed Kafka config, returning false if the given key is
@@ -14,8 +14,11 @@ public abstract class ConfigUtil {
      * @param parsedConfig
      * @return
      */
-    public final static boolean getBoolean(String key, Map<String, Object> parsedConfig) {
+    static boolean getBoolean(String key, Map<String, Object> parsedConfig) {
         Boolean val = (Boolean) parsedConfig.get(key);
-        return val != null ? val : false;
+        if (val == null) {
+            return false;
+        }
+        return val;
     }
 }

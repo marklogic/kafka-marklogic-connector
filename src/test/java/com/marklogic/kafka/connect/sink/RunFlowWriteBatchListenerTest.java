@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RunFlowWriteBatchListenerTest {
+class RunFlowWriteBatchListenerTest {
 
     @Test
     void buildFlowInputs() {

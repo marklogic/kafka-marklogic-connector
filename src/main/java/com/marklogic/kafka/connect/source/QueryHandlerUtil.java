@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.row.RowManager;
+import com.marklogic.kafka.connect.MarkLogicConnectorException;
 
-abstract class QueryHandlerUtil {
+interface QueryHandlerUtil {
 
     /**
      * Convenience method for executing a plan to get the maximum value for a particular constraint column; exists
@@ -27,7 +28,7 @@ abstract class QueryHandlerUtil {
             String message = String.format(
                 "Unable to get max constraint value; query returned null; query: %s; server timestamp: %d; response: %s",
                 maxValueQuery, serverTimestamp, result.get());
-            throw new RuntimeException(message);
+            throw new MarkLogicConnectorException(message);
         }
         return valueNode.asText();
     }

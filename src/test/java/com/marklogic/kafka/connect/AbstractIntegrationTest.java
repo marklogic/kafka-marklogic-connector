@@ -10,7 +10,7 @@ import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
+public abstract class AbstractIntegrationTest extends AbstractSpringMarkLogicTest {
 
     protected final static ObjectMapper objectMapper = new ObjectMapper();
 

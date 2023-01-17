@@ -1,6 +1,7 @@
 package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.kafka.connect.ConfigUtil;
+import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
@@ -22,12 +23,12 @@ abstract class AbstractSinkTask extends SinkTask {
     private boolean logKeys = false;
     private boolean logHeaders = false;
     protected BiConsumer<SinkRecord, Throwable> errorReporterMethod;
-    static public final String MARKLOGIC_MESSAGE_FAILURE_HEADER = "marklogic-failure-type";
-    static public final String MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE = "marklogic-exception-message";
-    static public final String MARKLOGIC_ORIGINAL_TOPIC = "marklogic-original-topic";
-    static public final String MARKLOGIC_TARGET_URI = "marklogic-target-uri";
-    static public final String MARKLOGIC_WRITE_FAILURE = "Write failure";
-    static public final String MARKLOGIC_CONVERSION_FAILURE = "Record conversion";
+    public static final String MARKLOGIC_MESSAGE_FAILURE_HEADER = "marklogic-failure-type";
+    public static final String MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE = "marklogic-exception-message";
+    public static final String MARKLOGIC_ORIGINAL_TOPIC = "marklogic-original-topic";
+    public static final String MARKLOGIC_TARGET_URI = "marklogic-target-uri";
+    public static final String MARKLOGIC_WRITE_FAILURE = "Write failure";
+    public static final String MARKLOGIC_CONVERSION_FAILURE = "Record conversion";
 
     /**
      * Subclasses implement this to pull their necessary config from Kafka. Invoked by the {@code start} method.
@@ -77,36 +78,38 @@ abstract class AbstractSinkTask extends SinkTask {
      */
     @Override
     public void put(Collection<SinkRecord> records) {
-        records.forEach(record -> {
+        records.forEach(sinkRecord -> {
             // It is not known if either of these scenarios will ever occur; it would seem that Kafka would never pass
             // a null record nor a record with a null value to a connector.
-            if (record == null) {
+            if (sinkRecord == null) {
                 logger.debug("Skipping null record");
-            } else if (record.value() == null) {
+            } else if (sinkRecord.value() == null) {
                 logger.debug("Skipping record with null value");
             } else {
-                logRecordBeforeWriting(record);
+                logRecordBeforeWriting(sinkRecord);
                 try {
-                    this.writeSinkRecord(record);
+                    this.writeSinkRecord(sinkRecord);
                 } catch (Exception ex) {
                     // Including the stacktrace here as this could happen for a variety of reasons
-                    throw new RuntimeException("Unable to write sink record; record offset: " + record.kafkaOffset() +
+                    throw new MarkLogicConnectorException("Unable to write sink record; record offset: " + sinkRecord.kafkaOffset() +
                         "cause: " + ex.getMessage(), ex);
                 }
             }
         });
     }
 
-    private void logRecordBeforeWriting(SinkRecord record) {
-        if (logKeys && record.key() != null) {
-            logger.info("Record key {}", record.key());
+    private void logRecordBeforeWriting(SinkRecord sinkRecord) {
+        if (logKeys && sinkRecord.key() != null) {
+            logger.info("Record key {}", sinkRecord.key());
         }
         if (logHeaders) {
             List<String> headers = new ArrayList<>();
-            record.headers().forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
+            sinkRecord.headers().forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
             logger.info("Record headers: {}", headers);
         }
-        logger.debug("Processing record value {} in topic {}", record.value(), record.topic());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Processing record value {} in topic {}", sinkRecord.value(), sinkRecord.topic());
+        }
     }
 
     /**

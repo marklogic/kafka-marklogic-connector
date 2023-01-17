@@ -64,24 +64,14 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
 
         String userDsl = "op.fromLexicons({ID:cts.elementReference(xs.QName('ID')),LastName:cts.elementReference(xs.QName('LastName')),})";
         String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc(op.col('ID')))";
-
-        String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
-        assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the fromLexicons function");
-
-        verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
-        verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
+        assertUserQueryIsModifiedCorrectly(userDsl, expectedResult);
     }
 
     @Test
     void pullDataUsingFromLiterals() {
         String userDsl = "op.fromLiterals([{LastName:'Second',ID:2},{LastName:'Third',ID:3},{LastName:'First',ID:1}])";
         String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc(op.col('ID')))";
-
-        String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
-        assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the fromLiterals function");
-
-        verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
-        verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
+        assertUserQueryIsModifiedCorrectly(userDsl, expectedResult);
     }
 
     @Test
@@ -90,13 +80,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
 
         String userDsl = "op.fromSQL('SELECT Authors.ID, Authors.LastName FROM Authors')";
         String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc(op.col('ID')))";
-
-        String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
-        assertEquals(expectedResult, result,
-            "The where clause should have been injected just after the closing paren of the fromSQL function");
-
-        verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
-        verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
+        assertUserQueryIsModifiedCorrectly(userDsl, expectedResult);
     }
 
     @Test
@@ -148,5 +132,13 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
         }};
         return appendConstraintOntoQuery(originalDsl, parsedConfig, value);
+    }
+
+    private void assertUserQueryIsModifiedCorrectly(String userDsl, String expectedResult) {
+        String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
+        assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the accesor function");
+
+        verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
+        verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
     }
 }

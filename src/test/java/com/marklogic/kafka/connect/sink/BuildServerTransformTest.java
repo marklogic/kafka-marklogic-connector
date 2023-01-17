@@ -8,47 +8,47 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BuildServerTransformTest {
+class BuildServerTransformTest {
 
     private WriteBatcherSinkTask task = new WriteBatcherSinkTask();
     private Map<String, Object> config = new HashMap<>();
 
     @Test
-    public void noTransform() {
-        assertNull(task.buildServerTransform(config));
+    void noTransform() {
+        assertFalse(task.buildServerTransform(config).isPresent());
     }
 
     @Test
-    public void noParams() {
+    void noParams() {
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM, "noParams");
-        ServerTransform t = task.buildServerTransform(config);
+        ServerTransform t = task.buildServerTransform(config).get();
         assertEquals("noParams", t.getName());
         assertTrue(t.keySet().isEmpty());
     }
 
     @Test
-    public void oneParam() {
+    void oneParam() {
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM, "oneParam");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, "param1,value1");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER, ",");
-        ServerTransform t = task.buildServerTransform(config);
+        ServerTransform t = task.buildServerTransform(config).get();
         assertEquals(1, t.keySet().size());
         assertEquals("value1", t.get("param1").get(0));
     }
 
     @Test
-    public void twoParamsWithCustomDelimiter() {
+    void twoParamsWithCustomDelimiter() {
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM, "twoParams");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, "param1;value1;param2;value2");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER, ";");
-        ServerTransform t = task.buildServerTransform(config);
+        ServerTransform t = task.buildServerTransform(config).get();
         assertEquals(2, t.keySet().size());
         assertEquals("value1", t.get("param1").get(0));
         assertEquals("value2", t.get("param2").get(0));
     }
 
     @Test
-    public void malformedParams() {
+    void malformedParams() {
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM, "malformedParams");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, "param1,value1,param2");
         config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER, ",");

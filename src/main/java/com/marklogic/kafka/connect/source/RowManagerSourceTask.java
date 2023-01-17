@@ -59,6 +59,7 @@ public class RowManagerSourceTask extends SourceTask {
         logger.info("Started RowBatcherSourceTask");
     }
 
+    @SuppressWarnings("java:S1168") // Kafka prefers for null to be returned when no data exists
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         logger.debug("Polling; sleep time: {}ms", pollDelayMs);

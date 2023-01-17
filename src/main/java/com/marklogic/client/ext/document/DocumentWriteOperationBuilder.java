@@ -14,11 +14,11 @@ public class DocumentWriteOperationBuilder {
     private String collections;
     private String permissions;
 
-    public DocumentWriteOperation build(RecordContent record) {
+    public DocumentWriteOperation build(RecordContent recordContent) {
 
-        AbstractWriteHandle content = record.getContent();
-        DocumentMetadataHandle metadata = record.getAdditionalMetadata();
-        String uri = record.getId();
+        AbstractWriteHandle content = recordContent.getContent();
+        DocumentMetadataHandle metadata = recordContent.getAdditionalMetadata();
+        String uri = recordContent.getId();
 
         if (content == null) {
             throw new NullPointerException("'content' must not be null");

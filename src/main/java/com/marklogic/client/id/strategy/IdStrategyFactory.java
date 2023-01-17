@@ -4,7 +4,7 @@ import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
 
 import java.util.Map;
 
-public class IdStrategyFactory {
+public interface IdStrategyFactory {
 
     public static IdStrategy getIdStrategy(Map<String, Object> parsedConfig) {
         String strategyType = (String) parsedConfig.get(MarkLogicSinkConfig.ID_STRATEGY);

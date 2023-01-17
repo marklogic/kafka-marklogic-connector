@@ -6,6 +6,8 @@ plugins {
 
   // Only used for testing
   id 'com.marklogic.ml-gradle' version '4.3.7'
+  id 'jacoco'
+  id "org.sonarqube" version "3.5.0.2730"
 }
 
 java {
@@ -84,6 +86,21 @@ tasks.withType(JavaCompile) {
 test {
   useJUnitPlatform()
 }
+
+// Configures jacoco test coverage to be included when "test" is run
+test {
+  finalizedBy jacocoTestReport
+}
+jacocoTestReport {
+  dependsOn test
+}
+// Enabling the XML report allows for sonar to grab coverage data from jacoco
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
+
 
 shadowJar {
   // Exclude DHF source files
@@ -253,10 +270,10 @@ loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
 loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
 loadMarkLogicEmployeesSourceConnector.mustRunAfter startLocalConfluent
 
-task insertAuthor(type: Test) {
+task insertAuthors(type: Test) {
   useJUnitPlatform()
   systemProperty "AUTHOR_IDS", authorIds
   description = "Insert a new author into the kafka-test-content database via a new citations XML document; " +
     "use e.g. -PauthorIds=7,8,9 to insert 3 new authors with IDs of 7, 8, and 9"
-  include "com/marklogic/kafka/connect/source/debug/InsertAuthors.class"
+  include "com/marklogic/kafka/connect/source/debug/InsertAuthorsTest.class"
 }

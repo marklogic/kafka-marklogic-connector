@@ -10,7 +10,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
+class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
 
     private final static String TEST_COLLECTION = "bulk-ds-test";
     private final static String TEST_BULK_ENDPOINT_URI = "/example/bulk-endpoint.sjs";

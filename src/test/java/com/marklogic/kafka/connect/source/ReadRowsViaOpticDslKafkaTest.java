@@ -16,7 +16,7 @@ import static net.mguenther.kafka.junit.TopicConfig.withName;
 import static org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_CONFIG;
 import static org.apache.kafka.common.config.TopicConfig.CLEANUP_POLICY_DELETE;
 
-public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
+class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
 
     private EmbeddedKafkaCluster kafka;
 
@@ -31,6 +31,7 @@ public class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest 
         kafka.stop();
     }
 
+    @SuppressWarnings("java:S2699") // The assertion happens via kafka.observe
     @Test
     void shouldWaitForKeyedRecordsToBePublished() throws InterruptedException {
         kafka.observe(on(AUTHORS_TOPIC, 15));

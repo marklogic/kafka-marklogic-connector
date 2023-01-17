@@ -36,6 +36,25 @@ You can then run the tests via:
 Alternatively, you can import this project into an IDE such as IntelliJ and run each of the tests found under 
 `src/test/java`.
 
+# Running Sonar code analysis
+
+An effort has been started to analyze the codebase with Sonar; this will ideally be done by Jenkins in the near future.
+
+You can run Sonar code analysis locally by doing the following:
+
+1. [Install the latest sonarqube](https://www.sonarsource.com/products/sonarqube/downloads/), either via the zip file
+   or via Docker. 
+2. If you install sonarqube via a zip file, you'll need to adjust its default config as both it and our kafka-junit tests
+   try to use the same port (and we haven't figured out yet how to make kafka-junit use a different port). To do so, 
+   edit the `./conf/sonar.properties` file in the directory where you unzipped the zip file. Uncomment the 
+   `sonar.embeddedDatabase.port` property and change the port from 9092 to 9093. 
+3. Follow the sonarqube docs for starting sonarqube up, logging in, and setting up a "manual" project in your local 
+   clone of this repository; make sure you generate a token, which can be set to never expire
+4. Configure `systemProp.sonar.login` in your gradle-local.properties (creating that file in the root of this project if necessary)
+5. Run `./gradlew sonar` or `./gradlew test sonar` if you want code coverage to be reported
+
+For more assistance with Sonar and Gradle, see the [Sonar Gradle plugin docs](https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner-for-gradle/).
+
 
 # Testing with Confluent Platform
 

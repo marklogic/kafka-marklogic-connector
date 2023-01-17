@@ -70,7 +70,7 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
 
         RunFlowResponse response = flowRunner.runFlow(inputs);
         flowRunner.awaitCompletion();
-        if (logResponse) {
+        if (logResponse && logger.isInfoEnabled()) {
             logger.info("Flow response for batch number {}: {}", batch.getJobBatchNumber(), response.toJson());
         }
     }

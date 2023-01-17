@@ -18,13 +18,16 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import static com.marklogic.kafka.connect.sink.AbstractSinkTask.*;
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE;
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_MESSAGE_FAILURE_HEADER;
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_ORIGINAL_TOPIC;
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_WRITE_FAILURE;
 import static net.mguenther.kafka.junit.EmbeddedConnectConfig.kafkaConnect;
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.newClusterConfig;
 import static net.mguenther.kafka.junit.ObserveKeyValues.on;
 
-public class SendWriteFailureRecordsToDlqKafkaTest extends AbstractIntegrationSinkTest {
+class SendWriteFailureRecordsToDlqKafkaTest extends AbstractIntegrationSinkTest {
 
     // Declared by AbstractSpringMarkLogicTest
     @Autowired

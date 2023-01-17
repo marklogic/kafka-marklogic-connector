@@ -1,8 +1,6 @@
 package com.marklogic.kafka.connect.source;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.FailedRequestException;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.JSONDocumentManager;
 import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
@@ -10,6 +8,7 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
@@ -49,7 +48,7 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
         } catch (Exception e) {
             String errorMessage = String.format("Unable to store constraint document %s at URI: %s; cause: %s",
                 constraintStateJson, constraintStorageUri, e.getMessage());
-            throw new RuntimeException(errorMessage, e);
+            throw new MarkLogicConnectorException(errorMessage, e);
         }
     }
 

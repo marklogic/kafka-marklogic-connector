@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import static com.marklogic.kafka.connect.sink.AbstractSinkTask.*;
@@ -146,11 +147,11 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
             writeBatcher.withThreadCount(threadCount);
         }
 
-        ServerTransform transform = buildServerTransform(parsedConfig);
-        if (transform != null) {
+        Optional<ServerTransform> transform = buildServerTransform(parsedConfig);
+        if (transform.isPresent()) {
             // Not logging transform parameters as they may contain sensitive values
-            logger.info("Will apply server transform: {}", transform.getName());
-            writeBatcher.withTransform(transform);
+            logger.info("Will apply server transform: {}", transform.get().getName());
+            writeBatcher.withTransform(transform.get());
         }
 
         String temporalCollection = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION);
@@ -196,30 +197,34 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
      * @param parsedConfig - The complete configuration object including any transform parameters.
      * @return - The ServerTransform that will operate on each record, or null
      */
-    protected ServerTransform buildServerTransform(final Map<String, Object> parsedConfig) {
-        String transform = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
-        if (StringUtils.hasText(transform)) {
-            ServerTransform t = new ServerTransform(transform);
+    protected Optional<ServerTransform> buildServerTransform(final Map<String, Object> parsedConfig) {
+        String transformName = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
+        if (StringUtils.hasText(transformName)) {
+            ServerTransform transform = new ServerTransform(transformName);
             String params = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
             if (params != null && params.trim().length() > 0) {
                 String delimiter = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
                 if (delimiter != null && delimiter.trim().length() > 0) {
-                    String[] tokens = params.split(delimiter);
-                    for (int i = 0; i < tokens.length; i += 2) {
-                        if (i + 1 >= tokens.length) {
-                            throw new IllegalArgumentException(String.format("The value of the %s property does not have an even number of " +
-                                "parameter names and values; property value: %s", MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, params));
-                        }
-                        t.addParameter(tokens[i], tokens[i + 1]);
-                    }
+                    addTransformParameters(transform, params, delimiter);
                 } else {
                     logger.warn("Unable to apply transform parameters to transform: {}; please set the " +
                         "delimiter via the {} property", transform, MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
                 }
             }
-            return t;
+            return Optional.of(transform);
         }
-        return null;
+        return Optional.empty();
+    }
+
+    private void addTransformParameters(ServerTransform transform, String params, String delimiter) {
+        String[] tokens = params.split(delimiter);
+        for (int i = 0; i < tokens.length; i += 2) {
+            if (i + 1 >= tokens.length) {
+                throw new IllegalArgumentException(String.format("The value of the %s property does not have an even number of " +
+                    "parameter names and values; property value: %s", MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, params));
+            }
+            transform.addParameter(tokens[i], tokens[i + 1]);
+        }
     }
 
     /**
@@ -252,7 +257,9 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         return errorReporter;
     }
 
-    private void nopReport(SinkRecord record, Throwable e) {}
+    private void nopReport(SinkRecord sinkRecord, Throwable e) {
+        // Used when errors cannot be sent to DLQ because Kafka version is too old
+    }
 }
 
 class WriteFailureHandler extends LoggingObject implements WriteFailureListener {
@@ -275,26 +282,32 @@ class WriteFailureHandler extends LoggingObject implements WriteFailureListener 
             DocumentMetadataWriteHandle writeHandle = writeEvent.getMetadata();
             if (writeHandle instanceof DocumentMetadataHandle) {
                 if (this.includeKafkaMetadata) {
-                    DocumentMetadataHandle metadata = (DocumentMetadataHandle) writeHandle;
-                    DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
-                    if (values != null) {
-                        logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
-                            writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
-                            values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
-                    }
+                    logFailedWriteEvent(writeEvent, (DocumentMetadataHandle) writeHandle);
                 }
                 if (writeHandle instanceof SinkRecordMetadataHandle) {
-                    SinkRecord sinkRecord = ((SinkRecordMetadataHandle) writeHandle).getSinkRecord();
-                    WriteBatcherSinkTask.addFailureHeaders(sinkRecord, throwable, MARKLOGIC_WRITE_FAILURE, writeEvent);
-                    Exception reportedException;
-                    if (throwable instanceof Exception) {
-                        reportedException = (Exception) throwable;
-                    } else {
-                        reportedException = new IOException(throwable.getMessage());
-                    }
-                    errorReporterMethod.accept(sinkRecord, reportedException);
+                    reportError(((SinkRecordMetadataHandle) writeHandle).getSinkRecord(), throwable, writeEvent);
                 }
             }
         }
+    }
+
+    private void logFailedWriteEvent(WriteEvent writeEvent, DocumentMetadataHandle metadata) {
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        if (values != null) {
+            logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
+                writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
+                values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
+        }
+    }
+
+    private void reportError(SinkRecord sinkRecord, Throwable throwable, WriteEvent writeEvent) {
+        WriteBatcherSinkTask.addFailureHeaders(sinkRecord, throwable, MARKLOGIC_WRITE_FAILURE, writeEvent);
+        Exception reportedException;
+        if (throwable instanceof Exception) {
+            reportedException = (Exception) throwable;
+        } else {
+            reportedException = new IOException(throwable.getMessage());
+        }
+        errorReporterMethod.accept(sinkRecord, reportedException);
     }
 }

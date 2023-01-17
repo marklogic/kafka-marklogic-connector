@@ -4,6 +4,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 
 import java.io.BufferedReader;
@@ -12,8 +13,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 class CsvPlanInvoker implements PlanInvoker {
 
@@ -40,7 +39,7 @@ class CsvPlanInvoker implements PlanInvoker {
                     records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, newDocument));
                 });
             } catch (IOException ex) {
-                throw new RuntimeException("Unable to parse CSV results: " + ex.getMessage(), ex);
+                throw new MarkLogicConnectorException("Unable to parse CSV results: " + ex.getMessage(), ex);
             }
         }
 

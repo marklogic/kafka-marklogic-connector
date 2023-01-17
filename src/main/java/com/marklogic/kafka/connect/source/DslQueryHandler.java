@@ -1,22 +1,17 @@
 package com.marklogic.kafka.connect.source;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
-import com.marklogic.client.io.Format;
-import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
-import com.marklogic.client.row.RawQueryDSLPlan;
 import com.marklogic.client.row.RowManager;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
 
 public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
-    private final static String VALUE_SANITIZATION_PATTERN = "[\"'\\(\\)]";
+    private static final String VALUE_SANITIZATION_PATTERN = "[\"'\\(\\)]";
 
     private final DatabaseClient databaseClient;
     private final String userDslQuery;

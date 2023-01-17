@@ -102,25 +102,25 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
     /**
      * Constructs an appropriate handle based on the value of the SinkRecord.
      *
-     * @param record
+     * @param sinkRecord
      * @return
      */
-    private AbstractWriteHandle toContent(SinkRecord record) {
-        if (record == null || record.value() == null) {
+    private AbstractWriteHandle toContent(SinkRecord sinkRecord) {
+        if (sinkRecord == null || sinkRecord.value() == null) {
             throw new IllegalArgumentException("Sink record must not be null and must have a value");
         }
 
-        Object value = record.value();
-        Schema schema = record.valueSchema();
+        Object value = sinkRecord.value();
+        Schema schema = sinkRecord.valueSchema();
 
         /* Determine the converter based on the value of SinkRecord*/
         if (schema != null && value instanceof Struct) {
             /* Avro, ProtoBuf or JSON with schema, ignore schema, handle only the value */
-            value = new String(JSON_CONVERTER.fromConnectData(record.topic(), schema, value), StandardCharsets.UTF_8).getBytes();
+            value = new String(JSON_CONVERTER.fromConnectData(sinkRecord.topic(), schema, value), StandardCharsets.UTF_8).getBytes();
         }
 
         if (value instanceof Map) {
-            value = new String(JSON_CONVERTER.fromConnectData(record.topic(), null, value)).getBytes();
+            value = new String(JSON_CONVERTER.fromConnectData(sinkRecord.topic(), null, value)).getBytes();
         }
 
         if (value instanceof byte[]) {
@@ -134,7 +134,7 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
             return content;
         }
 
-        StringHandle content = new StringHandle(record.value().toString());
+        StringHandle content = new StringHandle(sinkRecord.value().toString());
         if (format != null) {
             content.withFormat(format);
         }

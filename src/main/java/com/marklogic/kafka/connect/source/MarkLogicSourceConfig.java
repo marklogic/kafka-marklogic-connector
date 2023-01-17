@@ -72,11 +72,11 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 null, -1, ConfigDef.Width.MEDIUM, KEY_STRATEGY, KEY_STRATEGY_RV);
     }
 
-    private MarkLogicSourceConfig(final Map<?, ?> originals) {
+    public MarkLogicSourceConfig(final Map<?, ?> originals) {
         super(CONFIG_DEF, originals, false);
     }
 
-    static public class PermissionsValidator implements ConfigDef.Validator {
+    public static class PermissionsValidator implements ConfigDef.Validator {
         public void ensureValid(String name, Object value) {
             if (StringUtils.hasText((String) value)) {
                 DocumentMetadataHandle metadata = new DocumentMetadataHandle();

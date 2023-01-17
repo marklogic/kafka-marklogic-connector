@@ -19,20 +19,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class BuildDatabaseClientConfigTest {
+class BuildDatabaseClientConfigTest {
 
     DefaultDatabaseClientConfigBuilder builder = new DefaultDatabaseClientConfigBuilder();
     Map<String, Object> config = new HashMap<>();
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         config.put(MarkLogicSinkConfig.CONNECTION_HOST, "some-host");
         config.put(MarkLogicSinkConfig.CONNECTION_PORT, 8123);
         config.put(MarkLogicSinkConfig.CONNECTION_DATABASE, "some-database");
     }
 
     @Test
-    public void basicAuthentication() {
+    void basicAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_USERNAME, "some-user");
         config.put(MarkLogicSinkConfig.CONNECTION_PASSWORD, new Password("some-password"));
@@ -47,7 +47,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void certificateAuthentication() {
+    void certificateAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "certificate");
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, "/path/to/file");
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, new Password("cert-password"));
@@ -59,7 +59,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void kerberosAuthentication() {
+    void kerberosAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "kerberos");
         config.put(MarkLogicSinkConfig.CONNECTION_EXTERNAL_NAME, "some-name");
 
@@ -69,7 +69,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void digestAuthenticationAndSimpleSsl() {
+    void digestAuthenticationAndSimpleSsl() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
 
@@ -81,7 +81,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void basicAuthenticationAndSimpleSsl() {
+    void basicAuthenticationAndSimpleSsl() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
 
@@ -93,7 +93,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void basicAuthenticationAndMutualSSL() {
+    void basicAuthenticationAndMutualSSL() {
         File file = new File("src/test/resources/srportal.p12");
         String absolutePath = file.getAbsolutePath();
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
@@ -113,7 +113,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void basicAuthenticationAndMutualSSLWithInvalidHost() {
+    void basicAuthenticationAndMutualSSLWithInvalidHost() {
         File file = new File("src/test/resources/srportal.p12");
         String absolutePath = file.getAbsolutePath();
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
@@ -134,7 +134,7 @@ public class BuildDatabaseClientConfigTest {
 
 
     @Test
-    public void digestAuthenticationAnd1WaySSL() {
+    void digestAuthenticationAnd1WaySSL() {
 
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, false);
@@ -151,7 +151,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void gatewayConnection() {
+    void gatewayConnection() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
         config.put(MarkLogicSinkConfig.CONNECTION_TYPE, "gateway");
 
@@ -160,7 +160,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void testInvalidAuthentication() {
+    void testInvalidAuthentication() {
         Map<String, Object> securityContextConfig = new HashMap<>();
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -171,7 +171,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidDocumentFormatConfig() {
+    void invalidDocumentFormatConfig() {
         Map<String, Object>  documentFormatConfig = new HashMap<>();
         documentFormatConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         documentFormatConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -182,7 +182,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidIdStrategyConfig() {
+    void invalidIdStrategyConfig() {
         Map<String, Object> idStrategyConfig = new HashMap<>();
         idStrategyConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         idStrategyConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -193,7 +193,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidHostConfig() {
+    void invalidHostConfig() {
         Map<String, Object> invalidHostConfig = new HashMap<>();
         invalidHostConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "");
         invalidHostConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -203,7 +203,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidPortConfig() {
+    void invalidPortConfig() {
         Map<String, Object> invalidPortConfig = new HashMap<>();
         invalidPortConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         invalidPortConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, null);
@@ -213,7 +213,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidSSLHostVerifierConfig() {
+    void invalidSSLHostVerifierConfig() {
         Map<String, Object> sslHostVerifierConfig = new HashMap<>();
         sslHostVerifierConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         sslHostVerifierConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -224,7 +224,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidConnectTypeConfig() {
+    void invalidConnectTypeConfig() {
         Map<String, Object> connectTypeConfig = new HashMap<>();
         connectTypeConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         connectTypeConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -235,7 +235,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidDmsdkConfig() {
+    void invalidDmsdkConfig() {
         ConfigException ex = null;
 
         Map<String, Object> dmsdkNegBatchSizeConfig = new HashMap<>();
@@ -272,7 +272,7 @@ public class BuildDatabaseClientConfigTest {
     }
 
     @Test
-    public void invalidBulkDSConfig() {
+    void invalidBulkDSConfig() {
         ConfigException ex = null;
 
         Map<String, Object> negBulkDsBatchSize = new HashMap<>();
@@ -294,7 +294,7 @@ public class BuildDatabaseClientConfigTest {
 
     @Test
     // This also implicitly verifies that all other sink properties are optional
-    public void testMissingRequired() {
+    void testMissingRequired() {
         Map<String, Object> allRequiredValuesConfig = new HashMap<>();
         allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         allRequiredValuesConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
@@ -302,9 +302,9 @@ public class BuildDatabaseClientConfigTest {
 
         Set<String> keys = allRequiredValuesConfig.keySet();
         for (String key : keys) {
+            HashMap<String, Object> missingSingleValueConfig = new HashMap<>(allRequiredValuesConfig);
+            missingSingleValueConfig.remove(key);
             assertThrows(ConfigException.class, () -> {
-                HashMap<String, Object> missingSingleValueConfig = new HashMap<>(allRequiredValuesConfig);
-                missingSingleValueConfig.remove(key);
                 MarkLogicSinkConfig.CONFIG_DEF.parse(missingSingleValueConfig);
             });
         }
