@@ -28,11 +28,11 @@ class XmlPlanInvoker implements PlanInvoker {
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
     private DatabaseClient client;
-    private KeyGenerator keyGenerator;
+    private Map<String, Object> parsedConfig;
 
     public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
-        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
+        this.parsedConfig = parsedConfig;
     }
 
     @Override
@@ -40,12 +40,12 @@ class XmlPlanInvoker implements PlanInvoker {
         DOMHandle baseHandle = new DOMHandle();
         DOMHandle result = client.newRowManager().resultDoc(plan, baseHandle);
         List<SourceRecord> records = result.get() != null ?
-            convertRowsToSourceRecords(result, topic) :
+            convertRowsToSourceRecords(result, topic, baseHandle.getServerTimestamp()) :
             new ArrayList<>();
         return new Results(records, baseHandle.getServerTimestamp());
     }
 
-    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic) {
+    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic, long serverTimestamp) {
         Element docElement = result.get().getDocumentElement();
         NodeList rows = docElement.getElementsByTagNameNS(TABLE_NS_URI, "row");
 
@@ -57,11 +57,11 @@ class XmlPlanInvoker implements PlanInvoker {
             throw new RuntimeException("Unable to create XML transformer: " + ex.getMessage(), ex);
         }
 
+        KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(this.parsedConfig, serverTimestamp);
         List<SourceRecord> records = new ArrayList<>();
         for (int i = 0; i < rows.getLength(); i++) {
-            String key = keyGenerator.generateKey((long) i + 1);
-            SourceRecord newRecord = new SourceRecord(null, null, topic, null, key,null, documentToString(rows.item(i), transformer));
-            records.add(newRecord);
+            String value = documentToString(rows.item(i), transformer);
+            records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, value));
         }
         return records;
     }

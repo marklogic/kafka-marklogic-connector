@@ -154,6 +154,7 @@ this, the following properties must be configured:
 The following optional properties can also be configured:
 
 - `ml.source.waitTime` = amount of time, in milliseconds, that the connector will wait on each poll before running the Optic query; defaults to 5000
+- `ml.source.key.strategy` = strategy for generating keys for each source records; defaults to "NONE", and can also be "UUID" or "TIMESTAMP"
 - `ml.source.optic.outputFormat` = the format of rows returned by the Optic query; defaults to "JSON", and can instead be "XML" or "CSV"
 - `ml.source.optic.rowLimit` = the maximum number of rows to retrieve per poll
 - `ml.source.optic.constraintColumn.name` = name of a column returned by the Optic query to use for constraining results on subsequent runs
@@ -239,6 +240,16 @@ containing the values for the row; example:
 Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Authors.Date,Medical.Authors.DateTime
 2,Smith,Jane,2022-05-11,2022-05-11T10:00:00
 ```
+
+### Generating a key for each source record
+
+Each source record returned by a Kafka source connector can have a key defined. A key is optional, and thus by default, 
+the MarkLogic Kafka connector will set the key to `null` on each record it returns. Depending on your requirements, 
+you can configure one of the following strategies via the `ml.source.key.strategy` option:
+
+- UUID = generate a UUID for each source record
+- TIMESTAMP = generate a key consisting of the [MarkLogic server timestamp](https://docs.marklogic.com/guide/app-dev/point_in_time), 
+  a hyphen, and then the row number of the row represented by the source record
 
 ### Limiting how many rows are returned
 

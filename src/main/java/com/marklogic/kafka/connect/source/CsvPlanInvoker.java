@@ -12,16 +12,17 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 class CsvPlanInvoker implements PlanInvoker {
 
     private DatabaseClient client;
-    private KeyGenerator keyGenerator;
+    private Map<String, Object> parsedConfig;
 
     public CsvPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
-        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
+        this.parsedConfig = parsedConfig;
     }
 
     @Override
@@ -31,14 +32,12 @@ class CsvPlanInvoker implements PlanInvoker {
         List<SourceRecord> records = new ArrayList<>();
 
         if (result.get() != null) {
+            KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig, baseHandle.getServerTimestamp());
             try (BufferedReader reader = new BufferedReader(new StringReader(result.get()))) {
                 String headers = reader.readLine();
-                AtomicLong rowNumber = new AtomicLong(1);
                 reader.lines().forEach(line -> {
-                    String key = keyGenerator.generateKey(rowNumber.getAndIncrement());
                     String newDocument = headers + "\n" + line;
-                    SourceRecord newRecord = new SourceRecord(null, null, topic, null, key, null, newDocument);
-                    records.add(newRecord);
+                    records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, newDocument));
                 });
             } catch (IOException ex) {
                 throw new RuntimeException("Unable to parse CSV results: " + ex.getMessage(), ex);

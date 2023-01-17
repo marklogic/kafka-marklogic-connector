@@ -13,11 +13,11 @@ import java.util.Map;
 class JsonPlanInvoker implements PlanInvoker {
 
     private DatabaseClient client;
-    private KeyGenerator keyGenerator;
+    private Map<String, Object> parsedConfig;
 
     public JsonPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
-        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
+        this.parsedConfig = parsedConfig;
     }
 
     @Override
@@ -33,11 +33,9 @@ class JsonPlanInvoker implements PlanInvoker {
          */
         JsonNode doc = result.get();
         if (doc != null && doc.has("rows")) {
-            long rowNumber = 1;
+            KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(this.parsedConfig, baseHandle.getServerTimestamp());
             for (JsonNode row : doc.get("rows")) {
-                String key = keyGenerator.generateKey(rowNumber);
-                rowNumber++;
-                records.add(new SourceRecord(null, null, topic, null, key,null, row.toString()));
+                records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, row.toString()));
             }
         }
         return new Results(records, baseHandle.getServerTimestamp());
