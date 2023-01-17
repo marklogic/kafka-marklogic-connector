@@ -13,7 +13,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
     void orderAuthorsByIDNumberAndLimit3() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "ID";
-        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
+        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
@@ -46,7 +46,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
     void orderAuthorsByDateAndLimit3() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "Date";
-        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
+        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
@@ -68,7 +68,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
     void orderAuthorsByDateTimeAndLimit3() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
         String constraintColumnName = "DateTime";
-        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
+        String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
@@ -93,7 +93,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
     @Test
     void insertNewDataBeforeSecondPoll() throws Exception {
         String constraintColumnName = "DateTime";
-        String authorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(\"" + constraintColumnName + "\"))";
+        String authorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, authorsDsl,

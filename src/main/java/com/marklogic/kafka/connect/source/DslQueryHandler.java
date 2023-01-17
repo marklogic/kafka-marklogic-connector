@@ -50,7 +50,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
                 String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
                 constraintPhrase = String.format(".where(op.gt(op.col('%s'), '%s'))", constraintColumnName, sanitizedValue);
             }
-            constraintPhrase += ".orderBy(op.asc('" + constraintColumnName + "'))";
+            constraintPhrase += ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
             constrainedDsl = userDslQuery + constraintPhrase;
         }
         return constrainedDsl;
@@ -66,7 +66,11 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     }
 
     private String buildMaxValueDslQuery() {
-        return String.format("%s.orderBy(op.desc(\"%s\")).limit(1).select([op.as(\"constraint\", op.col(\"%s\"))])", currentDslQuery, constraintColumnName, constraintColumnName);
+        return String.format("%s" +
+            ".orderBy(op.desc(op.col('%s')))" +
+            ".limit(1)" +
+            ".select([op.as('constraint', op.col('%s'))])",
+            currentDslQuery, constraintColumnName, constraintColumnName);
     }
 
     public String getCurrentQuery() {
