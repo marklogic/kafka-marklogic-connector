@@ -21,7 +21,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
 
     public static final String DSL_QUERY = "ml.source.optic.dsl";
     public static final String SERIALIZED_QUERY = "ml.source.optic.serialized";
-    public static final String ROW_LIMIT = "ml.source.optic.row.limit";
+    public static final String ROW_LIMIT = "ml.source.optic.rowLimit";
     public static final String CONSTRAINT_COLUMN_NAME = "ml.source.optic.constraintColumn.name";
     public static final String CONSTRAINT_STORAGE_URI = "ml.source.optic.constraintColumn.uri";
     public static final String CONSTRAINT_STORAGE_PERMISSIONS = "ml.source.optic.constraintColumn.permissions";

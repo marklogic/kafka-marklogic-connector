@@ -177,6 +177,7 @@ The following optional properties can also be configured:
 
 - `ml.source.waitTime` = amount of time, in milliseconds, that the connector will wait on each poll before running the Optic query; defaults to 5000
 - `ml.source.optic.outputFormat` = the format of rows returned by the Optic query; defaults to "JSON", and can instead be "XML" or "CSV"
+- `ml.source.optic.rowLimit` = the maximum number of rows to retrieve per poll
 - `ml.source.optic.constraintColumn.name` = name of a column returned by the Optic query to use for constraining results on subsequent runs
 - `ml.source.optic.constraintColumn.uri` = URI of a document that the connector will write after each run that uses a constraint column; the document will contain the highest value in the constraint column
 - `ml.source.optic.constraintColumn.collections` = comma-separated list of collection names to assign to the document identified by the URI
@@ -263,24 +264,20 @@ Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Aut
 
 ### Limiting how many rows are returned
 
-When a Kafka source connector is run, it is required to return an in-memory list of source records. Thus, connector 
-users have to be careful to ensure that any given run will not return so many source records that the Kafka Connect 
-process runs out of memory. The MarkLogic Kafka connector is no different in this regard. While MarkLogic can 
+When a Kafka source connector is run, it is required to return an in-memory list of source records. Thus, connector
+users have to be careful to ensure that any given run will not return so many source records that the Kafka Connect
+process runs out of memory. The MarkLogic Kafka connector is no different in this regard. While MarkLogic can
 efficiently return millions of rows or more in a single call, that amount of data being stored in an in-memory list
-in the Kafka Connect process is likely to cause memory issues. 
+in the Kafka Connect process is likely to cause memory issues.
 
-Users can leverage the [Optic limit function](https://docs.marklogic.com/AccessPlan.prototype.limit) to control 
-how many rows are returned at once. In conjunction with the `ml.source.waitTime` configuration option, a user can 
-control how frequently the connector runs and how much data it returns at once. For example, a user may wish to 
-limit their query to the first 1000 rows in a view, ordered by purchase ID, and queried every 2 seconds:
+The preferred approach for limiting how many rows are returned is via the `ml.source.optic.rowLimit` option, which
+can be set to any integer greater than zero. When set, the connector will append an
+[Optic limit function](https://docs.marklogic.com/AccessPlan.prototype.limit) call to the end of your query to control
+how many rows are returned.
 
-    ml.source.optic.query=op.fromView('demo', 'purchases').orderBy(op.asc('id')).limit(1000)
-    ml.source.waitTime=2000
+Using this option is strongly recommended when using the constraint column feature described below. If you are not
+using a constraint column, you may include a limit function call in your own query. 
 
-For some users, returning up to 200k rows each time and only running every hour may suffice. For other users, 
-returning up to 10k rows and running every 5 seconds may be the right fit. Whatever limit and wait time are chosen, it 
-is recommended to test the configuration with realistic data to ensure that the connector performs well and that 
-there is no risk of the Kafka Connect process trying to fit too much data into memory.
 
 ### Configuring a constraint column
 
@@ -299,27 +296,34 @@ column is configured, the connector will perform the on each run:
    at the same [MarkLogic server timestamp](https://docs.marklogic.com/guide/rest-dev/intro#id_68993) at which the initial 
    query was run. This value is then used on the next run to constrain the user's query. 
    
-A user can choose any column returned by their query. In practice, this will often be a dateTime column or a column with
-incrementing numbers, but the feature will work as long a "greater than" operation can be performed on the column. 
-Users should note the following guidelines though:
+A user can choose any column returned by their query, though the following guidelines are recommended:
 
-1. It is recommended for the column to contain unique values. For example, if the column contains numbers, an initial 
+1. The "greater than" operation should be meaningful on values in the column. In practice, the column will often be a 
+   dateTime column or a numeric column (e.g. in the case of a numeric incrementing identifier). But as long as "greater than"
+   can be used to select new or modified rows, the column should work properly.
+2. The column should ideally contain unique values. For example, if the column contains numbers, an initial 
    query may find that the highest value in the column is 50. If it is possible for future rows to be inserted with a 
    value of 50, those rows will not be returned because the connector will constrain on rows with a value greater than 50.
    Note that a "last updated" dateTime column does not need to contain unique values, assuming that any new row would 
    always have a value greater than any existing row. 
-2. A query can make use of the Optic `limit()` modifier to limit how many rows are returned in conjunction with a 
-   constraint column as well. This may be useful in situations where the number of "new" rows can be high enough to cause
-   the Kafka Connect process to run out of memory. When doing so though, the user will typically want to order the 
-   results by the same column used as the constraint column to ensure that no rows are missed. 
    
-Consider the following example of using a constraint column and a limit together:
+Consider the following example of using a constraint column with a row limit:
 
-    ml.source.optic.query=op.fromView('demo', 'purchases').where(op.sqlCondition('price_per_unit > 10')).orderBy(op.asc('id')).limit(1000)
+    ml.source.optic.query=op.fromView('demo', 'purchases').where(op.sqlCondition('price_per_unit > 10'))
+    ml.source.optic.rowLimit=100
     ml.source.optic.constraintColumn.name=id
 
-With this configuration, each run of the source connector will return no more than 1000 purchase rows, where each 
-purchase row has an ID greater than any of the purchase rows returned by the previous run.
+Assuming that 1000 matching rows exist, with IDs from 1 to 1000, then the following will occur:
+
+1. On the first poll, and [orderBy](https://docs.marklogic.com/ModifyPlan.prototype.orderBy) modifier on the given 
+   constraint column will be appended to the user's query to ensure that rows with IDs from 1 to 100 are returned. 
+2. On the second poll, the user's query will further be modified with a 
+   [where](https://docs.marklogic.com/ModifyPlan.prototype.where) function to constrain on rows with an ID greater than 
+   100, thus resulting in rows with IDs from 101 to 200 being returned.
+3. This behavior will continue until all 1000 rows have been, with each poll returning 100 rows.
+4. After all 1000 rows have been returned via 10 poll calls, the next poll will not return any data. 
+5. Finally, once rows with an ID greater than 1000 are added to MarkLogic, those will be returned. 
+
 
 ### Configuring storage of a constraint column value
 
@@ -350,7 +354,6 @@ defined as a comma-separated string with alternating roles and capabilities - e.
 The document written by the connector will include the maximum constraint column value along with some other metadata
 that is intended to be helpful for debugging any problems that arise. However, as of the 1.8.0 release, the contents 
 of this document are considered private and thus subject to change with any release. 
-
 
 ## Configuring how data is written to MarkLogic
 

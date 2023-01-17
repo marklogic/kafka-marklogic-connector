@@ -36,14 +36,10 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
         currentDslQuery = appendConstraintAndOrderByToQuery(previousMaxConstraintColumnValue);
         if (rowLimit > 0) {
-            currentDslQuery = appendLimitToQuery(currentDslQuery);
+            currentDslQuery += ".limit(" + rowLimit + ")";
         }
         logger.info("DSL query: " + currentDslQuery);
         return databaseClient.newRowManager().newRawQueryDSLPlan(new StringHandle(currentDslQuery));
-    }
-
-    protected String appendLimitToQuery(String currentDslQuery) {
-        return currentDslQuery + ".limit(" + rowLimit + ")";
     }
 
     protected String appendConstraintAndOrderByToQuery(String previousMaxConstraintColumnValue) {
