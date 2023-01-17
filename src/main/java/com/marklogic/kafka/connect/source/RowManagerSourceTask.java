@@ -61,7 +61,7 @@ public class RowManagerSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        logger.info("Polling; sleep time: {}ms", pollDelayMs);
+        logger.debug("Polling; sleep time: {}ms", pollDelayMs);
         Thread.sleep(pollDelayMs);
 
         String currentQuery = "<Not Built Yet>";
@@ -76,12 +76,20 @@ public class RowManagerSourceTask extends SourceTask {
             PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan, topic);
             final long duration = System.currentTimeMillis() - start;
             List<SourceRecord> newSourceRecords = results.getSourceRecords();
-            logger.info("Source record count: " + newSourceRecords.size() + "; duration: " + duration);
+            if (!newSourceRecords.isEmpty()) {
+                logger.info("Source record count: {}; duration: {}", newSourceRecords.size(), duration);
+            } else {
+                logger.debug("No source records found; duration: {}", duration);
+            }
             updateMaxConstraintValue(results, queryHandler);
             return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
-            logger.error("Unable to poll for source records; cause: " + ex.getMessage() +
-                "; Current Query: " + currentQuery, ex);
+            final String message = String.format("Unable to poll for source records; cause: %s; query: %s", ex.getMessage(), currentQuery);
+            if (logger.isDebugEnabled()) {
+                logger.error(message, ex);
+            } else {
+                logger.error(message);
+            }
             return null;
         }
     }
@@ -101,7 +109,7 @@ public class RowManagerSourceTask extends SourceTask {
         if (constraintValueStore != null && !results.getSourceRecords().isEmpty()) {
             long serverTimestamp = results.getServerTimestamp();
             String newMaxConstraintColumnValue = queryHandler.getMaxConstraintColumnValue(serverTimestamp);
-            logger.info("Storing new max constraint value: " + newMaxConstraintColumnValue);
+            logger.debug("Storing new max constraint value: {}", newMaxConstraintColumnValue);
             constraintValueStore.storeConstraintState(newMaxConstraintColumnValue, results.getSourceRecords().size());
         }
     }

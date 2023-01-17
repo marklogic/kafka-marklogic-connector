@@ -16,6 +16,10 @@
     <appender-ref ref="STDOUT"/>
   </logger>
 
+  <logger name="com.marklogic.kafka" level="DEBUG" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
   <logger name="org.reflections" level="ERROR" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>

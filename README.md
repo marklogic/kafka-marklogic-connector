@@ -84,28 +84,6 @@ two properties in the "Common" section
 copy of the `./config/marklogic-connect-standalone.properties` file. This file already has the two properties set to the
   correct values, so you should not need to do anything further with them.
 
-### Dead Letter Configuration
-
-Starting with version 1.8.0, the sink connector makes use of the dead letter queue (DLQ) if the user has configured
-Kafka appropriately. [Please see the Kafka documentation](https://www.confluent.io/blog/kafka-connect-deep-dive-error-handling-dead-letter-queues/)
-for more information on configuring the dead letter queue in Kafka.
-
-When Kafka has been configured to use the DLQ, there are two events in the sink connector that will cause a record to be
-sent to the DLQ.
-- "Record conversion" : If a specific record cannot be converted into the target format to be delivered to MarkLogic,
-then that record will be sent to the DLQ.
-- "Write failure" : If a batch of documents (converted Kafka records from the source topic) fails to be written to
-MarkLogic then each of the records in the batch will be sent to the DLQ. The entire batch must be sent to the DLQ since
-the connector is unable to determine the cause of the failure.
-
-When a record is sent to the DLQ, the connector first adds headers to the record providing information about the cause
-of the failure in order to assist with troubleshooting and potential routing.
-- "marklogic-failure-type" : Either "Write failure" or "Record conversion"
-- "marklogic-exception-message" : Information from MarkLogic when there is a write failure
-- "marklogic-original-topic" : The name of the topic that this record came from
-- "marklogic-target-uri" : For write failures, this contains the target URI for the document
-
-
 ## Configuring the connection
 
 You must configure the connector to control how it connects to MarkLogic. The properties you must configure are determined 
@@ -355,6 +333,31 @@ The document written by the connector will include the maximum constraint column
 that is intended to be helpful for debugging any problems that arise. However, as of the 1.8.0 release, the contents 
 of this document are considered private and thus subject to change with any release. 
 
+### Source connector logging
+
+The manner in which logging is configured for the MarkLogic Kafka connector depends on the particular Kafka distribution
+you are using. Generally though, [Kafka uses Log4j](https://docs.confluent.io/platform/current/connect/logging.html) 
+to configure logging. Assuming the use of Log4j, `com.marklogic.kafka` is the package to use when configuring logging 
+for the MarkLogic Kafka connector. 
+
+If debug logging is not enabled for the connector, then the following items specific to the source connector will be
+logged:
+
+- If one or more source records are returned on a poll call, the count of records and the duration of the call will 
+be logged at the INFO level
+- Any exception thrown during execution of the poll call will have its message logged at the ERROR level 
+- Changes to the state of the connector, such as when it is stopped and started, are logged at the INFO level
+
+If debug logging is enabled, the following items will also be logged (at the DEBUG level, unless otherwise stated):
+
+- The beginning of each poll call, along with the value of `ml.source.waitTime`
+- The source query that is sent to MarkLogic
+- If a constraint column is configured, the query to find the maximum value for this query will be logged along with the
+  returned value
+- If no records are returned on a poll call, the duration of the call will be logged
+- Any exception thrown during execution of the poll call will be logged at the ERROR level and will include the stacktrace
+
+
 ## Configuring how data is written to MarkLogic
 
 By default, the MarkLogic Kafka connector assumes that the app server associated with the port defined by the `ml.connection.port`
@@ -589,3 +592,25 @@ MarkLogic.
 
 As always with MarkLogic applications, use the [MarkLogic Monitoring dashboard](https://docs.marklogic.com/guide/monitoring/intro)
 to understand resource consumption and server performance while testing various connector settings. 
+
+
+### Dead Letter Queue configuration
+
+Starting with version 1.8.0, the sink connector makes use of the dead letter queue (DLQ) if the user has configured
+Kafka appropriately. [Please see the Kafka documentation](https://www.confluent.io/blog/kafka-connect-deep-dive-error-handling-dead-letter-queues/)
+for more information on configuring the dead letter queue in Kafka.
+
+When Kafka has been configured to use the DLQ, there are two events in the sink connector that will cause a record to be
+sent to the DLQ.
+- "Record conversion" : If a specific record cannot be converted into the target format to be delivered to MarkLogic,
+  then that record will be sent to the DLQ.
+- "Write failure" : If a batch of documents (converted Kafka records from the source topic) fails to be written to
+  MarkLogic then each of the records in the batch will be sent to the DLQ. The entire batch must be sent to the DLQ since
+  the connector is unable to determine the cause of the failure.
+
+When a record is sent to the DLQ, the connector first adds headers to the record providing information about the cause
+of the failure in order to assist with troubleshooting and potential routing.
+- "marklogic-failure-type" : Either "Write failure" or "Record conversion"
+- "marklogic-exception-message" : Information from MarkLogic when there is a write failure
+- "marklogic-original-topic" : The name of the topic that this record came from
+- "marklogic-target-uri" : For write failures, this contains the target URI for the document

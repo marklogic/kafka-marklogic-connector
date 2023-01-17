@@ -71,7 +71,7 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
         RunFlowResponse response = flowRunner.runFlow(inputs);
         flowRunner.awaitCompletion();
         if (logResponse) {
-            logger.info(format("Flow response for batch number %d:\n%s", batch.getJobBatchNumber(), response.toJson()));
+            logger.info("Flow response for batch number {}: {}", batch.getJobBatchNumber(), response.toJson());
         }
     }
 

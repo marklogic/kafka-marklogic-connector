@@ -136,26 +136,26 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     private void configureWriteBatcher(Map<String, Object> parsedConfig, WriteBatcher writeBatcher) {
         Integer batchSize = (Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE);
         if (batchSize != null) {
-            logger.info("DMSDK batch size: " + batchSize);
+            logger.info("DMSDK batch size: {}", batchSize);
             writeBatcher.withBatchSize(batchSize);
         }
 
         Integer threadCount = (Integer) parsedConfig.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT);
         if (threadCount != null) {
-            logger.info("DMSDK thread count: " + threadCount);
+            logger.info("DMSDK thread count: {}", threadCount);
             writeBatcher.withThreadCount(threadCount);
         }
 
         ServerTransform transform = buildServerTransform(parsedConfig);
         if (transform != null) {
             // Not logging transform parameters as they may contain sensitive values
-            logger.info("Will apply server transform: " + transform.getName());
+            logger.info("Will apply server transform: {}", transform.getName());
             writeBatcher.withTransform(transform);
         }
 
         String temporalCollection = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION);
         if (StringUtils.hasText(temporalCollection)) {
-            logger.info("Will add documents to temporal collection: " + temporalCollection);
+            logger.info("Will add documents to temporal collection: {}", temporalCollection);
             writeBatcher.withTemporalCollection(temporalCollection);
         }
 
@@ -213,8 +213,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
                         t.addParameter(tokens[i], tokens[i + 1]);
                     }
                 } else {
-                    logger.warn(String.format("Unable to apply transform parameters to transform: %s; please set the " +
-                        "delimiter via the %s property", transform, MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER));
+                    logger.warn("Unable to apply transform parameters to transform: {}; please set the " +
+                        "delimiter via the {} property", transform, MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
                 }
             }
             return t;
