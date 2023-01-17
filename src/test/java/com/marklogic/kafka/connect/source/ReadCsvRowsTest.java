@@ -26,6 +26,36 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
+    void testRowBatcherTaskWithTimeStampKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+            MarkLogicSourceConfig.KEY_STRATEGY, "timestamp"
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT, "timestamp");
+    }
+
+    @Test
+    void testRowBatcherTaskWithUuidKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+            MarkLogicSourceConfig.KEY_STRATEGY, "uuid"
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT, "uuid");
+    }
+
+    @Test
     void noMatchingRows() throws InterruptedException {
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,

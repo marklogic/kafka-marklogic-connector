@@ -55,11 +55,11 @@ public interface PlanInvoker {
 
         switch (outputType) {
             case JSON:
-                return new JsonPlanInvoker(client);
+                return new JsonPlanInvoker(client, parsedConfig);
             case CSV:
-                return new CsvPlanInvoker(client);
+                return new CsvPlanInvoker(client, parsedConfig);
             case XML:
-                return new XmlPlanInvoker(client);
+                return new XmlPlanInvoker(client, parsedConfig);
             default:
                 throw new IllegalArgumentException("Unexpected output type: " + outputType);
         }

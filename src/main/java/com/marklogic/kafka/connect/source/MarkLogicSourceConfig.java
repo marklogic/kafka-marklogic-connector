@@ -30,6 +30,9 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
     enum OUTPUT_TYPE {JSON, XML, CSV}
     private static final CustomRecommenderAndValidator OUTPUT_FORMAT_RV =
         new CustomRecommenderAndValidator(Arrays.stream(MarkLogicSourceConfig.OUTPUT_TYPE.values()).map(Enum::toString).toArray(String[]::new));
+    public static final String KEY_STRATEGY = "ml.source.key.strategy";
+    private static final CustomRecommenderAndValidator KEY_STRATEGY_RV =
+        new CustomRecommenderAndValidator("UUID", "TIMESTAMP", "NONE");
     public static final String TOPIC = "ml.source.topic";
     public static final String WAIT_TIME = "ml.source.waitTime";
 
@@ -63,7 +66,10 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
                 "Required, must be zero or higher; the amount of time in milliseconds to wait, on each poll call, " +
                     "before querying MarkLogic. Kafka will continually call poll on the source connector, so this " +
-                    "can be used to control how frequently the connector queries MarkLogic.");
+                    "can be used to control how frequently the connector queries MarkLogic.")
+            .define(KEY_STRATEGY, Type.STRING, "NONE", KEY_STRATEGY_RV, Importance.MEDIUM,
+                "Assigns a key for each record returned; either 'UUID', 'TIMESTAMP', or 'NONE'. If not set, then NONE will be used, in which case a key is not created for each record.",
+                null, -1, ConfigDef.Width.MEDIUM, KEY_STRATEGY, KEY_STRATEGY_RV);
     }
 
     private MarkLogicSourceConfig(final Map<?, ?> originals) {

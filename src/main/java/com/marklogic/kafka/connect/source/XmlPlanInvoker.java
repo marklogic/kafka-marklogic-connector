@@ -17,6 +17,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class XmlPlanInvoker implements PlanInvoker {
 
@@ -27,9 +28,11 @@ class XmlPlanInvoker implements PlanInvoker {
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
     private DatabaseClient client;
+    private KeyGenerator keyGenerator;
 
-    public XmlPlanInvoker(DatabaseClient client) {
+    public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
+        this.keyGenerator = KeyGenerator.newKeyGenerator(parsedConfig);
     }
 
     @Override
@@ -56,7 +59,8 @@ class XmlPlanInvoker implements PlanInvoker {
 
         List<SourceRecord> records = new ArrayList<>();
         for (int i = 0; i < rows.getLength(); i++) {
-            SourceRecord newRecord = new SourceRecord(null, null, topic, null, documentToString(rows.item(i), transformer));
+            String key = keyGenerator.generateKey((long) i + 1);
+            SourceRecord newRecord = new SourceRecord(null, null, topic, null, key,null, documentToString(rows.item(i), transformer));
             records.add(newRecord);
         }
         return records;

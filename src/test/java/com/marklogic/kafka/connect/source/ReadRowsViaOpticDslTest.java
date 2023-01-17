@@ -33,6 +33,36 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
+    void testRowBatcherTaskWithUuidKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        String keyStrategy = "uuid";
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.KEY_STRATEGY, keyStrategy
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, JSON_RESULT, keyStrategy);
+    }
+
+    @Test
+    void testRowBatcherTaskWithTimestampKeyStrategy() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        String keyStrategy = "timestamp";
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.KEY_STRATEGY, keyStrategy
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, JSON_RESULT, keyStrategy);
+    }
+
+    @Test
     void noRowsReturned() throws InterruptedException {
         List<SourceRecord> records = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
