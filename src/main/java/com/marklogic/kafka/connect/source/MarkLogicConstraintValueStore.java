@@ -46,13 +46,9 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
             insertCollections(metadataHandle.getCollections());
             JSONDocumentManager mgr = databaseClient.newJSONDocumentManager();
             mgr.write(constraintStorageUri, metadataHandle, handle);
-        } catch (JsonProcessingException e) {
-            String errorMessage = "Unable to store constraint value (" + constraintStateJson + ") at URI: "
-                + constraintStorageUri + "; cause: " + e.getMessage();
-            throw new RuntimeException(errorMessage, e);
-        } catch (FailedRequestException e) {
-            String errorMessage = "Unable to store constraint value (" + constraintStateJson + ") at URI: "
-                + constraintStorageUri + "; cause: " + e.getMessage();
+        } catch (Exception e) {
+            String errorMessage = String.format("Unable to store constraint document %s at URI: %s; cause: %s",
+                constraintStateJson, constraintStorageUri, e.getMessage());
             throw new RuntimeException(errorMessage, e);
         }
     }
