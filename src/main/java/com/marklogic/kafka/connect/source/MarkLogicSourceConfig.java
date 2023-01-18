@@ -38,38 +38,49 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
 
     public static final ConfigDef CONFIG_DEF = getConfigDef();
     private static final DefaultDocumentPermissionsParser permissionsParser = new DefaultDocumentPermissionsParser();
-
+    private static final String GROUP = "MarkLogic Source Settings";
 
     private static ConfigDef getConfigDef() {
         ConfigDef configDef = new ConfigDef();
         MarkLogicConfig.addDefinitions(configDef);
         return configDef
-            .define(DSL_QUERY, Type.STRING, null, Importance.HIGH,
-                format("Required (or %s); the Optic DSL query to execute", SERIALIZED_QUERY))
-            .define(SERIALIZED_QUERY, Type.STRING, null, Importance.HIGH,
-                format("Required (or %s); the serialized Optic query to execute", DSL_QUERY))
-            .define(ROW_LIMIT, Type.INT, 0, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
-                "The maximum number of rows to retrieve per poll")
-            .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
-                "The name of the column which should be used to constrain the Optic query")
-            .define(CONSTRAINT_STORAGE_URI, Type.STRING, null, Importance.MEDIUM,
-                "The URI of the JSON document in MarkLogic used to store constraint value information. " +
-                    "Since it is JSON data, the URI should have a '.json' suffix.")
-            .define(CONSTRAINT_STORAGE_PERMISSIONS, Type.STRING, null, new PermissionsValidator(), Importance.HIGH,
-                "Comma-separated list of roles and capabilities that define the permissions for the constraint value document")
-            .define(CONSTRAINT_STORAGE_COLLECTIONS, Type.STRING, null, Importance.HIGH,
-                "Comma-separated list of collections to assign to the constraint value document")
-            .define(OUTPUT_FORMAT, Type.STRING, "JSON", OUTPUT_FORMAT_RV, Importance.HIGH,
-                "The structure of the data in the query response", null, -1, ConfigDef.Width.MEDIUM, OUTPUT_FORMAT, OUTPUT_FORMAT_RV)
             .define(TOPIC, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.CompositeValidator.of(new ConfigDef.NonNullValidator(), new ConfigDef.NonEmptyString()), Importance.HIGH,
-                "Required; the name of a Kafka topic to send records to")
+                "Required; the name of a Kafka topic to send records to",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Kafka Topic Name")
+            .define(DSL_QUERY, Type.STRING, null, Importance.HIGH,
+                format("Required (or %s); the Optic DSL query to execute", SERIALIZED_QUERY),
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Optic DSL Query")
+            .define(SERIALIZED_QUERY, Type.STRING, null, Importance.HIGH,
+                format("Required (or %s); the serialized Optic query to execute", DSL_QUERY),
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Optic Serialized Query")
+            .define(OUTPUT_FORMAT, Type.STRING, "JSON", OUTPUT_FORMAT_RV, Importance.HIGH,
+                "The structure of the data in the query response",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Output Format", OUTPUT_FORMAT_RV)
+            .define(ROW_LIMIT, Type.INT, 0, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
+                "The maximum number of rows to retrieve per poll",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Row Limit")
             .define(WAIT_TIME, Type.LONG, 5000, ConfigDef.Range.atLeast(0), Importance.MEDIUM,
                 "Required, must be zero or higher; the amount of time in milliseconds to wait, on each poll call, " +
                     "before querying MarkLogic. Kafka will continually call poll on the source connector, so this " +
-                    "can be used to control how frequently the connector queries MarkLogic.")
+                    "can be used to control how frequently the connector queries MarkLogic.",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Wait Time")
             .define(KEY_STRATEGY, Type.STRING, "NONE", KEY_STRATEGY_RV, Importance.MEDIUM,
                 "Assigns a key for each record returned; either 'UUID', 'TIMESTAMP', or 'NONE'. If not set, then NONE will be used, in which case a key is not created for each record.",
-                null, -1, ConfigDef.Width.MEDIUM, KEY_STRATEGY, KEY_STRATEGY_RV);
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Key Generation Strategy", KEY_STRATEGY_RV)
+            .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
+                "The name of the column which should be used to constrain the Optic query; typically used when only " +
+                    "new or modified data should be returned.",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Column Name")
+            .define(CONSTRAINT_STORAGE_URI, Type.STRING, null, Importance.MEDIUM,
+                "The URI of the JSON document in MarkLogic used to store constraint value information. " +
+                    "Since it is JSON data, it is recommended that the URI have a '.json' suffix.",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage URI")
+            .define(CONSTRAINT_STORAGE_PERMISSIONS, Type.STRING, null, new PermissionsValidator(), Importance.HIGH,
+                "Comma-separated list of roles and capabilities that define the permissions for the constraint value document",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage Permissions")
+            .define(CONSTRAINT_STORAGE_COLLECTIONS, Type.STRING, null, Importance.HIGH,
+                "Comma-separated list of collections to assign to the constraint value document",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage Collections");
     }
 
     public MarkLogicSourceConfig(final Map<?, ?> originals) {
