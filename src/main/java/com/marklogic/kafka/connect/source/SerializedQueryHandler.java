@@ -1,13 +1,14 @@
 package com.marklogic.kafka.connect.source;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
-import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 
@@ -18,89 +19,71 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     private static final String OPTIC_PLAN_ROOT_NODE = "$optic";
 
     private final DatabaseClient databaseClient;
-    private final String userSerializedQuery;
     private final String constraintColumnName;
     private final Integer rowLimit;
 
-    private String currentSerializedQuery = null;
+    private final JsonNode currentSerializedQuery;
 
     public SerializedQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         this.databaseClient = databaseClient;
-        this.userSerializedQuery = (String) parsedConfig.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
+        String userSerializedQuery = (String) parsedConfig.get(MarkLogicSourceConfig.SERIALIZED_QUERY);
+        try {
+            this.currentSerializedQuery = mapper.readTree(userSerializedQuery);
+        } catch (JsonProcessingException e) {
+            throw new MarkLogicConnectorException(
+                String.format("Unable to read serialized query; cause: %s", e.getMessage()), e);
+        }
         this.constraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
     @Override
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
-        currentSerializedQuery = appendConstraintAndOrderByToQuery(userSerializedQuery, previousMaxConstraintColumnValue);
+        appendConstraintAndOrderByToQuery(currentSerializedQuery, previousMaxConstraintColumnValue);
         if (rowLimit > 0) {
-            currentSerializedQuery = appendLimitToQuery(currentSerializedQuery);
+            appendLimitToQuery(currentSerializedQuery);
         }
         logger.debug("Serialized query: {}", currentSerializedQuery);
-        return databaseClient.newRowManager().newRawPlanDefinition(new StringHandle(currentSerializedQuery));
+        return databaseClient.newRowManager().newRawPlanDefinition(new JacksonHandle(currentSerializedQuery));
     }
 
-    protected String appendLimitToQuery(String currentSerializedQuery) {
+    protected void appendLimitToQuery(JsonNode currentSerializedQuery) {
         ObjectNode limitNode = buildLimitNode(rowLimit);
-        try {
-            ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
-            ArrayNode rootArgsArray = (ArrayNode) queryRoot.get(OPTIC_PLAN_ROOT_NODE).get("args");
-
-            rootArgsArray.add(limitNode);
-            return mapper.writeValueAsString(queryRoot);
-        } catch (JsonProcessingException e) {
-            throw new MarkLogicConnectorException("Unable to modify serialized query to include the constraint column, cause: " + e.getMessage(), e);
-        }
+        ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
+        rootArgsArray.add(limitNode);
     }
 
-    protected String appendConstraintAndOrderByToQuery(String currentSerializedQuery, String previousMaxConstraintColumnValue) {
-        String constrainedSerialized = currentSerializedQuery;
+    protected void appendConstraintAndOrderByToQuery(JsonNode currentSerializedQuery, String previousMaxConstraintColumnValue) {
         if (constraintColumnName != null) {
-            try {
-                ObjectNode orderByNode = buildOrderByNode(true);
-                ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
-                ArrayNode rootArgsArray = (ArrayNode) queryRoot.get(OPTIC_PLAN_ROOT_NODE).get("args");
-
-                if (previousMaxConstraintColumnValue != null) {
-                    ObjectNode constraintNode = buildConstraintNode(previousMaxConstraintColumnValue);
-                    rootArgsArray.add(constraintNode);
-                }
-
-                rootArgsArray.add(orderByNode);
-                constrainedSerialized = mapper.writeValueAsString(queryRoot);
-            } catch (JsonProcessingException e) {
-                throw new MarkLogicConnectorException("Unable to modify serialized query to include the constraint column, cause: " + e.getMessage(), e);
+            ObjectNode orderByNode = buildOrderByNode(true);
+            ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
+            if (previousMaxConstraintColumnValue != null) {
+                ObjectNode constraintNode = buildConstraintNode(previousMaxConstraintColumnValue);
+                rootArgsArray.add(constraintNode);
             }
+            rootArgsArray.add(orderByNode);
         }
-        return constrainedSerialized;
     }
 
     @Override
     public String getMaxConstraintColumnValue(long serverTimestamp) {
-        String maxValueQuery;
-        try {
-            maxValueQuery = buildMaxValueSerializedQuery();
-        } catch (JsonProcessingException e) {
-            throw new MarkLogicConnectorException("Unable to build max value query: " + e.getMessage(), e);
-        }
+        JsonNode maxValueQuery = buildMaxValueSerializedQuery();
         logger.debug("Query for max constraint value: {}", maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();
-        return QueryHandlerUtil.executeMaxValuePlan(rowMgr, rowMgr.newRawPlanDefinition(new StringHandle(maxValueQuery)),
-            serverTimestamp, maxValueQuery);
+        return QueryHandlerUtil.executeMaxValuePlan(rowMgr, rowMgr.newRawPlanDefinition(new JacksonHandle(maxValueQuery)),
+            serverTimestamp, maxValueQuery.toString());
     }
 
-    private String buildMaxValueSerializedQuery() throws JsonProcessingException {
+    private JsonNode buildMaxValueSerializedQuery() {
         ObjectNode orderByDescendingNode = buildOrderByNode(false);
         ObjectNode limitOneNode = buildLimitNode(1);
         ObjectNode constraintColumnNode = buildMaxValueQueryConstraintNode();
 
-        ObjectNode queryRoot = (ObjectNode) mapper.readTree(currentSerializedQuery);
-        ArrayNode rootArgsArray = (ArrayNode) queryRoot.get(OPTIC_PLAN_ROOT_NODE).get("args");
+        ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
         rootArgsArray.add(orderByDescendingNode);
         rootArgsArray.add(limitOneNode);
         rootArgsArray.add(constraintColumnNode);
-        return mapper.writeValueAsString(queryRoot);
+        return currentSerializedQuery;
     }
 
     private ObjectNode buildMaxValueQueryConstraintNode() {
@@ -163,6 +146,6 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     public String getCurrentQuery() {
-        return currentSerializedQuery;
+        return currentSerializedQuery.toString();
     }
 }
