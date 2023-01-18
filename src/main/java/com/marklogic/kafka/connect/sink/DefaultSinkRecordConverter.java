@@ -1,10 +1,10 @@
 package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.document.DocumentWriteOperation;
-import com.marklogic.client.ext.document.DocumentWriteOperationBuilder;
-import com.marklogic.client.ext.document.RecordContent;
-import com.marklogic.client.id.strategy.IdStrategy;
-import com.marklogic.client.id.strategy.IdStrategyFactory;
+import com.marklogic.kafka.connect.source.DocumentWriteOperationBuilder;
+import com.marklogic.kafka.connect.source.RecordContent;
+import com.marklogic.kafka.connect.sink.idstrategy.IdStrategy;
+import com.marklogic.kafka.connect.sink.idstrategy.IdStrategyFactory;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;

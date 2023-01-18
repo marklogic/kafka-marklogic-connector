@@ -1,4 +1,4 @@
-package com.marklogic.client.ext.document;
+package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
