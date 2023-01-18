@@ -1,4 +1,4 @@
-package com.marklogic.client.id.strategy;
+package com.marklogic.kafka.connect.sink.idstrategy;
 
 import com.marklogic.client.io.marker.AbstractWriteHandle;
 import org.slf4j.Logger;

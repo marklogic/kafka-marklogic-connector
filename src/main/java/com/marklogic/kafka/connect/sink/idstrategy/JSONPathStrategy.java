@@ -1,4 +1,4 @@
-package com.marklogic.client.id.strategy;
+package com.marklogic.kafka.connect.sink.idstrategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
