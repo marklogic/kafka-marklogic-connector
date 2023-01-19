@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
@@ -12,47 +13,41 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
         "2,Pulhoster,Misty,2022-05-11,2022-05-11T10:00:00";
 
     @Test
-    void testRowBatcherTask() throws InterruptedException {
+    void readFifteenAuthorsAsCsv() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('ID')))",
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString()
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+            MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
         );
 
         List<SourceRecord> newSourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT);
+
+        assertEquals("1", newSourceRecords.get(0).key(), "The key should be populated by the ID column");
+        assertEquals("5", newSourceRecords.get(14).key());
     }
 
     @Test
-    void testRowBatcherTaskWithTimeStampKeyStrategy() throws InterruptedException {
+    void keyColumnDoesntExist() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
             MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
-            MarkLogicSourceConfig.KEY_STRATEGY, "timestamp"
+            MarkLogicSourceConfig.KEY_COLUMN, "column-doesnt-exist"
         );
 
-        List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT, "timestamp");
-    }
+        List<SourceRecord> sourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(sourceRecords, CSV_RESULT);
 
-    @Test
-    void testRowBatcherTaskWithUuidKeyStrategy() throws InterruptedException {
-        loadFifteenAuthorsIntoMarkLogic();
-
-        RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
-            MarkLogicSourceConfig.KEY_STRATEGY, "uuid"
-        );
-
-        List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT, "uuid");
+        sourceRecords.forEach(sourceRecord -> {
+            assertNull(sourceRecord.key(), "If the column is not found, it should not throw an error; a key will " +
+                "just not be generated");
+        });
     }
 
     @Test

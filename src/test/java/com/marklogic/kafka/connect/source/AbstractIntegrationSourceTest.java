@@ -95,21 +95,8 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
     }
 
     void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue) {
-        verifyQueryReturnsFifteenAuthors(sourceRecords, expectedValue, "none");
-    }
-
-    void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue, String keyStrategy) {
         assertEquals(15, sourceRecords.size());
         assertTopicAndSingleValue(sourceRecords, expectedValue);
-
-        if (keyStrategy.equalsIgnoreCase("uuid")) {
-            assertRecordKeysAreUuids(sourceRecords);
-        } else if (keyStrategy.equalsIgnoreCase("timestamp")) {
-            assertRecordKeysAreTimestamps(sourceRecords);
-        } else {
-            sourceRecords.forEach(sourceRecord -> assertNull(sourceRecord.key(),
-                "If no key generator strategy is specified, then the key should be null"));
-        }
     }
 
     private void assertTopicAndSingleValue(List<SourceRecord> newSourceRecords, String expectedValue) {
@@ -124,31 +111,6 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         });
         assertTrue(foundExpectedValue.get(),
             "List of SourceRecords does not contain a record with the expected value");
-    }
-
-    private void assertRecordKeysAreUuids(List<SourceRecord> records) {
-        records.forEach(record -> {
-            String key = record.key().toString();
-            assertEquals(UUID.fromString(key).toString(), key, "The key should be a valid UUID");
-        });
-    }
-
-    private void assertRecordKeysAreTimestamps(List<SourceRecord> records) {
-        String serverTimestamp = null;
-        int rowCounter = 1;
-        for (SourceRecord record : records) {
-            String[] keys = record.key().toString().split("-");
-            assertDoesNotThrow(() -> Long.parseLong(keys[0]), "The key is expected to begin with a MarkLogic " +
-                "server timestamp, which should be parseable as a long");
-            if (serverTimestamp == null) {
-                serverTimestamp = keys[0];
-            } else {
-                assertEquals(serverTimestamp, keys[0], "Each key is expected to begin with the same MarkLogic " +
-                    "server timestamp");
-            }
-            assertEquals(rowCounter++, Integer.parseInt(keys[1]), "Each key is expected to end in a row number, which " +
-                "along with the ML server timestamp guarantees a unique key");
-        }
     }
 
     /**
