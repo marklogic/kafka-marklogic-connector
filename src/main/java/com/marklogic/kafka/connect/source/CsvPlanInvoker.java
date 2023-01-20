@@ -8,6 +8,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 
@@ -39,7 +40,9 @@ class CsvPlanInvoker implements PlanInvoker {
     @Override
     public Results invokePlan(PlanBuilder.Plan plan, String topic) {
         StringHandle baseHandle = new StringHandle().withFormat(Format.TEXT).withMimetype("text/csv");
-        StringHandle result = client.newRowManager().resultDoc(plan, baseHandle);
+        RowManager mgr = client.newRowManager();
+        mgr.setDatatypeStyle(RowManager.RowSetPart.HEADER);
+        StringHandle result = mgr.resultDoc(plan, baseHandle);
         List<SourceRecord> records = new ArrayList<>();
 
         if (result.get() != null) {
@@ -49,6 +52,7 @@ class CsvPlanInvoker implements PlanInvoker {
                 reader.lines().forEach(line -> {
                     String key = getKeyValueFromRow(keyColumnIndex, line);
                     String newDocument = headers + "\n" + line;
+                    System.out.println("DOC: " + newDocument);
                     records.add(new SourceRecord(null, null, topic, null, key, null, newDocument));
                 });
             } catch (IOException ex) {

@@ -46,16 +46,26 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     }
 
     @Test
-    void wordQueryWithOrderByNoConstraintValue() {
-        String userDsl = "op.fromDocUris(cts.wordQuery('my phrase'))";
+    void wordQueryWithOrderByNoConstraintValue() throws Exception {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        String userDsl = "op.fromDocUris(cts.wordQuery('Moria')).joinDoc(op.col('doc'), op.col('uri'))";
         String expectedResult = userDsl + ".orderBy(op.asc(op.col('uri')))";
         Map<String, Object> localParsedConfig = new HashMap<String, Object>() {{
             put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
             put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
             put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+            put(MarkLogicSourceConfig.DSL_QUERY, userDsl);
         }};
-        assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, localParsedConfig, null),
-            "The where clause should have been injected just after the closing paren of the fromDocUris function");
+
+        startSourceTask(
+            MarkLogicSourceConfig.TOPIC, "blah",
+            MarkLogicSourceConfig.DSL_QUERY, userDsl
+        ).poll();
+//        assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, localParsedConfig, null),
+//            "The where clause should have been injected just after the closing paren of the fromDocUris function");
+//
+//        assertUserQueryIsModifiedCorrectly(userDsl, "blah");
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.DOMHandle;
+import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.w3c.dom.Element;
@@ -45,14 +46,16 @@ class XmlPlanInvoker implements PlanInvoker {
     @Override
     public Results invokePlan(PlanBuilder.Plan plan, String topic) {
         DOMHandle baseHandle = new DOMHandle();
-        DOMHandle result = client.newRowManager().resultDoc(plan, baseHandle);
+        RowManager rowManager = client.newRowManager();
+        rowManager.setDatatypeStyle(RowManager.RowSetPart.HEADER);
+        DOMHandle result = rowManager.resultDoc(plan, baseHandle);
         List<SourceRecord> records = result.get() != null ?
-            convertRowsToSourceRecords(result, topic, baseHandle.getServerTimestamp()) :
+            convertRowsToSourceRecords(result, topic) :
             new ArrayList<>();
         return new Results(records, baseHandle.getServerTimestamp());
     }
 
-    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic, long serverTimestamp) {
+    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic) {
         Element docElement = result.get().getDocumentElement();
         NodeList rows = docElement.getElementsByTagNameNS(TABLE_NS_URI, "row");
 
@@ -64,10 +67,13 @@ class XmlPlanInvoker implements PlanInvoker {
             throw new MarkLogicConnectorException("Unable to create XML transformer: " + ex.getMessage(), ex);
         }
 
+        System.out.println("DOC: " + documentToString(result.get(), transformer));
+
         List<SourceRecord> records = new ArrayList<>();
         for (int i = 0; i < rows.getLength(); i++) {
             Node row = rows.item(i);
             String value = documentToString(row, transformer);
+            System.out.println("DOC: " + value);
             records.add(new SourceRecord(null, null, topic, null, getKeyFromRow(row), null, value));
         }
         return records;

@@ -1,9 +1,14 @@
 package com.marklogic.kafka.connect.source;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.JacksonHandle;
+import com.marklogic.client.row.RowManager;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.source.SourceRecord;
 
 import java.util.ArrayList;
@@ -28,7 +33,9 @@ class JsonPlanInvoker implements PlanInvoker {
     @Override
     public Results invokePlan(PlanBuilder.Plan plan, String topic) {
         JacksonHandle baseHandle = new JacksonHandle();
-        JacksonHandle result = client.newRowManager().resultDoc(plan, baseHandle);
+        RowManager mgr = client.newRowManager();
+        mgr.setDatatypeStyle(RowManager.RowSetPart.HEADER);
+        JacksonHandle result = mgr.resultDoc(plan, baseHandle);
         List<SourceRecord> records = new ArrayList<>();
         /**
          * Testing has shown that converting the JSON to a string and using
@@ -38,6 +45,7 @@ class JsonPlanInvoker implements PlanInvoker {
          */
         JsonNode doc = result.get();
         if (doc != null && doc.has("rows")) {
+            System.out.println("ROW: " + doc.toPrettyString());
             for (JsonNode row : doc.get("rows")) {
                 records.add(new SourceRecord(null, null, topic, null, getKeyValueFromRow(row), null, row.toString()));
             }
