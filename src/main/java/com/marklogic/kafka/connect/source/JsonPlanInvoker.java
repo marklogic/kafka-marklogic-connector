@@ -12,12 +12,17 @@ import java.util.Map;
 
 class JsonPlanInvoker implements PlanInvoker {
 
-    private DatabaseClient client;
-    private Map<String, Object> parsedConfig;
+    private final DatabaseClient client;
+    private final String keyColumn;
 
     public JsonPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
-        this.parsedConfig = parsedConfig;
+        String value = (String) parsedConfig.get(MarkLogicSourceConfig.KEY_COLUMN);
+        if (value != null && value.trim().length() > 0) {
+            this.keyColumn = value;
+        } else {
+            this.keyColumn = null;
+        }
     }
 
     @Override
@@ -33,11 +38,19 @@ class JsonPlanInvoker implements PlanInvoker {
          */
         JsonNode doc = result.get();
         if (doc != null && doc.has("rows")) {
-            KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(this.parsedConfig, baseHandle.getServerTimestamp());
             for (JsonNode row : doc.get("rows")) {
-                records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, row.toString()));
+                records.add(new SourceRecord(null, null, topic, null, getKeyValueFromRow(row), null, row.toString()));
             }
         }
         return new Results(records, baseHandle.getServerTimestamp());
+    }
+
+    private String getKeyValueFromRow(JsonNode row) {
+        if (keyColumn != null && row.has(keyColumn)) {
+            JsonNode column = row.get(keyColumn);
+            // The "value" child is expected to exist; trust but verify
+            return column.has("value") ? column.get("value").asText() : null;
+        }
+        return null;
     }
 }

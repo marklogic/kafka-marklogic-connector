@@ -43,6 +43,8 @@ dependencies {
     exclude module: "marklogic-client-api"
   }
 
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.1"
+
   implementation("com.marklogic:marklogic-data-hub:5.7.2") {
     exclude module: "marklogic-client-api"
     exclude module: "ml-javaclient-util"

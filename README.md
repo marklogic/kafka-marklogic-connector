@@ -154,7 +154,7 @@ this, the following properties must be configured:
 The following optional properties can also be configured:
 
 - `ml.source.waitTime` = amount of time, in milliseconds, that the connector will wait on each poll before running the Optic query; defaults to 5000
-- `ml.source.key.strategy` = strategy for generating keys for each source records; defaults to "NONE", and can also be "UUID" or "TIMESTAMP"
+- `ml.source.optic.keyColumn` = name of a column to use for generating a row for each source record
 - `ml.source.optic.outputFormat` = the format of rows returned by the Optic query; defaults to "JSON", and can instead be "XML" or "CSV"
 - `ml.source.optic.rowLimit` = the maximum number of rows to retrieve per poll
 - `ml.source.optic.constraintColumn.name` = name of a column returned by the Optic query to use for constraining results on subsequent runs
@@ -244,12 +244,16 @@ Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Aut
 ### Generating a key for each source record
 
 Each source record returned by a Kafka source connector can have a key defined. A key is optional, and thus by default, 
-the MarkLogic Kafka connector will set the key to `null` on each record it returns. Depending on your requirements, 
-you can configure one of the following strategies via the `ml.source.key.strategy` option:
+the MarkLogic Kafka connector will set the key to `null` on each record it returns. 
 
-- UUID = generate a UUID for each source record
-- TIMESTAMP = generate a key consisting of the [MarkLogic server timestamp](https://docs.marklogic.com/guide/app-dev/point_in_time), 
-  a hyphen, and then the row number of the row represented by the source record
+You may instead choose to set the key to the value of a column in the row associated with a source record. Typically, 
+this column will either contain the URI of the document that the row is projected from, or it will contain a value that 
+acts as a unique identifier for the row.
+
+Note that when using an Optic accessor such as `op.fromView`, the column may have the schema and view name prepended 
+to it. For example, if your query starts with `op.fromView('demo', 'persons')` and you have an "ID" column, the column
+will have a name of "demo.persons.ID".
+
 
 ### Limiting how many rows are returned
 

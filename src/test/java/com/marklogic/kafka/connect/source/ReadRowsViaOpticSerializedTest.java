@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
 
     @Test
-    void testRowBatcherTask() throws InterruptedException {
+    void readFifteenAuthors() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(

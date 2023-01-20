@@ -49,14 +49,14 @@ public class RowManagerSourceTask extends SourceTask {
      */
     @Override
     public final void start(Map<String, String> config) {
-        logger.info("Starting RowBatcherSourceTask");
+        logger.info("Starting RowManagerSourceTask");
         parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
         DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
         constraintValueStore = ConstraintValueStore.newConstraintValueStore(databaseClient, parsedConfig);
         this.topic = (String) parsedConfig.get(MarkLogicSourceConfig.TOPIC);
-        logger.info("Started RowBatcherSourceTask");
+        logger.info("Started RowManagerSourceTask");
     }
 
     @SuppressWarnings("java:S1168") // Kafka prefers for null to be returned when no data exists

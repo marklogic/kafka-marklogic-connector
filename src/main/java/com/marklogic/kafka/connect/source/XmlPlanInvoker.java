@@ -6,6 +6,7 @@ import com.marklogic.client.io.DOMHandle;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -28,12 +29,17 @@ class XmlPlanInvoker implements PlanInvoker {
     // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-    private DatabaseClient client;
-    private Map<String, Object> parsedConfig;
+    private final DatabaseClient client;
+    private final String keyColumn;
 
     public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         this.client = client;
-        this.parsedConfig = parsedConfig;
+        String value = (String) parsedConfig.get(MarkLogicSourceConfig.KEY_COLUMN);
+        if (value != null && value.trim().length() > 0) {
+            this.keyColumn = value;
+        } else {
+            this.keyColumn = null;
+        }
     }
 
     @Override
@@ -58,13 +64,30 @@ class XmlPlanInvoker implements PlanInvoker {
             throw new MarkLogicConnectorException("Unable to create XML transformer: " + ex.getMessage(), ex);
         }
 
-        KeyGenerator keyGenerator = KeyGenerator.newKeyGenerator(this.parsedConfig, serverTimestamp);
         List<SourceRecord> records = new ArrayList<>();
         for (int i = 0; i < rows.getLength(); i++) {
-            String value = documentToString(rows.item(i), transformer);
-            records.add(new SourceRecord(null, null, topic, null, keyGenerator.generateKey(), null, value));
+            Node row = rows.item(i);
+            String value = documentToString(row, transformer);
+            records.add(new SourceRecord(null, null, topic, null, getKeyFromRow(row), null, value));
         }
         return records;
+    }
+
+    private String getKeyFromRow(Node row) {
+        if (keyColumn != null) {
+            NodeList columns = row.getChildNodes();
+            int len = columns.getLength();
+            for (int j = 0; j < len; j++) {
+                Node column = columns.item(j);
+                NamedNodeMap attributes = column.getAttributes();
+                // The 'name' attribute is expected to exist; trust but verify
+                if (attributes != null && attributes.getNamedItem("name") != null &&
+                    keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
+                    return column.getTextContent();
+                }
+            }
+        }
+        return null;
     }
 
     private String documentToString(Node newDoc, Transformer transformer) {
