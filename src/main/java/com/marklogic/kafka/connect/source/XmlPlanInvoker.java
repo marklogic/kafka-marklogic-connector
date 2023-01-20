@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class XmlPlanInvoker implements PlanInvoker {
+class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
@@ -29,30 +29,21 @@ class XmlPlanInvoker implements PlanInvoker {
     // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-    private final DatabaseClient client;
-    private final String keyColumn;
-
     public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
-        this.client = client;
-        String value = (String) parsedConfig.get(MarkLogicSourceConfig.KEY_COLUMN);
-        if (value != null && value.trim().length() > 0) {
-            this.keyColumn = value;
-        } else {
-            this.keyColumn = null;
-        }
+        super(client, parsedConfig);
     }
 
     @Override
     public Results invokePlan(PlanBuilder.Plan plan, String topic) {
         DOMHandle baseHandle = new DOMHandle();
-        DOMHandle result = client.newRowManager().resultDoc(plan, baseHandle);
+        DOMHandle result = newRowManager().resultDoc(plan, baseHandle);
         List<SourceRecord> records = result.get() != null ?
-            convertRowsToSourceRecords(result, topic, baseHandle.getServerTimestamp()) :
+            convertRowsToSourceRecords(result, topic) :
             new ArrayList<>();
         return new Results(records, baseHandle.getServerTimestamp());
     }
 
-    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic, long serverTimestamp) {
+    private List<SourceRecord> convertRowsToSourceRecords(DOMHandle result, String topic) {
         Element docElement = result.get().getDocumentElement();
         NodeList rows = docElement.getElementsByTagNameNS(TABLE_NS_URI, "row");
 

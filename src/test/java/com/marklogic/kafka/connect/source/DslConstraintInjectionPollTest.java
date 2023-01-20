@@ -27,7 +27,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
         assertEquals("1", previousMaxConstraintColumnValue, "The lowest ID of the first 3 authors sorted by ID is 1");
         assertEquals(3, newRecords.size(), "Each poll() should only return 3 records due to the use of limit()");
         recordsToJsonObjects(newRecords).forEach(author -> {
-            int recordId = author.findPath("Medical.Authors.ID").findPath("value").intValue();
+            int recordId = author.findPath("Medical.Authors.ID").intValue();
             assertEquals(1, recordId);
         });
 
@@ -37,7 +37,7 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
                 "and returned the next batch of 3, which are all expected to have an ID of 2");
         assertEquals(3, newRecords.size());
         recordsToJsonObjects(newRecords).forEach(author -> {
-            int recordId = author.findPath("Medical.Authors.ID").findPath("value").intValue();
+            int recordId = author.findPath("Medical.Authors.ID").intValue();
             assertEquals(2, recordId);
         });
     }

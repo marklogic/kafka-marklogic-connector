@@ -8,6 +8,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.kafka.connect.ConfigUtil;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
 
@@ -19,20 +20,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-class CsvPlanInvoker implements PlanInvoker {
+class CsvPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
-    private final DatabaseClient client;
-    private final String keyColumn;
     private final CsvMapper csvMapper;
 
     public CsvPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
-        this.client = client;
+        super(client, parsedConfig);
         this.csvMapper = new CsvMapper();
-        String value = (String) parsedConfig.get(MarkLogicSourceConfig.KEY_COLUMN);
-        if (value != null && value.trim().length() > 0) {
-            this.keyColumn = value;
-        } else {
-            this.keyColumn = null;
+        if (ConfigUtil.getBoolean(MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, parsedConfig)) {
+            logger.warn("The option {} is not supported and is ignored when CSV is the output format",
+                MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES);
         }
     }
 

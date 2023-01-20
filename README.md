@@ -156,6 +156,7 @@ The following optional properties can also be configured:
 - `ml.source.waitTime` = amount of time, in milliseconds, that the connector will wait on each poll before running the Optic query; defaults to 5000
 - `ml.source.optic.keyColumn` = name of a column to use for generating a row for each source record
 - `ml.source.optic.outputFormat` = the format of rows returned by the Optic query; defaults to "JSON", and can instead be "XML" or "CSV"
+- `ml.source.optic.includeColumnTypes` = set to true so that each record includes column types; defaults to false; only supported when the output format is JSON or XML
 - `ml.source.optic.rowLimit` = the maximum number of rows to retrieve per poll
 - `ml.source.optic.constraintColumn.name` = name of a column returned by the Optic query to use for constraining results on subsequent runs
 - `ml.source.optic.constraintColumn.uri` = URI of a document that the connector will write after each run that uses a constraint column; the document will contain the highest value in the constraint column
@@ -189,32 +190,17 @@ object being captured as a String in the Kafka `SourceRecord`. You may instead c
 with a value of `org.apache.kafka.connect.json.JsonConverter`. If you do this, you will either need to configure a 
 schema for the connector or configure the Kafka `value.converter.schemas.enable` property with a value of "false".
 
-Each row is represented as a JSON object, with each column represented as an object that defines the type and value of 
-the column; example:
+Each row is represented as a JSON object, as shown in the example below:
 
 ```
 {
-    "Medical.Authors.ID": {
-        "type": "xs:integer",
-        "value": 2
-    },
-    "Medical.Authors.LastName": {
-        "type": "xs:string",
-        "value": "Smith"
-    },
-    "Medical.Authors.ForeName": {
-        "type": "xs:string",
-        "value": "Jane"
-    },
-    "Medical.Authors.Date": {
-        "type": "xs:date",
-        "value": "2022-05-11"
-    },
-    "Medical.Authors.DateTime": {
-        "type": "xs:dateTime",
-        "value": "2022-05-11T10:00:00"
-    }
+  "Medical.Authors.ID": 1,
+  "Medical.Authors.LastName": "Smith",
+  "Medical.Authors.ForeName": "Jane",
+  "Medical.Authors.Date": "2022-07-13",
+  "Medical.Authors.DateTime": "2022-07-13T09:00:00"
 }
+
 ```
 
 Note that because the query used the Optic `fromView` accessor with a schema and view name, those schema and view names
@@ -225,11 +211,11 @@ chosen, each row will be an XML element stored as a String in the Kafka `SourceR
 
 ```
 <t:row xmlns:t="http://marklogic.com/table">
-  <t:cell name="Medical.Authors.ID" type="xs:integer">2</t:cell>
-  <t:cell name="Medical.Authors.LastName" type="xs:string">Smith</t:cell>
-  <t:cell name="Medical.Authors.ForeName" type="xs:string">Jane</t:cell>
-  <t:cell name="Medical.Authors.Date" type="xs:date">2022-05-11</t:cell>
-  <t:cell name="Medical.Authors.DateTime" type="xs:dateTime">2022-05-11T10:00:00</t:cell>
+  <t:cell name="Medical.Authors.ID">2</t:cell>
+  <t:cell name="Medical.Authors.LastName">Smith</t:cell>
+  <t:cell name="Medical.Authors.ForeName">Jane</t:cell>
+  <t:cell name="Medical.Authors.Date">2022-05-11</t:cell>
+  <t:cell name="Medical.Authors.DateTime">2022-05-11T10:00:00</t:cell>
 </t:row>
 ```
 
@@ -239,6 +225,50 @@ containing the values for the row; example:
 ```
 Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Authors.Date,Medical.Authors.DateTime
 2,Smith,Jane,2022-05-11,2022-05-11T10:00:00
+```
+
+### Including column types in source records
+
+If the selected output type for source records is JSON or XML, you may set the `ml.source.optic.includeColumnTypes`
+option to "true", which will result in the column type being included for each column in each source record.
+
+For example, when the output type is JSON, the source record will nest both the type and value for each column:
+
+```
+{
+  "Medical.Authors.ID" : {
+    "type" : "xs:integer",
+    "value" : 1
+  },
+  "Medical.Authors.LastName" : {
+    "type" : "xs:string",
+    "value" : "Smith"
+  },
+  "Medical.Authors.ForeName" : {
+    "type" : "xs:string",
+    "value" : "Jane"
+  },
+  "Medical.Authors.Date" : {
+    "type" : "xs:date",
+    "value" : "2022-07-13"
+  },
+  "Medical.Authors.DateTime" : {
+    "type" : "xs:dateTime",
+    "value" : "2022-07-13T09:00:00"
+  }
+}
+```
+
+When the output type is XML, the source record will include the column type as an attribute for each column:
+
+```
+<t:row xmlns:t="http://marklogic.com/table">
+  <t:cell name="Medical.Authors.ID" type="xs:integer">1</t:cell>
+  <t:cell name="Medical.Authors.LastName" type="xs:string">Smith</t:cell>
+  <t:cell name="Medical.Authors.ForeName" type="xs:string">Jane</t:cell>
+  <t:cell name="Medical.Authors.Date" type="xs:date">2022-07-13</t:cell>
+  <t:cell name="Medical.Authors.DateTime" type="xs:dateTime">2022-07-13T09:00:00</t:cell>
+</t:row>
 ```
 
 ### Generating a key for each source record
