@@ -35,7 +35,7 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         newRecords.forEach(sourceRecord -> {
             try {
                 JsonNode authorJson = mapper.readTree((String) sourceRecord.value());
-                int recordId = authorJson.findPath("Medical.Authors.ID").findPath("value").intValue();
+                int recordId = authorJson.findPath("Medical.Authors.ID").intValue();
                 Assertions.assertTrue(recordId <= firstMaxConstraintColumnValueInteger,
                     recordId + " should be less than or equal to " + firstMaxConstraintColumnValueInteger);
             } catch (JsonProcessingException e) {
@@ -52,7 +52,7 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         newRecords.forEach(sourceRecord -> {
             try {
                 JsonNode authorJson = mapper.readTree((String) sourceRecord.value());
-                int recordId = authorJson.findPath("Medical.Authors.ID").findPath("value").intValue();
+                int recordId = authorJson.findPath("Medical.Authors.ID").intValue();
                 Assertions.assertTrue(recordId > firstMaxConstraintColumnValueInteger,
                     recordId + " should be less than or equal to " + firstMaxConstraintColumnValueInteger);
                 Assertions.assertTrue(recordId <= secondMaxConstraintColumnValueInteger,

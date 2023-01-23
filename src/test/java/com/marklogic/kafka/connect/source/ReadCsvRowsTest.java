@@ -17,7 +17,7 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('ID')))",
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
             MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
             MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
@@ -28,6 +28,28 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
 
         assertEquals("1", newSourceRecords.get(0).key(), "The key should be populated by the ID column");
         assertEquals("5", newSourceRecords.get(14).key());
+    }
+
+    /**
+     * Verifies that including column types has no impact when results are in CSV. Also verifies that no error is
+     * thrown. The config option is expected to be ignored because the v1/rows endpoint does not support returning
+     * column types when CSV is requested.
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    void includeColumnTypes() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+            MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, "true"
+        );
+
+        List<SourceRecord> newSourceRecords = task.poll();
+        verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT);
     }
 
     @Test

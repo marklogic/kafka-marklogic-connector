@@ -31,6 +31,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
     private static final CustomRecommenderAndValidator OUTPUT_FORMAT_RV =
         new CustomRecommenderAndValidator(Arrays.stream(MarkLogicSourceConfig.OUTPUT_TYPE.values()).map(Enum::toString).toArray(String[]::new));
     public static final String KEY_COLUMN = "ml.source.optic.keyColumn";
+    public static final String INCLUDE_COLUMN_TYPES = "ml.source.optic.includeColumnTypes";
     public static final String TOPIC = "ml.source.topic";
     public static final String WAIT_TIME = "ml.source.waitTime";
 
@@ -65,6 +66,10 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             .define(KEY_COLUMN, Type.STRING, null, Importance.MEDIUM,
                 "The name of a column to use for creating a key for each source record",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Key Column")
+            .define(INCLUDE_COLUMN_TYPES, Type.BOOLEAN, null, Importance.MEDIUM,
+                "Set to true for column types to be included in the value of each source record; has no effect if the output " +
+                    "format is CSV",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "Include Column Types")
             .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
                 "The name of the column which should be used to constrain the Optic query; typically used when only " +
                     "new or modified data should be returned.",
@@ -73,10 +78,10 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 "The URI of the JSON document in MarkLogic used to store constraint value information. " +
                     "Since it is JSON data, it is recommended that the URI have a '.json' suffix.",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage URI")
-            .define(CONSTRAINT_STORAGE_PERMISSIONS, Type.STRING, null, new PermissionsValidator(), Importance.HIGH,
+            .define(CONSTRAINT_STORAGE_PERMISSIONS, Type.STRING, null, new PermissionsValidator(), Importance.MEDIUM,
                 "Comma-separated list of roles and capabilities that define the permissions for the constraint value document",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage Permissions")
-            .define(CONSTRAINT_STORAGE_COLLECTIONS, Type.STRING, null, Importance.HIGH,
+            .define(CONSTRAINT_STORAGE_COLLECTIONS, Type.STRING, null, Importance.MEDIUM,
                 "Comma-separated list of collections to assign to the constraint value document",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Storage Collections");
     }

@@ -1,6 +1,7 @@
 package com.marklogic.kafka.connect.source;
 
 import org.apache.kafka.connect.source.SourceRecord;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,7 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
+
     private final String XML_RESULT = "<t:row xmlns:t=\"http://marklogic.com/table\">\n" +
+        "<t:cell name=\"Medical.Authors.ID\">2</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.LastName\">Pulhoster</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.ForeName\">Misty</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.Date\">2022-05-11</t:cell>\n" +
+        "<t:cell name=\"Medical.Authors.DateTime\">2022-05-11T10:00:00</t:cell>\n" +
+        "</t:row>";
+
+    private final String XML_RESULT_WITH_COLUMN_TYPES = "<t:row xmlns:t=\"http://marklogic.com/table\">\n" +
         "<t:cell name=\"Medical.Authors.ID\" type=\"xs:integer\">2</t:cell>\n" +
         "<t:cell name=\"Medical.Authors.LastName\" type=\"xs:string\">Pulhoster</t:cell>\n" +
         "<t:cell name=\"Medical.Authors.ForeName\" type=\"xs:string\">Misty</t:cell>\n" +
@@ -17,28 +27,42 @@ class ReadXmlRowsTest extends AbstractIntegrationSourceTest {
         "<t:cell name=\"Medical.Authors.DateTime\" type=\"xs:dateTime\">2022-05-11T10:00:00</t:cell>\n" +
         "</t:row>";
 
+    @BeforeEach
+    void setup() {
+        loadFifteenAuthorsIntoMarkLogic();
+    }
+
     @Test
     void readFifteenAuthorsAsXml() throws InterruptedException {
-        loadFifteenAuthorsIntoMarkLogic();
-
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('ID')))",
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
             MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.XML.toString(),
             MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
         );
 
-        List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords, XML_RESULT);
+        List<SourceRecord> records = task.poll();
+        verifyQueryReturnsFifteenAuthors(records, XML_RESULT);
+        verifyRecordKeysAreSetToIDColumn(records);
+    }
 
-        assertEquals("1", newSourceRecords.get(0).key(), "The key should be populated by the ID column");
-        assertEquals("5", newSourceRecords.get(14).key());
+    @Test
+    void includeColumnTypes() throws InterruptedException {
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.XML.toString(),
+            MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, "true",
+            MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
+        );
+
+        List<SourceRecord> records = task.poll();
+        verifyQueryReturnsFifteenAuthors(records, XML_RESULT_WITH_COLUMN_TYPES);
+        verifyRecordKeysAreSetToIDColumn(records);
     }
 
     @Test
     void keyColumnDoesntExist() throws InterruptedException {
-        loadFifteenAuthorsIntoMarkLogic();
-
         RowManagerSourceTask task = startSourceTask(
             MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,

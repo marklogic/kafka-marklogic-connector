@@ -42,6 +42,7 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
     protected SimpleTestConfig testConfig;
 
     protected final String AUTHORS_OPTIC_DSL = "op.fromView(\"Medical\", \"Authors\")";
+    protected final String AUTHORS_ORDERED_BY_ID_OPTIC_DSL = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('ID')))";
     protected final String AUTHORS_OPTIC_SERIALIZED = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
     protected final String AUTHORS_TOPIC = "Authors";
 
@@ -152,6 +153,14 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         loadSingleAuthorRowIntoMarkLogicWithCustomTime("first", "1", "01:00:00", "First");
         loadSingleAuthorRowIntoMarkLogicWithCustomTime("second", "2", "02:00:00", "Second");
         loadSingleAuthorRowIntoMarkLogicWithCustomTime("Third", "3", "03:00:00", "Third");
+    }
+
+
+    protected void verifyRecordKeysAreSetToIDColumn(List<SourceRecord> records) {
+        assertEquals("1", records.get(0).key(), "The key should be populated by the ID column, and the records are " +
+            "expected to be ordered by ID ascending, so the first record should have a key of 1");
+        assertEquals("5", records.get(14).key(), "The records are expected to be ordered by ID ascending, so the " +
+            "last record should have a key of 5");
     }
 
     /**

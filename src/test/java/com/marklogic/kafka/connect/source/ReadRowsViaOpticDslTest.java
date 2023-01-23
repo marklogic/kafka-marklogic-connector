@@ -13,7 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
+
     protected static final String JSON_RESULT =
+        "{\"Medical.Authors.ID\":2," +
+            "\"Medical.Authors.LastName\":\"Pulhoster\"," +
+            "\"Medical.Authors.ForeName\":\"Misty\"," +
+            "\"Medical.Authors.Date\":\"2022-05-11\"," +
+            "\"Medical.Authors.DateTime\":\"2022-05-11T10:00:00\"}";
+
+    private static final String JSON_RESULT_WITH_COLUMN_TYPES =
         "{\"Medical.Authors.ID\":{\"type\":\"xs:integer\",\"value\":2}," +
             "\"Medical.Authors.LastName\":{\"type\":\"xs:string\",\"value\":\"Pulhoster\"}," +
             "\"Medical.Authors.ForeName\":{\"type\":\"xs:string\",\"value\":\"Misty\"}," +
@@ -25,17 +33,30 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('ID')))",
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
             MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.ROW_LIMIT, "1000",
             MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
         );
 
-        List<SourceRecord> newSourceRecords = task.poll();
-        verifyQueryReturnsFifteenAuthors(newSourceRecords, JSON_RESULT);
+        List<SourceRecord> records = task.poll();
+        verifyQueryReturnsFifteenAuthors(records, JSON_RESULT);
+        verifyRecordKeysAreSetToIDColumn(records);
+    }
 
-        assertEquals("1", newSourceRecords.get(0).key(), "The key should be populated by the ID column");
-        assertEquals("5", newSourceRecords.get(14).key());
+    @Test
+    void includeColumnTypes() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, "true",
+            MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
+        );
+
+        List<SourceRecord> records = task.poll();
+        verifyQueryReturnsFifteenAuthors(records, JSON_RESULT_WITH_COLUMN_TYPES);
+        verifyRecordKeysAreSetToIDColumn(records);
     }
 
     @Test
@@ -97,10 +118,8 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
 
         assertEquals(1, records.size());
         recordsToJsonObjects(records).forEach(row -> {
-            assertEquals("xs:string", row.get("uri").get("type").asText());
-            assertEquals("citations.xml", row.get("uri").get("value").asText());
-            assertEquals("element", row.get("doc").get("type").asText());
-            String xmlDoc = row.get("doc").get("value").asText();
+            assertEquals("citations.xml", row.get("uri").asText());
+            String xmlDoc = row.get("doc").asText();
             assertTrue(xmlDoc.contains("<Citations>"), "Unexpected doc content: " + xmlDoc);
         });
     }
@@ -158,7 +177,7 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
             put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
         }};
 
-        verifyQueryReturnsExpectedRows(null, 15, "xs:date", parsedConfig);
+        verifyQueryReturnsExpectedRows(null, 15, "2022-04-11", parsedConfig);
     }
 
     @Test
