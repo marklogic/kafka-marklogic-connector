@@ -402,6 +402,24 @@ If debug logging is enabled, the following items will also be logged (at the DEB
 - If no records are returned on a poll call, the duration of the call will be logged
 - Any exception thrown during execution of the poll call will be logged at the ERROR level and will include the stacktrace
 
+### Source connector error handling
+
+Per Kafka's recommendation for error handling for source connectors, the MarkLogic Kafka connector catches and logs any 
+error that occurs when Kafka polls the connector.
+
+The level of detail in a logged error can be controlled by adjusting [Kafka logging](https://docs.confluent.io/platform/current/connect/logging.html). 
+The package to configure in Kafka's Log4J logging is `com.marklogic.kafka`. If set to "DEBUG", the error message will 
+be logged at the "ERROR" level and the error stacktrace will be logged at the "DEBUG" level. Otherwise, the error message
+will be logged at the "ERROR" level and the stacktrace will not be logged.
+
+In addition, always check the MarkLogic server log files, particularly those associated with the MarkLogic app server 
+that the connector connects to, for additional information about the error. 
+
+For any errors pertaining to execution of the Optic query run by the connector, it is often helpful to debug these by 
+running the Optic query via [MarkLogic's qconsole tool](https://docs.marklogic.com/guide/qconsole/intro). You may find 
+it helpful to simplify the query as much as possible, get it working, and then progressively build the query back up
+until it fails. 
+
 
 ## Configuring how data is written to MarkLogic
 
@@ -662,3 +680,28 @@ of the failure in order to assist with troubleshooting and potential routing.
 - "marklogic-exception-message" : Information from MarkLogic when there is a write failure
 - "marklogic-original-topic" : The name of the topic that this record came from
 - "marklogic-target-uri" : For write failures, this contains the target URI for the document
+
+
+### Sink connector error handling
+
+The most common cause of errors in the MarkLogic Kafka sink connector is those occurring when a batch of documents is 
+written to MarkLogic. The connector provides the following support for these errors:
+
+1. The error message and size of the failed batch is logged at the "ERROR" level. 
+2. If the `ml.dmsdk.includeKafkaMetadata` option is set to "true", then each failed record in the batch will have its 
+   URI and associated Kafka metadata logged at the "ERROR" level.
+3. If Dead Letter Queue (DLQ) support has been configured as described above and DMSDK is used to write documents to 
+   MarkLogic, then each failed record in the batch will be sent to the user-defined DLQ topic.  
+
+The connector also provides support for the rare instance where a Kafka sink record cannot be converted into a 
+document to be written to MarkLogic. Such an error will be logged at the "ERROR" level, and if DLQ support is enabled 
+by the user, the sink record will be sent to the DLQ topic.
+
+In addition, always check the MarkLogic server log files, particularly those associated with the MarkLogic app server
+that the connector connects to, for additional information about the error.
+
+Finally, it is possible for an unexpected error to occur within the connector. Contrary to a source connector, which is 
+required to catch any error that occurs, an unexpected error in the sink connector will be thrown and eventually caught 
+and logged by Kafka. However, nothing will be sent to the user-configured DLQ topic in this scenario as the error will
+not be associated with a particular sink record. Kafka and MarkLogic server logs should be examined to determine the 
+cause of the error. 

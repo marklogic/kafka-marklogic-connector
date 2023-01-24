@@ -16,6 +16,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.runtime.InternalSinkRecord;
 import org.apache.kafka.connect.sink.ErrantRecordReporter;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -73,6 +74,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         try {
             this.writeBatcher.add(this.sinkRecordConverter.convert(sinkRecord));
         } catch (Exception e) {
+            logger.error("Unable to convert sink record into a document to be written to MarkLogic; " +
+                    "record key: {}; cause: {}", sinkRecord.key(), e.getMessage());
             addFailureHeaders(sinkRecord, e, AbstractSinkTask.MARKLOGIC_CONVERSION_FAILURE, null);
             errorReporterMethod.accept(sinkRecord, e);
         }
