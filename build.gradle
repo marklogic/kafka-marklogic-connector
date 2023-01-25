@@ -46,10 +46,12 @@ dependencies {
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.1"
 
   // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
-  // may work together, but that behavior is not guaranteed. 
+  // may work together, but that behavior is not guaranteed.
   implementation("com.marklogic:marklogic-data-hub:5.8.0") {
     exclude module: "marklogic-client-api"
     exclude module: "ml-javaclient-util"
+    exclude module: "ml-app-deployer"
+
     // No need for mlcp-util, it's only used in 'legacy' DHF 4 jobs
     exclude module: "mlcp-util"
     // Excluding because it causes Kafka Connect to complain mightily if included

@@ -1,0 +1,16 @@
+{
+  "collections" : [ "custom1" ],
+  "permissions" : "data-hub-common,read,data-hub-common,update",
+  "batchSize" : 100,
+  "sourceDatabase" : "data-hub-STAGING",
+  "targetDatabase" : "data-hub-FINAL",
+  "provenanceGranularityLevel" : "off",
+  "name" : "custom1",
+  "description" : "",
+  "stepDefinitionType" : "custom",
+  "stepDefinitionName" : "custom1",
+  "selectedSource" : "query",
+  "sourceQuery" : "cts.collectionQuery('expected-to-be-overridden-by-kafka-sink-connector')",
+  "stepId" : "custom1-custom",
+  "lastUpdated" : "2023-01-25T12:57:05.474973-05:00"
+}

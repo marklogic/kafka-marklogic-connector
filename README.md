@@ -542,6 +542,10 @@ ingestion step depends on reading data from a filesystem. You can however run an
 transform as described above. Please see the DHF documentation for information on how to configure the DHF REST transform
 for running an ingestion step. 
 
+**Warning** - as of the MarkLogic Kafka 1.7.0 release, this feature may not work on certain versions of Confluent 
+Platform due to dependency conflicts. Testing has verified that this feature works on the latest Apache Kafka 2.8.x
+release and the latest Apache Kafka 3.3.x release. 
+
 
 ### Writing data via custom code (Bulk Data Services)
 
