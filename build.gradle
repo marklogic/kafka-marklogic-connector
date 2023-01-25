@@ -38,23 +38,20 @@ dependencies {
   compileOnly "org.slf4j:slf4j-api:1.7.36"
 
   implementation "com.marklogic:marklogic-client-api:6.0.0"
+  implementation "com.marklogic:ml-javaclient-util:4.4.0"
 
-  implementation ("com.marklogic:ml-javaclient-util:4.4.0") {
-    exclude module: "marklogic-client-api"
-  }
+  // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
+  implementation "com.marklogic:ml-app-deployer:4.4.0"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.1"
 
-  implementation("com.marklogic:marklogic-data-hub:5.7.2") {
+  // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
+  // may work together, but that behavior is not guaranteed. 
+  implementation("com.marklogic:marklogic-data-hub:5.8.0") {
     exclude module: "marklogic-client-api"
     exclude module: "ml-javaclient-util"
-
-    // Excluding these because there's no need for them
-    exclude module: "spring-boot-autoconfigure"
-    exclude module: "spring-integration-http"
-    exclude module: "jaeger-core"
-    exclude module: "jaeger-thrift"
-
+    // No need for mlcp-util, it's only used in 'legacy' DHF 4 jobs
+    exclude module: "mlcp-util"
     // Excluding because it causes Kafka Connect to complain mightily if included
     exclude module: "logback-classic"
   }
