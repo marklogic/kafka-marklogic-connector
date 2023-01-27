@@ -157,4 +157,19 @@ class DslConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
             "returned to indicate there's no new data. Additionally, manual inspection of the logs should show that " +
             "no attempt was made by the task to fetch a new max value since the second poll returned no rows.");
     }
+
+    @Test
+    void constraintColumnNameIsEmptyString() throws Exception {
+        loadFifteenAuthorsIntoMarkLogic();
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+            MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "",
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+        );
+
+        assertEquals(15, task.poll().size());
+        assertEquals(15, task.poll().size(), "An empty string for the constraint column name should be treated like " +
+            "null, such that it's not applied and we thus get back 15 rows each time.");
+    }
 }

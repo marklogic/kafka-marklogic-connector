@@ -11,6 +11,7 @@ import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.row.RowManager;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     protected void appendConstraintAndOrderByToQuery(JsonNode currentSerializedQuery, String previousMaxConstraintColumnValue) {
-        if (constraintColumnName != null) {
+        if (StringUtils.hasText(constraintColumnName)) {
             ObjectNode orderByNode = buildOrderByNode(true);
             ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
             if (previousMaxConstraintColumnValue != null) {

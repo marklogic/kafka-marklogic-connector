@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTest {
 
     @Test
@@ -156,5 +158,21 @@ class SerializedConstraintInjectionPollTest extends AbstractIntegrationSourceTes
         Assertions.assertEquals(1, newRecords.size());
         String laterRow = (String) newRecords.get(0).value();
         Assertions.assertTrue(laterRow.contains("Later"), "Did not find 'Later' in: " + laterRow);
+    }
+
+    @Test
+    void constraintColumnNameIsEmptyString() throws InterruptedException {
+        loadFifteenAuthorsIntoMarkLogic();
+        String limitedAuthorsSerialized = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
+
+        RowManagerSourceTask task = startSourceTask(
+            MarkLogicSourceConfig.SERIALIZED_QUERY, limitedAuthorsSerialized,
+            MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "",
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
+        );
+
+        assertEquals(15, task.poll().size());
+        assertEquals(15, task.poll().size(), "An empty string for the constraint column name should be treated like " +
+            "null, such that it's not applied and we thus get back 15 rows each time.");
     }
 }
