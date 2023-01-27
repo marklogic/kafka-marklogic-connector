@@ -11,6 +11,7 @@ import com.marklogic.client.io.StringHandle;
 import com.marklogic.kafka.connect.ConfigUtil;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,7 +58,7 @@ class CsvPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
     }
 
     private Optional<Integer> getIndexOfKeyColumn(String headerLine) {
-        if (keyColumn != null) {
+        if (StringUtils.hasText(keyColumn)) {
             ArrayNode headerNames;
             try {
                 headerNames = (ArrayNode) csvMapper.readTree(headerLine);

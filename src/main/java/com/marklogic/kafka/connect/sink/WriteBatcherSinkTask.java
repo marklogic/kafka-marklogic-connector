@@ -53,7 +53,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         configureWriteBatcher(parsedConfig, writeBatcher);
 
         final String flowName = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
-        if (flowName != null && flowName.trim().length() > 0) {
+        if (StringUtils.hasText(flowName)) {
             writeBatcher.onBatchSuccess(buildRunFlowListener(flowName, parsedConfig, databaseClientConfig));
         }
 
@@ -180,7 +180,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
         final String flowSteps = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
         List<String> steps = null;
-        if (flowSteps != null && flowSteps.trim().length() > 0) {
+        if (StringUtils.hasText(flowSteps)) {
             steps = Arrays.asList(flowSteps.split(","));
             logMessage += String.format(" with steps '%s' constrained to the URIs in that batch", steps);
         }
@@ -205,9 +205,9 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         if (StringUtils.hasText(transformName)) {
             ServerTransform transform = new ServerTransform(transformName);
             String params = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
-            if (params != null && params.trim().length() > 0) {
+            if (StringUtils.hasText(params)) {
                 String delimiter = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
-                if (delimiter != null && delimiter.trim().length() > 0) {
+                if (StringUtils.hasText(delimiter)) {
                     addTransformParameters(transform, params, delimiter);
                 } else {
                     logger.warn("Unable to apply transform parameters to transform: {}; please set the " +

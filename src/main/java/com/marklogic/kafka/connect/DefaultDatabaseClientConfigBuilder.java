@@ -7,6 +7,7 @@ import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.ext.modulesloader.ssl.SimpleX509TrustManager;
 import org.apache.kafka.common.config.types.Password;
+import org.springframework.util.StringUtils;
 
 import javax.net.ssl.*;
 import java.io.InputStream;
@@ -28,11 +29,11 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
 
         String database = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_DATABASE);
-        if (database != null && database.trim().length() > 0) {
+        if (StringUtils.hasText(database)) {
             clientConfig.setDatabase(database);
         }
         String connType = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_TYPE);
-        if (connType != null && connType.trim().length() > 0) {
+        if (StringUtils.hasText(connType)) {
             clientConfig.setConnectionType(DatabaseClient.ConnectionType.valueOf(connType.toUpperCase()));
         }
 
