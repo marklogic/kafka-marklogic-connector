@@ -5,6 +5,7 @@ import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.impl.DocumentWriteOperationImpl;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
+import org.springframework.util.StringUtils;
 
 public class DocumentWriteOperationBuilder {
 
@@ -23,17 +24,17 @@ public class DocumentWriteOperationBuilder {
         if (content == null) {
             throw new NullPointerException("'content' must not be null");
         }
-        if (hasText(collections)) {
+        if (StringUtils.hasText(collections)) {
             metadata.getCollections().addAll(collections.trim().split(","));
         }
-        if (hasText(permissions)) {
+        if (StringUtils.hasText(permissions)) {
             new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());
         }
 
-        if (hasText(uriPrefix)) {
+        if (StringUtils.hasText(uriPrefix)) {
             uri = uriPrefix + uri;
         }
-        if (hasText(uriSuffix)) {
+        if (StringUtils.hasText(uriSuffix)) {
             uri += uriSuffix;
         }
 
@@ -52,10 +53,6 @@ public class DocumentWriteOperationBuilder {
      */
     protected DocumentWriteOperation build(DocumentWriteOperation.OperationType operationType, String uri, DocumentMetadataHandle metadata, AbstractWriteHandle content) {
         return new DocumentWriteOperationImpl(operationType, uri, metadata, content);
-    }
-
-    private boolean hasText(String val) {
-        return val != null && val.trim().length() > 0;
     }
 
     public DocumentWriteOperationBuilder withUriPrefix(String uriPrefix) {

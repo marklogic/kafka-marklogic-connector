@@ -5,6 +5,7 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.JacksonHandle;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ class JsonPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
     }
 
     private String getKeyValueFromRow(JsonNode row) {
-        if (keyColumn != null && row.has(keyColumn)) {
+        if (StringUtils.hasText(keyColumn) && row.has(keyColumn)) {
             JsonNode column = row.get(keyColumn);
             return this.includeColumnTypes ? column.get("value").asText() : column.asText();
         }

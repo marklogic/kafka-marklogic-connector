@@ -58,7 +58,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         if (StringUtils.hasText(constraintColumnName)) {
             ObjectNode orderByNode = buildOrderByNode(true);
             ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
-            if (previousMaxConstraintColumnValue != null) {
+            if (StringUtils.hasText(previousMaxConstraintColumnValue)) {
                 ObjectNode constraintNode = buildConstraintNode(previousMaxConstraintColumnValue);
                 rootArgsArray.add(constraintNode);
             }

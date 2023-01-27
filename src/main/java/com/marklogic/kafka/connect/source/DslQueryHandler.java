@@ -42,7 +42,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         String constrainedDsl = userDslQuery;
         if (StringUtils.hasText(constraintColumnName)) {
             String constraintPhrase = "";
-            if (previousMaxConstraintColumnValue != null) {
+            if (StringUtils.hasText(previousMaxConstraintColumnValue)) {
                 String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
                 constraintPhrase = String.format(".where(op.gt(op.col('%s'), '%s'))", constraintColumnName, sanitizedValue);
             }

@@ -5,6 +5,7 @@ import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -65,7 +66,7 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
     }
 
     private String getKeyFromRow(Node row) {
-        if (keyColumn != null) {
+        if (StringUtils.hasText(keyColumn)) {
             NodeList columns = row.getChildNodes();
             int len = columns.getLength();
             for (int j = 0; j < len; j++) {
