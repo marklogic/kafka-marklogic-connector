@@ -64,7 +64,10 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                     "can be used to control how frequently the connector queries MarkLogic.",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Wait Time")
             .define(KEY_COLUMN, Type.STRING, null, Importance.MEDIUM,
-                "The name of a column to use for creating a key for each source record",
+                "The name of a column to use for creating a key for each source record. Note that the accessor in your Optic " +
+                    "query may affect the column names in each row that it returns; for example, fromView will prepend " +
+                    "schema and view names to the column. Be sure your key column name matches a column in each row that " +
+                    "is returned.",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Key Column")
             .define(INCLUDE_COLUMN_TYPES, Type.BOOLEAN, null, Importance.MEDIUM,
                 "Set to true for column types to be included in the value of each source record; has no effect if the output " +
