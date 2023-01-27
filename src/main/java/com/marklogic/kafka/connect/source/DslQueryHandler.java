@@ -5,6 +5,7 @@ import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.ext.helper.LoggingObject;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.client.row.RowManager;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -39,7 +40,7 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
     protected String appendConstraintAndOrderByToQuery(String previousMaxConstraintColumnValue) {
         String constrainedDsl = userDslQuery;
-        if (constraintColumnName != null) {
+        if (StringUtils.hasText(constraintColumnName)) {
             String constraintPhrase = "";
             if (previousMaxConstraintColumnValue != null) {
                 String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
