@@ -232,7 +232,8 @@ Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Aut
 If the selected output type for source records is JSON or XML, you may set the `ml.source.optic.includeColumnTypes`
 option to "true", which will result in the column type being included for each column in each source record.
 
-For example, when the output type is JSON, the source record will nest both the type and value for each column:
+For example, when the output type is JSON, the source record will nest both the type and value for each column (note that
+this is pretty-printed for readability purposes; the data written to a source record is not pretty-printed):
 
 ```
 {
@@ -259,7 +260,8 @@ For example, when the output type is JSON, the source record will nest both the 
 }
 ```
 
-When the output type is XML, the source record will include the column type as an attribute for each column:
+When the output type is XML, the source record will include the column type as an attribute for each column (like the
+JSON example above, this too is pretty-printed for readability purposes):
 
 ```
 <t:row xmlns:t="http://marklogic.com/table">
