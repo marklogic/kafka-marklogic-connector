@@ -5,6 +5,8 @@ import com.marklogic.client.datamovement.WriteBatchListener;
 import com.marklogic.client.datamovement.WriteEvent;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.helper.LoggingObject;
+import com.marklogic.hub.HubClient;
+import com.marklogic.hub.HubClientConfig;
 import com.marklogic.hub.flow.FlowInputs;
 import com.marklogic.hub.flow.FlowRunner;
 import com.marklogic.hub.flow.RunFlowResponse;
@@ -61,12 +63,13 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
     public void processEvent(WriteBatch batch) {
         FlowInputs inputs = buildFlowInputs(batch);
 
-        // DHF 5.2.0 only supports basic/digest auth, so this can safely be done.
-        FlowRunner flowRunner = new FlowRunnerImpl(
+        // TODO When this was originally created for DHF 5.2, basic/digest auth were required. Need to support all
+        // auth techniques.
+        FlowRunner flowRunner = new FlowRunnerImpl(HubClient.withHubClientConfig(new HubClientConfig(
             databaseClientConfig.getHost(),
             databaseClientConfig.getUsername(),
             databaseClientConfig.getPassword()
-        );
+        )));
 
         RunFlowResponse response = flowRunner.runFlow(inputs);
         flowRunner.awaitCompletion();
