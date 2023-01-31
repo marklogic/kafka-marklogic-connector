@@ -6,7 +6,7 @@
 
   "description": "Kafka sink and source connector for reading data from Kafka topics to MarkLogic and for reading rows from MarkLogic to Kafka topics.",
 
-  "documentation_url": "https://github.com/marklogic-community/kafka-marklogic-connector",
+  "documentation_url": "https://github.com/marklogic/kafka-marklogic-connector",
 
   "features": {
     "confluent_control_center_integration": true,
