@@ -40,7 +40,7 @@ as many instances of the MarkLogic Kafka connector that you wish.
 ### Using the connector with Apache Kafka
 
 For a regular installation of Apache Kafka, obtain the latest version of the MarkLogic Kafka connector from 
-[this repository's Releases page](https://github.com/marklogic-community/kafka-marklogic-connector/releases). Download
+[this repository's Releases page](https://github.com/marklogic/kafka-marklogic-connector/releases). Download
 the jar file - named `kafka-connect-marklogic-(version).jar` - and copy it to the `./libs` directory in your Kafka 
 distribution. 
 
