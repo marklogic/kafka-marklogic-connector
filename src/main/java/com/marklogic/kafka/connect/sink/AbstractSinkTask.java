@@ -107,8 +107,8 @@ abstract class AbstractSinkTask extends SinkTask {
             sinkRecord.headers().forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
             logger.info("Record headers: {}", headers);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Processing record value {} in topic {}", sinkRecord.value(), sinkRecord.topic());
+        if (logger.isTraceEnabled()) {
+            logger.trace("Processing record value {} in topic {}", sinkRecord.value(), sinkRecord.topic());
         }
     }
 
