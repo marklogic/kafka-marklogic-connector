@@ -63,8 +63,8 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
     public void processEvent(WriteBatch batch) {
         FlowInputs inputs = buildFlowInputs(batch);
 
-        // TODO When this was originally created for DHF 5.2, basic/digest auth were required. Need to support all
-        // auth techniques.
+        // Current plan for 1.9.0 is to support Java Client 6.1.0, at which point we may be able to support any auth
+        // technique here as well.
         FlowRunner flowRunner = new FlowRunnerImpl(HubClient.withHubClientConfig(new HubClientConfig(
             databaseClientConfig.getHost(),
             databaseClientConfig.getUsername(),
