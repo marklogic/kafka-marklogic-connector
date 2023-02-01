@@ -1,7 +1,11 @@
 package com.marklogic.kafka.connect.sink;
 
 import com.marklogic.client.DatabaseClient;
-import com.marklogic.client.datamovement.*;
+import com.marklogic.client.datamovement.DataMovementManager;
+import com.marklogic.client.datamovement.WriteBatch;
+import com.marklogic.client.datamovement.WriteBatcher;
+import com.marklogic.client.datamovement.WriteEvent;
+import com.marklogic.client.datamovement.WriteFailureListener;
 import com.marklogic.client.document.ServerTransform;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.DefaultConfiguredDatabaseClientFactory;
@@ -16,7 +20,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.runtime.InternalSinkRecord;
 import org.apache.kafka.connect.sink.ErrantRecordReporter;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -28,7 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import static com.marklogic.kafka.connect.sink.AbstractSinkTask.*;
+import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_WRITE_FAILURE;
 
 /**
  * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
