@@ -84,6 +84,18 @@ class BuildDatabaseClientConfigTest {
     }
 
     @Test
+    void cloudAuthentication() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "cloud");
+        config.put(MarkLogicSinkConfig.CONNECTION_CLOUD_API_KEY, "my-key");
+        config.put(MarkLogicSinkConfig.CONNECTION_BASE_PATH, "/my/path");
+
+        DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+        assertEquals(SecurityContextType.CLOUD, clientConfig.getSecurityContextType());
+        assertEquals("my-key", clientConfig.getCloudApiKey());
+        assertEquals("/my/path", clientConfig.getBasePath());
+    }
+
+    @Test
     void digestAuthenticationAndSimpleSsl() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
