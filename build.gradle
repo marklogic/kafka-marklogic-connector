@@ -20,6 +20,16 @@ repositories {
 
   // For testing
   mavenLocal()
+  maven {
+    url "https://nexus.marklogic.com/repository/maven-snapshots/"
+  }
+}
+
+// Do not cache changing modules
+configurations.all {
+  resolutionStrategy {
+    cacheChangingModulesFor 0, 'seconds'
+  }
 }
 
 configurations {
@@ -37,11 +47,12 @@ dependencies {
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  implementation "com.marklogic:marklogic-client-api:6.0.0"
-  implementation "com.marklogic:ml-javaclient-util:4.4.0"
+  implementation ('com.marklogic:ml-javaclient-util:4.5-SNAPSHOT') {
+    changing = true
+  }
 
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:4.4.0"
+  implementation "com.marklogic:ml-app-deployer:4.5-SNAPSHOT"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.1"
 

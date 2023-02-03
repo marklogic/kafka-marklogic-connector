@@ -31,6 +31,7 @@ import java.util.Map;
 public class MarkLogicConfig extends AbstractConfig {
     public static final String CONNECTION_HOST = "ml.connection.host";
     public static final String CONNECTION_PORT = "ml.connection.port";
+    public static final String CONNECTION_BASE_PATH = "ml.connection.basePath";
     public static final String CONNECTION_DATABASE = "ml.connection.database";
     public static final String CONNECTION_SECURITY_CONTEXT_TYPE = "ml.connection.securityContextType";
     public static final String CONNECTION_USERNAME = "ml.connection.username";
@@ -40,6 +41,7 @@ public class MarkLogicConfig extends AbstractConfig {
     public static final String CONNECTION_CERT_FILE = "ml.connection.certFile";
     public static final String CONNECTION_CERT_PASSWORD = "ml.connection.certPassword";
     public static final String CONNECTION_EXTERNAL_NAME = "ml.connection.externalName";
+    public static final String CONNECTION_CLOUD_API_KEY = "ml.connection.cloudApiKey";
     public static final String ENABLE_CUSTOM_SSL = "ml.connection.enableCustomSsl";
     public static final String TLS_VERSION = "ml.connection.customSsl.tlsVersion";
     public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
@@ -58,6 +60,9 @@ public class MarkLogicConfig extends AbstractConfig {
         .define(CONNECTION_PORT, Type.INT, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.Range.atLeast(0), Importance.HIGH,
             "Required; the port of a REST API app server to connect to; if using Bulk Data Services, can be a plain HTTP app server",
             GROUP, -1, ConfigDef.Width.MEDIUM, "Port")
+        .define(CONNECTION_BASE_PATH, Type.STRING, null, Importance.MEDIUM,
+            "Base path for all calls to MarkLogic; typically used when a reverse proxy is in front of MarkLogic",
+            GROUP, -1, ConfigDef.Width.MEDIUM, "Base Path")
         .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", CONNECTION_SECURITY_CONTEXT_TYPE_RV, Importance.HIGH,
             "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'",
             GROUP, -1, ConfigDef.Width.MEDIUM, "Security Context Type", CONNECTION_SECURITY_CONTEXT_TYPE_RV)
@@ -79,6 +84,9 @@ public class MarkLogicConfig extends AbstractConfig {
         .define(CONNECTION_EXTERNAL_NAME, Type.STRING, null, Importance.MEDIUM,
             "External name for 'KERBEROS' authentication",
             GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
+        .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
+            "API key for connecting to MarkLogic Cloud. Should set port to 443 when connecting to MarkLogic Cloud.",
+            GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
         .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
             "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",
             GROUP, -1, ConfigDef.Width.MEDIUM, "Connection Type", CONNECTION_TYPE_RV)

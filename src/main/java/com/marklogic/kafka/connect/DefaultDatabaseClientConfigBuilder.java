@@ -40,6 +40,8 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
         clientConfig.setHost((String) parsedConfig.get(MarkLogicConfig.CONNECTION_HOST));
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicConfig.CONNECTION_PORT));
+        clientConfig.setBasePath((String) parsedConfig.get(MarkLogicConfig.CONNECTION_BASE_PATH));
+
         String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
         clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
 
@@ -74,6 +76,8 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         if (ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
             configureSimpleSsl(clientConfig);
         }
+
+        clientConfig.setCloudApiKey((String)parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY));
 
         return clientConfig;
     }
