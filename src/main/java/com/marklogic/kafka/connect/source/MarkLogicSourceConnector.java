@@ -71,10 +71,13 @@ public class MarkLogicSourceConnector extends SourceConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(final int taskCount) {
-        final List<Map<String, String>> configs = new ArrayList<>(taskCount);
-        for (int i = 0; i < taskCount; ++i) {
-            configs.add(config);
+        if (taskCount > 1) {
+            logger.warn("As of the 1.8.0 release, the Kafka tasks.max property is ignored and a single source connector " +
+                            "task is created. This prevents duplicate records from being created via multiple instances of " +
+                            "the task with the exact same config.");
         }
+        final List<Map<String, String>> configs = new ArrayList<>(1);
+        configs.add(config);
         return configs;
     }
 

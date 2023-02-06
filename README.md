@@ -188,9 +188,15 @@ data:
 - `topic` = the topic identified by `ml.source.topic`
 
 The same query can also be executed by defining a serialized version of the plan; this can be useful when the plan has
-been constructed already via the MarkLogic Java Client:
+been constructed in another tool already, such as the MarkLogic Java Client, and can then be exported into its 
+serialized form:
 
     ml.source.optic.serialized={"$optic": {"ns": "op", "fn": "operators", "args": [{"ns": "op", "fn": "from-view", "args": ["demo", "purchases"]}]}}
+
+**Warning** - the Kafka `tasks.max` property is ignored by the MarkLogic Kafka source connector. Running 2 or more tasks
+with the same configuration would produce 2 or more copies of the same records and may also lead to inconsistent 
+results when using a constraint column. If you have a valid scenario for setting this property to 2 or higher, please 
+file an issue with your use case. 
 
 ### Selecting an output type
 
