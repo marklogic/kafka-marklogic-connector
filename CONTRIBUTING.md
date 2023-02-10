@@ -80,10 +80,11 @@ does not already exist) to point to where you extracted the Confluent Platform d
 
 Then build and copy the connector to the Confluent Platform directory that you configured above:
 
-    ./gradlew copyConnectorToConfluent
+    ./gradlew clean copyConnectorToConfluent
 
 Note that any time you modify the MarkLogic Kafka connector code, you'll need to repeat the 
-`./gradlew copyConnectorToConfluent` step.
+`./gradlew clean copyConnectorToConfluent` step. Note that `clean` is included to ensure that in case you've changed 
+any connector dependencies, old dependencies will not be included in the connector archive.
 
 Next, start Confluent:
 

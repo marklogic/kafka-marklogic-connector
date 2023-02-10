@@ -66,15 +66,14 @@ dependencies {
     exclude module: "logback-classic"
   }
 
-  // 1.2.1 will be published soon, and then we'll switch to that
-  testImplementation 'com.marklogic:marklogic-junit5:1.2.1'
+  testImplementation 'com.marklogic:marklogic-junit5:1.3.0'
 
   testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation 'net.mguenther.kafka:kafka-junit:3.2.2'
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.2.11"
+  testImplementation "ch.qos.logback:logback-classic:1.3.5"
   testImplementation "org.slf4j:jcl-over-slf4j:1.7.36"
 
   documentation files('LICENSE.txt')
@@ -184,7 +183,17 @@ task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy, group: confl
 task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: confluentArchiveGroup, dependsOn: jar) {
   description = "Copy the dependency jars into the lib folder"
   from jar
-  from configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }
+  // Confluent already includes the Jackson dependencies that this connector depends on. If the connector includes any
+  // itself, and the DHF integration is used with the sink connector, then the following error will occur when DHF
+  // tries to connect to the Manage API of MarkLogic:
+  // java.lang.ClassCastException: com.fasterxml.jackson.datatype.jdk8.Jdk8Module cannot be cast to com.fasterxml.jackson.databind.Module
+  //	at org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.registerWellKnownModulesIfAvailable(Jackson2ObjectMapperBuilder.java:849)
+  // stackoverflow indicates this may be due to multiple copies of Jackson being on the classpath, as Jdk8Module
+  // otherwise should be castable to Module.
+  // Testing has verified that excluding all "jackson-" jars still results in the connector working properly with
+  // Confluent 7.3.1. This has no impact on using the connector with plain Apache Kafka which does not rely on
+  // constructing this connector archive.
+  from configurations.runtimeClasspath.findAll { it.name.endsWith('jar') && !it.name.startsWith("jackson-")}
   into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
