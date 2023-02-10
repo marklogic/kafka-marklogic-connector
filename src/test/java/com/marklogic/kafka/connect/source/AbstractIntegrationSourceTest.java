@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -156,6 +157,7 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         task.setConstraintValueStore(new TestConstraintValueStore((String)parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME), constraintValue));
         try {
             List<SourceRecord> newRecords = task.poll();
+            assertNotNull(newRecords, "poll() unexpectedly returned null; params: " + params + "; constraintValue: " + constraintValue);
             assertEquals(expectedRowCount, newRecords.size());
             assertTrue(((String) newRecords.get(0).value()).contains(stringInFirstRecord),
                 "Did not find " + stringInFirstRecord + " in " + ((String) newRecords.get(0).value()));
