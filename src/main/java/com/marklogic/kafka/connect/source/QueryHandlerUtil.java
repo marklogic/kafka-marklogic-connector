@@ -37,7 +37,17 @@ interface QueryHandlerUtil {
     static String executeMaxValuePlan(RowManager rowManager, PlanBuilder.Plan maxValuePlan, long serverTimestamp, String maxValueQuery) {
         JacksonHandle handle = new JacksonHandle();
         handle.setPointInTimeQueryTimestamp(serverTimestamp);
-        JacksonHandle result = rowManager.resultDoc(maxValuePlan, handle);
+
+        JacksonHandle result;
+        try {
+            result = rowManager.resultDoc(maxValuePlan, handle);
+        } catch (Exception e) {
+            throw new MarkLogicConnectorException(String.format(
+                "Unable to get max constraint value; query: %s; server timestamp: %d; cause: %s",
+                maxValueQuery, serverTimestamp, e.getMessage()
+            ), e);
+        }
+
         JsonNode valueNode = result.get().at("/rows/0/constraint/value");
         if (valueNode == null) {
             String message = String.format(
