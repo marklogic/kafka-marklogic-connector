@@ -1,7 +1,7 @@
-﻿Kafka MarkLogic Connector
+Kafka MarkLogic Connector
 
 
-Copyright © 2019 MarkLogic Corporation.
+Copyright © 2022 MarkLogic Corporation. MarkLogic and the MarkLogic logo are trademarks or registered trademarks of MarkLogic Corporation in the United States and other countries.  All other trademarks are the property of their respective owners.
 
 This project is licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at
 
@@ -9,19 +9,13 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
+To the extent required by the applicable open source license, a complete machine-readable copy of the source code corresponding to such code is available upon request. This offer is valid to anyone in receipt of this information and shall expire three years following the date of the final distribution of this product version by MarkLogic. To obtain such source code, send an email to legal@marklogic.com. Please specify the product and version for which you are requesting source code.
 
-This project and its code and functionality is not representative of MarkLogic Server and is not supported by MarkLogic.
-
-Please direct questions, comments and requests to fossreview@marklogic.com. 
-
-Open source software required to be made available under license is included herein. In the event you are unable to obtain a copy of such open source software, please contact fossreview@marklogic.com and a copy will be made available to you.
-
-
-The following software may be included in this project (last updated February 8, 2019):
+The following software may be included in this project (last updated February 9, 2023):
 
 ----------
 
-Jackson Annotations 2.9.4 
+Jackson Annotations 2.14.1 
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -33,7 +27,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: http://github.com/FasterXML/jackson 
 
-Jackson Core 2.9.4 
+Jackson Core 2.14.1 
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -45,7 +39,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/FasterXML/jackson-core 
 
-Jackson Databind 2.9.4 
+Jackson Databind 2.14.1 
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -57,19 +51,31 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/FasterXML/jackson-databind 
 
-OkHttp 3.10.0 
+Jackson Dataformat 2.14.1 
+Attribution Statements
+http://wiki.fasterxml.com/JacksonHome
+
+Copyright Statements
+Copyright ©2009 FasterXML, LLC
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/FasterXML/jackson-databind 
+
+OkHttp 4.10.0 
 Attribution Statements
 http://square.github.io/okhttp/
 
 Copyright Statements
-Copyright 2016 Square, Inc.
+Copyright 2019 Square, Inc.
 
 License Text (http://spdx.org/licenses/Apache-2.0)
 Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp 
 
-Okio 1.14.0 
+Okio 3.0.0 
 Attribution Statements
 https://square.github.io/okio/2.x/okio/jvm/okio/index.html
 
@@ -81,7 +87,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/square/okio 
 
-JavaMail 1.6.1 
+JavaMail 1.6.2 
 Attribution Statements
 https://javaee.github.io/javamail/
 
@@ -105,19 +111,7 @@ Made available under the Common Development and Distribution License 1.0. See Ap
 
 Source materials are available for download at: https://www.oracle.com/technetwork/java/jaf11-139815.html 
 
-JAX-RS API 2.1 
-Attribution Statements
-https://github.com/jax-rs
-
-Copyright Statements
-Copyright (c) 2011-2017 Oracle and/or its affiliates. All rights reserved.
-
-License Text (http://www.spdx.org/licenses/CDDL-1.1.html)
-Made available under the Common Development and Distribution License 1.1. See Appendix for full text.
-
-Source materials are available for download at: https://github.com/jax-rs/api 
-
-SLF4J API 1.7.25 
+SLF4J API 1.7.36 
 Attribution Statements
 http://www.slf4j.org
 
@@ -148,6 +142,264 @@ OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Source materials are available for download at: https://github.com/qos-ch/slf4j/tree/master/slf4j-api 
+
+Java™ Architecture for XML Binding (JAXB) 2.3.3
+Attribution Statements
+https://javaee.github.io/jaxb-v2/
+
+Copyright Statements
+Copyright (c) 1997-2017 Oracle and/or its affiliates. All rights reserved.
+
+License Text (http://www.spdx.org/licenses/CDDL-1.1.html)
+Made available under the Common Development and Distribution License 1.1. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/javaee/jaxb-v2
+
+Apache Commons Codec™ 1.15
+Attribution Statements
+http://commons.apache.org/proper/commons-codec/
+
+src/test/org/apache/commons/codec/language/DoubleMetaphoneTest.java
+contains test data from http://aspell.net/test/orig/batch0.tab.
+Copyright (C) 2002 Kevin Atkinson (kevina@gnu.org)
+
+The content of package org.apache.commons.codec.language.bm has been translated
+from the original php source code available at http://stevemorse.org/phoneticinfo.htm
+with permission from the original authors.
+Original source copyright:
+Copyright (c) 2008 Alexander Beider & Stephen P. Morse.
+
+Apache Commons Codec may include the following software under license:
+JUnit 4.11 (EPL-2.0) - Copyright 2015-2019 the original author or authors.
+
+Copyright Statements
+Copyright 2002-2019 The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/apache/commons-codec
+
+Apache Commons IO™ 2.11.0
+Attribution Statements
+http://commons.apache.org/proper/commons-io/
+
+Apache Commons IO may include the following software under license:
+JUnit 4.10 (EPL-2.0) - Copyright 2015-2019 the original author or authors.
+
+Copyright Statements
+Copyright 2002-2016 The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://git-wip-us.apache.org/repos/asf?p=commons-io.git
+
+Apache Commons Logging™ 1.2
+Attribution Statements
+http://commons.apache.org/proper/commons-logging/
+
+Apache Commons Logging may include the following software under license:
+Apache Avalon 4.1.5 Apache-2.0) - Copyright 2004 Apache Software Foundation.
+JUnit 3.8.1 (EPL-2.0) - Copyright 2015-2019 the original author or authors.
+LogKit 1.0.1 (ISC) - Copyright (c) 2015 - 2016, Justin Pawela & The LogKit Project (http://www.logkit.info/)
+Servlet API 2.3 - © Oracle
+
+Copyright Statements
+Copyright 2003-2016 The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/apache/commons-logging
+
+okhttp-digest 2.7
+Attribution Statements
+https://github.com/rburgst/okhttp-digest/
+
+The following NOTICEs are pertain to software distributed with this project.
+Apache HttpComponents HttpClient
+Copyright 1999-2011 The Apache Software Foundation
+
+Copyright Statements
+rburgst http://rainer.4950.net
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/rburgst/okhttp-digest/
+
+javax.ws.rs-api (JAX-RS API) 2.1.1
+Attribution Statements
+https://github.com/jax-rs/api
+
+Copyright Statements
+Copyright (c) 2010-2017 Oracle and/or its affiliates. All rights reserved.
+
+License Text (http://www.spdx.org/licenses/CDDL-1.1.html)
+Made available under the Common Development and Distribution License 1.1. See Appendix for full text.
+
+Source materials are available for download at: https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
+
+Apache Commons Collections™ 4.2
+Attribution Statements
+https://commons.apache.org/proper/commons-collections/
+
+Copyright Statements
+Copyright 2001-2018 The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0.html)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://mvnrepository.com/artifact/commons-collections/commons-collections
+
+Apache Commons Lang™ 3.12.0
+Attribution Statements
+http://commons.apache.org/proper/commons-lang/
+
+This product includes software from the Spring Framework,
+under the Apache License 2.0 (see: StringUtils.containsWhitespace())
+
+Apache Commons Lang may include the following software under license:
+JUnit 3.8.1 (EPL-2.0) - Copyright 2015-2019 the original author or authors.
+
+Copyright Statements
+Copyright (C) 2017, The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/apache/commons-lang
+
+Apache HttpComponents™ HttpClient 4.5.13
+Attribution Statements
+http://hc.apache.org/httpcomponents-client
+
+Copyright Statements
+Copyright (C) 2021, The Apache Software Foundation
+
+License Text (http://www.apache.org/licenses/LICENSE-2.0.txt)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/apache/httpcomponents-client
+
+Apache HttpComponents™ HttpCore 4.4.13
+Attribution Statements
+http://hc.apache.org/httpcomponents-core-ga
+
+This project contains annotations derived from JCIP-ANNOTATIONS
+Copyright (c) 2005 Brian Goetz and Tim Peierls. See http://www.jcip.net
+
+Copyright Statements
+Copyright 2005-2014 The Apache Software Foundation
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/apache/httpcomponents-core
+
+JDOM 2.0.6.1
+Attribution Statements
+http://www.jdom.org
+
+This product includes software developed by the JDOM Project (http://www.jdom.org/).
+
+Copyright Statements
+Copyright (C) 2000-2012 Jason Hunter & Brett McLaughlin. All rights reserved.
+
+License Text (https://github.com/hunterhacker/jdom/blob/master/LICENSE.txt)
+Copyright (C) 2000-2012 Jason Hunter & Brett McLaughlin.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions, and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions, and the disclaimer that follows 
+    these conditions in the documentation and/or other materials 
+    provided with the distribution.
+
+ 3. The name "JDOM" must not be used to endorse or promote products
+    derived from this software without prior written permission.  For
+    written permission, please contact <request_AT_jdom_DOT_org>.
+ 
+ 4. Products derived from this software may not be called "JDOM", nor
+    may "JDOM" appear in their name, without prior written permission
+    from the JDOM Project Management <request_AT_jdom_DOT_org>.
+ 
+ In addition, we request (but do not require) that you include in the 
+ end-user documentation provided with the redistribution and/or in the 
+ software itself an acknowledgement equivalent to the following:
+     "This product includes software developed by the
+      JDOM Project (http://www.jdom.org/)."
+ Alternatively, the acknowledgment may be graphical using the logos 
+ available at http://www.jdom.org/images/logos.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED.  IN NO EVENT SHALL THE JDOM AUTHORS OR THE PROJECT
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+ This software consists of voluntary contributions made by many 
+ individuals on behalf of the JDOM Project and was originally 
+ created by Jason Hunter <jhunter_AT_jdom_DOT_org> and
+ Brett McLaughlin <brett_AT_jdom_DOT_org>.  For more information
+ on the JDOM Project, please see <http://www.jdom.org/>.
+
+Source materials are available for download at: https://github.com/hunterhacker/jdom/
+
+Kotlin Standard Library JDK 1.6.20
+Attribution Statements
+http://kotlinlang.org/
+
+Copyright Statements
+Copyright 2010-2018 JetBrains s.r.o.
+
+License Text (http://spdx.org/licenses/Apache-2.0.html)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk8
+
+Spring Framework 5.3.24
+Attribution Statements
+https://projects.spring.io/spring-framework/
+
+Copyright Statements
+Copyright (c) 2002-2013 Pivotal, Inc.
+
+License Text (http://spdx.org/licenses/Apache-2.0)
+Made available under the Apache License 2.0. See Appendix for full text.
+
+Source materials are available for download at: https://github.com/spring-projects/spring-framework
+
+Group: com.flipkart.zjsonpatch Name: zjsonpatch Version: 0.4.12
+POM Project URL: https://github.com/flipkart-incubator/zjsonpatch/
+POM License: The Apache Software License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0.txt
+Copyright 2016 flipkart.com zjsonpatch.
+
+Group: jaxen Name: jaxen Version: 1.2.0
+Project URL: http://www.cafeconleche.org/jaxen
+POM License: BSD License 2.0 - https://raw.githubusercontent.com/jaxen-xpath/jaxen/master/LICENSE.txt
+Embedded license files: jaxen-1.2.0.jar/META-INF/LICENSE.txt
+Copyright 2001-2022 The Jaxen Project. All Rights Reserved.
+
+Group: org.jetbrains Name: annotations Version: 13.0
+POM Project URL: http://www.jetbrains.org
+POM License: The Apache Software License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0.txt
+Copyright 2000-2016 JetBrains s.r.o.
+
  
 Appendix
 Full Text Licenses
@@ -360,3 +612,282 @@ This License represents the complete agreement concerning subject matter hereof.
 
 10. RESPONSIBILITY FOR CLAIMS.
 As between Initial Developer and the Contributors, each party is responsible for claims and damages arising, directly or indirectly, out of its utilization of rights under this License and You agree to work with Initial Developer and Contributors to distribute such responsibility on an equitable basis. Nothing herein is intended or shall be deemed to constitute any admission of liability.
+
+ 
+Eclipse Public License - v 2.0
+
+    THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE
+    PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION
+    OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+
+1. DEFINITIONS
+
+"Contribution" means:
+
+  a) in the case of the initial Contributor, the initial content
+     Distributed under this Agreement, and
+
+  b) in the case of each subsequent Contributor:
+     i) changes to the Program, and
+     ii) additions to the Program;
+  where such changes and/or additions to the Program originate from
+  and are Distributed by that particular Contributor. A Contribution
+  "originates" from a Contributor if it was added to the Program by
+  such Contributor itself or anyone acting on such Contributor's behalf.
+  Contributions do not include changes or additions to the Program that
+  are not Modified Works.
+
+"Contributor" means any person or entity that Distributes the Program.
+
+"Licensed Patents" mean patent claims licensable by a Contributor which
+are necessarily infringed by the use or sale of its Contribution alone
+or when combined with the Program.
+
+"Program" means the Contributions Distributed in accordance with this
+Agreement.
+
+"Recipient" means anyone who receives the Program under this Agreement
+or any Secondary License (as applicable), including Contributors.
+
+"Derivative Works" shall mean any work, whether in Source Code or other
+form, that is based on (or derived from) the Program and for which the
+editorial revisions, annotations, elaborations, or other modifications
+represent, as a whole, an original work of authorship.
+
+"Modified Works" shall mean any work in Source Code or other form that
+results from an addition to, deletion from, or modification of the
+contents of the Program, including, for purposes of clarity any new file
+in Source Code form that contains any contents of the Program. Modified
+Works shall not include works that contain only declarations,
+interfaces, types, classes, structures, or files of the Program solely
+in each case in order to link to, bind by name, or subclass the Program
+or Modified Works thereof.
+
+"Distribute" means the acts of a) distributing or b) making available
+in any manner that enables the transfer of a copy.
+
+"Source Code" means the form of a Program preferred for making
+modifications, including but not limited to software source code,
+documentation source, and configuration files.
+
+"Secondary License" means either the GNU General Public License,
+Version 2.0, or any later versions of that license, including any
+exceptions or additional permissions as identified by the initial
+Contributor.
+
+2. GRANT OF RIGHTS
+
+  a) Subject to the terms of this Agreement, each Contributor hereby
+  grants Recipient a non-exclusive, worldwide, royalty-free copyright
+  license to reproduce, prepare Derivative Works of, publicly display,
+  publicly perform, Distribute and sublicense the Contribution of such
+  Contributor, if any, and such Derivative Works.
+
+  b) Subject to the terms of this Agreement, each Contributor hereby
+  grants Recipient a non-exclusive, worldwide, royalty-free patent
+  license under Licensed Patents to make, use, sell, offer to sell,
+  import and otherwise transfer the Contribution of such Contributor,
+  if any, in Source Code or other form. This patent license shall
+  apply to the combination of the Contribution and the Program if, at
+  the time the Contribution is added by the Contributor, such addition
+  of the Contribution causes such combination to be covered by the
+  Licensed Patents. The patent license shall not apply to any other
+  combinations which include the Contribution. No hardware per se is
+  licensed hereunder.
+
+  c) Recipient understands that although each Contributor grants the
+  licenses to its Contributions set forth herein, no assurances are
+  provided by any Contributor that the Program does not infringe the
+  patent or other intellectual property rights of any other entity.
+  Each Contributor disclaims any liability to Recipient for claims
+  brought by any other entity based on infringement of intellectual
+  property rights or otherwise. As a condition to exercising the
+  rights and licenses granted hereunder, each Recipient hereby
+  assumes sole responsibility to secure any other intellectual
+  property rights needed, if any. For example, if a third party
+  patent license is required to allow Recipient to Distribute the
+  Program, it is Recipient's responsibility to acquire that license
+  before distributing the Program.
+
+  d) Each Contributor represents that to its knowledge it has
+  sufficient copyright rights in its Contribution, if any, to grant
+  the copyright license set forth in this Agreement.
+
+  e) Notwithstanding the terms of any Secondary License, no
+  Contributor makes additional grants to any Recipient (other than
+  those set forth in this Agreement) as a result of such Recipient's
+  receipt of the Program under the terms of a Secondary License
+  (if permitted under the terms of Section 3).
+
+3. REQUIREMENTS
+
+3.1 If a Contributor Distributes the Program in any form, then:
+
+  a) the Program must also be made available as Source Code, in
+  accordance with section 3.2, and the Contributor must accompany
+  the Program with a statement that the Source Code for the Program
+  is available under this Agreement, and informs Recipients how to
+  obtain it in a reasonable manner on or through a medium customarily
+  used for software exchange; and
+
+  b) the Contributor may Distribute the Program under a license
+  different than this Agreement, provided that such license:
+     i) effectively disclaims on behalf of all other Contributors all
+     warranties and conditions, express and implied, including
+     warranties or conditions of title and non-infringement, and
+     implied warranties or conditions of merchantability and fitness
+     for a particular purpose;
+
+     ii) effectively excludes on behalf of all other Contributors all
+     liability for damages, including direct, indirect, special,
+     incidental and consequential damages, such as lost profits;
+
+     iii) does not attempt to limit or alter the recipients' rights
+     in the Source Code under section 3.2; and
+
+     iv) requires any subsequent distribution of the Program by any
+     party to be under a license that satisfies the requirements
+     of this section 3.
+
+3.2 When the Program is Distributed as Source Code:
+
+  a) it must be made available under this Agreement, or if the
+  Program (i) is combined with other material in a separate file or
+  files made available under a Secondary License, and (ii) the initial
+  Contributor attached to the Source Code the notice described in
+  Exhibit A of this Agreement, then the Program may be made available
+  under the terms of such Secondary Licenses, and
+
+  b) a copy of this Agreement must be included with each copy of
+  the Program.
+
+3.3 Contributors may not remove or alter any copyright, patent,
+trademark, attribution notices, disclaimers of warranty, or limitations
+of liability ("notices") contained within the Program from any copy of
+the Program which they Distribute, provided that Contributors may add
+their own appropriate notices.
+
+4. COMMERCIAL DISTRIBUTION
+
+Commercial distributors of software may accept certain responsibilities
+with respect to end users, business partners and the like. While this
+license is intended to facilitate the commercial use of the Program,
+the Contributor who includes the Program in a commercial product
+offering should do so in a manner which does not create potential
+liability for other Contributors. Therefore, if a Contributor includes
+the Program in a commercial product offering, such Contributor
+("Commercial Contributor") hereby agrees to defend and indemnify every
+other Contributor ("Indemnified Contributor") against any losses,
+damages and costs (collectively "Losses") arising from claims, lawsuits
+and other legal actions brought by a third party against the Indemnified
+Contributor to the extent caused by the acts or omissions of such
+Commercial Contributor in connection with its distribution of the Program
+in a commercial product offering. The obligations in this section do not
+apply to any claims or Losses relating to any actual or alleged
+intellectual property infringement. In order to qualify, an Indemnified
+Contributor must: a) promptly notify the Commercial Contributor in
+writing of such claim, and b) allow the Commercial Contributor to control,
+and cooperate with the Commercial Contributor in, the defense and any
+related settlement negotiations. The Indemnified Contributor may
+participate in any such claim at its own expense.
+
+For example, a Contributor might include the Program in a commercial
+product offering, Product X. That Contributor is then a Commercial
+Contributor. If that Commercial Contributor then makes performance
+claims, or offers warranties related to Product X, those performance
+claims and warranties are such Commercial Contributor's responsibility
+alone. Under this section, the Commercial Contributor would have to
+defend claims against the other Contributors related to those performance
+claims and warranties, and if a court requires any other Contributor to
+pay any damages as a result, the Commercial Contributor must pay
+those damages.
+
+5. NO WARRANTY
+
+EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT
+PERMITTED BY APPLICABLE LAW, THE PROGRAM IS PROVIDED ON AN "AS IS"
+BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF
+TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR
+PURPOSE. Each Recipient is solely responsible for determining the
+appropriateness of using and distributing the Program and assumes all
+risks associated with its exercise of rights under this Agreement,
+including but not limited to the risks and costs of program errors,
+compliance with applicable laws, damage to or loss of data, programs
+or equipment, and unavailability or interruption of operations.
+
+6. DISCLAIMER OF LIABILITY
+
+EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT
+PERMITTED BY APPLICABLE LAW, NEITHER RECIPIENT NOR ANY CONTRIBUTORS
+SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST
+PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
+EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+7. GENERAL
+
+If any provision of this Agreement is invalid or unenforceable under
+applicable law, it shall not affect the validity or enforceability of
+the remainder of the terms of this Agreement, and without further
+action by the parties hereto, such provision shall be reformed to the
+minimum extent necessary to make such provision valid and enforceable.
+
+If Recipient institutes patent litigation against any entity
+(including a cross-claim or counterclaim in a lawsuit) alleging that the
+Program itself (excluding combinations of the Program with other software
+or hardware) infringes such Recipient's patent(s), then such Recipient's
+rights granted under Section 2(b) shall terminate as of the date such
+litigation is filed.
+
+All Recipient's rights under this Agreement shall terminate if it
+fails to comply with any of the material terms or conditions of this
+Agreement and does not cure such failure in a reasonable period of
+time after becoming aware of such noncompliance. If all Recipient's
+rights under this Agreement terminate, Recipient agrees to cease use
+and distribution of the Program as soon as reasonably practicable.
+However, Recipient's obligations under this Agreement and any licenses
+granted by Recipient relating to the Program shall continue and survive.
+
+Everyone is permitted to copy and distribute copies of this Agreement,
+but in order to avoid inconsistency the Agreement is copyrighted and
+may only be modified in the following manner. The Agreement Steward
+reserves the right to publish new versions (including revisions) of
+this Agreement from time to time. No one other than the Agreement
+Steward has the right to modify this Agreement. The Eclipse Foundation
+is the initial Agreement Steward. The Eclipse Foundation may assign the
+responsibility to serve as the Agreement Steward to a suitable separate
+entity. Each new version of the Agreement will be given a distinguishing
+version number. The Program (including Contributions) may always be
+Distributed subject to the version of the Agreement under which it was
+received. In addition, after a new version of the Agreement is published,
+Contributor may elect to Distribute the Program (including its
+Contributions) under the new version.
+
+Except as expressly stated in Sections 2(a) and 2(b) above, Recipient
+receives no rights or licenses to the intellectual property of any
+Contributor under this Agreement, whether expressly, by implication,
+estoppel or otherwise. All rights in the Program not expressly granted
+under this Agreement are reserved. Nothing in this Agreement is intended
+to be enforceable by any entity that is not a Contributor or Recipient.
+No third-party beneficiary rights are created under this Agreement.
+
+Exhibit A - Form of Secondary Licenses Notice
+
+"This Source Code may also be made available under the following 
+Secondary Licenses when the conditions for such availability set forth 
+in the Eclipse Public License, v. 2.0 are satisfied: {name license(s),
+version(s), and exceptions or additional permissions here}."
+
+  Simply including a copy of this Agreement, including this Exhibit A
+  is not sufficient to license the Source Code under Secondary Licenses.
+
+  If it is not possible or desirable to put the notice in a particular
+  file, then You may include the notice in a location (such as a LICENSE
+  file in a relevant directory) where a recipient would be likely to
+  look for such a notice.
+
+  You may add additional accurate notices of copyright ownership.
