@@ -1,0 +1,15 @@
+{
+  "type" : "record",
+  "name" : "AvroTestClass",
+  "namespace" : "com.marklogic.kafka.connect.sink",
+  "fields" : [ {
+    "name" : "name",
+    "type" : "string"
+  }, {
+    "name" : "luckyNumber",
+    "type" : "int"
+  }, {
+    "name" : "enabled",
+    "type" : "boolean"
+  } ]
+}

@@ -8,6 +8,12 @@ plugins {
   id 'com.marklogic.ml-gradle' version '4.5.0'
   id 'jacoco'
   id "org.sonarqube" version "3.5.0.2730"
+
+  // Used to generate Avro classes. This will write classes to build/generated-test-avro-java and also add that folder
+  // as a source root. Since this is commented out by default, the generated Avro test class has been added to
+  // src/test/java. This only needs to be uncommented when there's a need to regenerate that class, at which point it
+  // should be copied over to src/test/java and then this plugin should be commented out again.
+  // id "com.github.davidmc24.gradle.plugin.avro" version "1.6.0"
 }
 
 java {
@@ -71,6 +77,8 @@ dependencies {
   testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation 'net.mguenther.kafka:kafka-junit:3.2.2'
+
+  testImplementation "org.apache.avro:avro-compiler:1.11.1"
 
   // Forcing logback to be used for test logging
   testImplementation "ch.qos.logback:logback-classic:1.3.5"
