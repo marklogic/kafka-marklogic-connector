@@ -58,7 +58,7 @@ For more assistance with Sonar and Gradle, see the [Sonar Gradle plugin docs](ht
 
 # Testing with Confluent Platform
 
-[Confluent Platform](https://docs.confluent.io/platform/7.2.1/overview.html) provides an easy mechanism for running
+[Confluent Platform](https://docs.confluent.io/platform/current/overview.html) provides an easy mechanism for running
 Kafka locally via a single application. A primary benefit of testing with Confluent Platform is to test configuring the
 MarkLogic Kafka connector via the [Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) 
 web application. 
@@ -67,16 +67,37 @@ To try out the MarkLogic Kafka connector via the Confluent Platform, follow the 
 
 ## Install Confluent Platform with the MarkLogic Kafka connector
 
-First, [install the Confluent Platform](https://docs.confluent.io/platform/current/quickstart/ce-docker-quickstart.html#cp-quickstart-step-1)
-via the "Tar archive" option (the "Docker" option has not yet been tested).
+First, [install the Confluent Platform](https://docs.confluent.io/platform/current/installation/installing_cp/zip-tar.html)
+(the "Docker" option has not yet been tested). It is recommended to configure `CONFLUENT_HOME` as described at that
+page, as that simplifies running the `confluent` commands below. 
 
-**Important!** After step 6 (installing the Datagen source connector) and before step 7 (starting Confluent Platform), 
-you'll need to install the MarkLogic Kafka connector into your Confluent Platform distribution. 
+To verify that you have Confluent Platform installed successfully, run the following:
 
-To do so, modify `confluentHome` in `gradle-local.properties` (create this file in the root of this project if it 
-does not already exist) to point to where you extracted the Confluent Platform distribution - e.g.:
+    confluent local services status
 
-    confluentHome=/Users/myusername/confluent-7.2.1
+This should show that each component of Confluent Platform is not running; you should see something like the following
+displayed:
+
+```
+Connect is [DOWN]
+Control Center is [DOWN]
+Kafka is [DOWN]
+Kafka REST is [DOWN]
+ksqlDB Server is [DOWN]
+Schema Registry is [DOWN]
+ZooKeeper is [DOWN]
+```
+
+The Kafka [Datagen Source Connector](https://www.confluent.io/hub/confluentinc/kafka-connect-datagen) is a convenient 
+tool for local development and testing. Install it via the following:
+
+    confluent-hub install confluentinc/kafka-connect-datagen:0.6.0
+
+Next, in order to build and deploy the MarkLogic Kafka connector to Confluent Platform, modify `confluentHome` in 
+`gradle-local.properties` (create this file in the root of this project if it does not already exist) to point to 
+where you extracted the Confluent Platform distribution - e.g.:
+
+    confluentHome=/Users/myusername/confluent-7.4.0
 
 Then build and copy the connector to the Confluent Platform directory that you configured above:
 
@@ -94,7 +115,6 @@ To verify that your Confluent installation is running properly, you can run `con
 see logging similar to this:
 
 ```
-Using CONFLUENT_CURRENT: /var/folders/wn/l42pccj17rbfw6h_5b8bt2nnkpch_s/T/confluent.995873
 Connect is [UP]
 Control Center is [UP]
 Kafka is [UP]
