@@ -224,15 +224,10 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
   destinationDir(file('build/distro'))
 }
 
-task deleteConnectorInConfluent(type: Delete) {
-  description = "Must delete the existing connector to ensure no old dependencies are left in the connector folder"
-  delete "${confluentHome}/share/confluent-hub-components/marklogic-kafka-marklogic-connector-${version}"
-}
-
-task copyConnectorToConfluent(type: Copy, group: confluentTestingGroup, dependsOn: [connectorArchive_BuildDirectory, deleteConnectorInConfluent]) {
-  description = "Build the connector archive and copy it to your local Confluent Platform"
-  from baseArchiveBuildDir
-  into "${confluentHome}/share/confluent-hub-components"
+task installConnectorInConfluent(type: Exec, group: confluentTestingGroup, dependsOn: [connectorArchive]) {
+  description = "Uses 'Confluent-hub' to install the connector in your local Confluent Platform"
+  commandLine "confluent-hub", "install", "--no-prompt", "build/distro/${baseArchiveName}.zip"
+  ignoreExitValue = true
 }
 
 // See https://docs.confluent.io/confluent-cli/current/command-reference/local/confluent_local_destroy.html
