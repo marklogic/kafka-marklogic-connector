@@ -93,18 +93,12 @@ tool for local development and testing. Install it via the following:
 
     confluent-hub install confluentinc/kafka-connect-datagen:0.6.0
 
-Next, in order to build and deploy the MarkLogic Kafka connector to Confluent Platform, modify `confluentHome` in 
-`gradle-local.properties` (create this file in the root of this project if it does not already exist) to point to 
-where you extracted the Confluent Platform distribution - e.g.:
+Then build and install the connector to the Confluent Platform indicated by your $CONFLUENT_HOME environment variable:
 
-    confluentHome=/Users/myusername/confluent-7.4.0
-
-Then build and copy the connector to the Confluent Platform directory that you configured above:
-
-    ./gradlew clean copyConnectorToConfluent
+    ./gradlew clean installConnectorInConfluent
 
 Note that any time you modify the MarkLogic Kafka connector code, you'll need to repeat the 
-`./gradlew clean copyConnectorToConfluent` step. Note that `clean` is included to ensure that in case you've changed 
+`./gradlew clean installConnectorInConfluent` step. Note that `clean` is included to ensure that in case you've changed 
 any connector dependencies, old dependencies will not be included in the connector archive.
 
 Next, start Confluent:
@@ -245,7 +239,7 @@ Platform will become unstable and no longer work. The [Confluent local docs](htt
 make reference to this - "The data that are produced are transient and are intended to be temporary". 
 
 It is thus advisable that after you copy a new instance of the MarkLogic Kafka connector into Confluent Platform (i.e. 
-by running `./gradlew copyConnectorToConfluent`), you should destroy your local Confluent Platform instance (this 
+by running `./gradlew installConnectorInConfluent`), you should destroy your local Confluent Platform instance (this 
 will usually finish in around 15s):
 
     ./gradlew destroyLocalConfluent
@@ -255,7 +249,7 @@ following (this will usually finish in around 1m):
 
     ./gradlew setupLocalConfluent
 
-Remember that if you've modified the connector code, you'll first need to run `./gradlew copyConnectorToConfluent`. 
+Remember that if you've modified the connector code, you'll first need to run `./gradlew installConnectorInConfluent`. 
 
 Doing the above will provide the most reliable way to get a new and working instance of Confluent Platform with the 
 MarkLogic Kafka connector installed.
@@ -265,7 +259,7 @@ and one task starts with "setup"):
 
     ./gradlew destroy setup
 
-You may have luck with simply doing `confluent local services stop`, `./gradlew copyConnectorToConfluent`, and 
+You may have luck with simply doing `confluent local services stop`, `./gradlew installConnectorInConfluent`, and 
 `confluent local services start`, but this has so far not worked reliably - i.e. one of the Confluent Platform 
 services (sometimes Schema Registry, sometimes Control Center) usually stops working. 
 
