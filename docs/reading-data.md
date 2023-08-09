@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Reading data
+title: Reading Data
 nav_order: 5
 ---
 
@@ -49,7 +49,7 @@ with the same configuration would produce 2 or more copies of the same records a
 results when using a constraint column. If you have a valid scenario for setting this property to 2 or higher, please
 file an issue with your use case.
 
-### Selecting an output type
+## Selecting an output type
 
 By default, the connector will return each row as JSON. As mentioned above, it is recommended to configure the Kafka
 `value.converter` property with a value of `org.apache.kafka.connect.storage.StringConverter`, which results in the JSON
@@ -94,7 +94,7 @@ Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Aut
 2,Smith,Jane,2022-05-11,2022-05-11T10:00:00
 ```
 
-### Including column types in source records
+## Including column types in source records
 
 If the selected output type for source records is JSON or XML, you may set the `ml.source.optic.includeColumnTypes`
 option to "true", which will result in the column type being included for each column in each source record.
@@ -140,7 +140,7 @@ JSON example above, this too is pretty-printed for readability purposes):
 </t:row>
 ```
 
-### Generating a key for each source record
+## Generating a key for each source record
 
 Each source record returned by a Kafka source connector can have a key defined. A key is optional, and thus by default,
 the MarkLogic Kafka connector will set the key to `null` on each record it returns.
@@ -154,7 +154,7 @@ to it. For example, if your query starts with `op.fromView('demo', 'persons')` a
 will have a name of "demo.persons.ID".
 
 
-### Limiting how many rows are returned
+## Limiting how many rows are returned
 
 When a Kafka source connector is run, it is required to return an in-memory list of source records. Thus, connector
 users have to be careful to ensure that any given run will not return so many source records that the Kafka Connect
@@ -171,7 +171,7 @@ Using this option is strongly recommended when using the constraint column featu
 using a constraint column, you may include a limit function call in your own query.
 
 
-### Configuring a constraint column
+## Configuring a constraint column
 
 A common use case when retrieving data from any data store is to only retrieve data that is new or modified since data
 was previously retrieved. For example, if an Optic query returns 10k rows on its first run, it is typical that on the
@@ -217,7 +217,7 @@ Assuming that 1000 matching rows exist, with IDs from 1 to 1000, then the follow
 5. Finally, once rows with an ID greater than 1000 are added to MarkLogic, those will be returned.
 
 
-### Configuring storage of a constraint column value
+## Configuring storage of a constraint column value
 
 When using the constraint column feature, the MarkLogic Kafka connector defaults to storing the maximum value for
 the constraint column in memory. This can be sufficient for development and test purposes, but it presents a risk where
@@ -247,7 +247,7 @@ The document written by the connector will include the maximum constraint column
 that is intended to be helpful for debugging any problems that arise. However, as of the 1.8.0 release, the contents
 of this document are considered private and thus subject to change with any release.
 
-### Source connector logging
+## Source connector logging
 
 The manner in which logging is configured for the MarkLogic Kafka connector depends on the particular Kafka distribution
 you are using. Generally though, [Kafka uses Log4j](https://docs.confluent.io/platform/current/connect/logging.html)
@@ -271,7 +271,7 @@ If debug logging is enabled, the following items will also be logged (at the DEB
 - If no records are returned on a poll call, the duration of the call will be logged
 - Any exception thrown during execution of the poll call will be logged at the ERROR level and will include the stacktrace
 
-### Source connector error handling
+## Source connector error handling
 
 Per Kafka's recommendation for error handling for source connectors, the MarkLogic Kafka connector catches and logs any
 error that occurs when Kafka polls the connector.

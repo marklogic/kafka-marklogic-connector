@@ -3,6 +3,9 @@ remote_theme: just-the-docs/just-the-docs
 plugins:
   - jekyll-remote-theme
 
+# Haven't needed this in other projects, but jekyll throws an error without it.
+repository: "marklogic/kafka-marklogic-connector"
+
 heading_anchors: true
 
 # Aux links for the upper right navigation

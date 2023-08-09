@@ -17,6 +17,7 @@ package com.marklogic.kafka.connect.sink;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.marklogic.client.document.DocumentWriteOperation;
 import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
@@ -31,7 +32,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Verifies that a DocumentWriteOperation is created correctly based on a SinkRecord.
@@ -89,7 +93,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void uriWithUUIDStrategy() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "UUID");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
@@ -105,7 +109,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void uriWithDefaultStrategy() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
@@ -120,7 +124,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void uriWithKafkaMetaData() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "KAFKA_META_WITH_SLASH");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
@@ -134,17 +138,20 @@ class ConvertSinkRecordTest {
     }
 
     @Test
-    void uriWithJsonPath() throws IOException {
-        JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\"}");
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH");
-        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/f1");
-        converter = new DefaultSinkRecordConverter(kafkaConfig);
+    void jsonPathValidExpression() {
+        ObjectMapper m = new ObjectMapper();
+        ObjectNode doc = m.createObjectNode();
+        doc.putObject("parent").putObject("child").put("hello", "world");
 
-        DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/example/");
+        config.put(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json");
+        config.put(MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH");
+        config.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/parent/child/hello");
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(config).convert(newSinkRecord(doc));
 
         assertNotNull(op.getUri());
-        assertEquals("100", op.getUri());
+        assertEquals("/example/world.json", op.getUri());
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         assertTrue(metadata.getCollections().isEmpty());
@@ -152,9 +159,26 @@ class ConvertSinkRecordTest {
     }
 
     @Test
+    void jsonPathDoesntResolve() {
+        ObjectMapper m = new ObjectMapper();
+        ObjectNode doc = m.createObjectNode();
+        doc.putObject("parent").putObject("child").put("hello", "world");
+
+        Map<String, Object> kafkaConfig = new HashMap<>();
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH");
+        kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/doesnt/point/to/anything");
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(kafkaConfig).convert(newSinkRecord(doc));
+
+        assertNotNull(op.getUri());
+        assertEquals("", op.getUri(), "This is the current behavior as of 1.8.0 but it does not seem correct; seems " +
+            "like a UUID should be returned instead so that duplicate URIs are not generated. DEVEXP-541 was " +
+            "opened to fix this.");
+    }
+
+    @Test
     void uriWithHashedJsonPaths() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\",\"f2\":\"200\"}");
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "HASH");
         kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/f1,/f2");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -171,7 +195,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void uriWithHashedKafkaMeta() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         kafkaConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "KAFKA_META_HASHED");
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 

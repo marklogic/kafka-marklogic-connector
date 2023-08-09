@@ -9,7 +9,7 @@ instructions on using the MarkLogic connector with either Kafka as a standalone 
 Kafka providers exist and should be capable of utilizing the MarkLogic connector as well, but instructions on those
 are out of scope of this document.
 
-### Using the connector with Confluent Platform
+## Using the connector with Confluent Platform
 
 [Confluent Platform](https://docs.confluent.io/platform/current/platform.html) provides an easy mechanism for running
 Kafka via a single application, which includes a simple process for installing new connectors.
@@ -19,7 +19,7 @@ The MarkLogic Kafka connector can be installed via the instructions at
 [Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) to load and configure
 as many instances of the MarkLogic Kafka connector that you wish.
 
-### Using the connector with Apache Kafka
+## Using the connector with Apache Kafka
 
 For a regular installation of Apache Kafka, obtain the latest version of the MarkLogic Kafka connector from
 [this repository's Releases page](https://github.com/marklogic/kafka-marklogic-connector/releases). Download
