@@ -8,6 +8,8 @@ repository: "marklogic/kafka-marklogic-connector"
 
 heading_anchors: true
 
+logo: "/assets/ProgressMarkLogic_PrimaryLogo_Stacked.svg"
+
 # Aux links for the upper right navigation
 aux_links:
   "marklogic/kafka-marklogic-connector":
