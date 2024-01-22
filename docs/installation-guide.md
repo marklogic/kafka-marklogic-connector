@@ -4,6 +4,14 @@ title: Installation Guide
 nav_order: 3
 ---
 
+## Table of contents
+{: .no_toc .text-delta }
+
+- TOC
+{:toc}
+
+## Overview
+
 Apache Kafka can be run either as a standalone product or via a provider such as Confluent. This guide provides
 instructions on using the MarkLogic connector with either Kafka as a standalone product or via Confluent. Other
 Kafka providers exist and should be capable of utilizing the MarkLogic connector as well, but instructions on those

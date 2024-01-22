@@ -4,6 +4,14 @@ title: Configuring the Connector
 nav_order: 4
 ---
 
+## Table of contents
+{: .no_toc .text-delta }
+
+- TOC
+{:toc}
+
+## Overview
+
 Using the MarkLogic Kafka connector requires configuring a set of properties to control how the connector interacts
 with MarkLogic. The manner in which you use the MarkLogic connector will determine how you configure the connector:
 

@@ -4,6 +4,14 @@ title: Reading Data
 nav_order: 5
 ---
 
+## Table of contents
+{: .no_toc .text-delta }
+
+- TOC
+{:toc}
+
+## Overview
+
 The MarkLogic Kafka connector uses the [Optic API](https://docs.marklogic.com/guide/app-dev/OpticAPI) to read data from
 MarkLogic as rows. Each row is converted into a Kafka `SourceRecord` and sent to a user-defined topic. To enable
 this, the following properties must be configured:

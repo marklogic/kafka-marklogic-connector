@@ -4,6 +4,14 @@ title: Writing Data
 nav_order: 6
 ---
 
+## Table of contents
+{: .no_toc .text-delta }
+
+- TOC
+{:toc}
+
+## Overview
+
 By default, the MarkLogic Kafka connector assumes that the app server associated with the port defined by the `ml.connection.port`
 property is a [REST API app server](https://docs.marklogic.com/guide/rest-dev) - that is, the value of its `url rewriter`
 property is `/MarkLogic/rest-api/rewriter.xml` or a variation of that rewriter. This allows the MarkLogic connector to use the
