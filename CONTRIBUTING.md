@@ -1,9 +1,10 @@
 This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
 develop and test the connector, either via a local install of Confluent Platform or of the regular Kafka distribution.
 
-Before beginning, you will need to install Java (either version 8, 11, or 17) and also have a MarkLogic instance 
-available. It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in Confluent 7.x and is 
-removing it in Confluent 8.x. See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
+Before beginning, you will need to install Java (either version 8, 11, or 17) and also have a MarkLogic instance
+available. It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in Confluent 7.x and is
+removing it in Confluent 8.x. Additionally, Sonar requires the use of Java 11 or 17.
+See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
 for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
 points to your Java installation.
 
@@ -11,19 +12,15 @@ points to your Java installation.
 # Running the test suite
 
 The test suite for the MarkLogic Kafka connector, found at `src/test/resources`, requires that an application first be
-deployed to a MarkLogic instance. This application is deployed via 
-[ml-gradle](https://github.com/marklogic-community/ml-gradle). 
+deployed to a MarkLogic instance. This application is deployed via Docker and [ml-gradle](https://github.com/marklogic-community/ml-gradle). 
 
 Note that you do not need to install [Gradle](https://gradle.org/) - the `gradlew` program used below will install the
 appropriate version of Gradle if you do not have it installed already. 
 
-Before deploying, first create `gradle-local.properties`
-if it does not yet exist in the root directory of this project and configure `mlPassword` for your `admin` user - e.g.
+Then deploy the application to a MarkLogic Docker container built using a docker-compose file:
 
-    mlPassword=changeme
-
-Then deploy the application:
-
+    docker-compose up -d --build
+    <Wait 20 to 30 seconds and verify that <http://localhost:8001> shows the MarkLogic admin screen before proceeding.>
     ./gradlew -i mlDeploy
 
 The application deploys a single REST API app server listening on port 8019; please ensure you have this port available
@@ -38,20 +35,40 @@ Alternatively, you can import this project into an IDE such as IntelliJ and run 
 
 # Running Sonar code analysis
 
-An effort has been started to analyze the codebase with Sonar; this will ideally be done by Jenkins in the near future.
+In order to use SonarQube, you must have used Docker to run this project's `docker-compose.yml` file, and you must
+have those services running.
 
-You can run Sonar code analysis locally by doing the following:
+To configure the SonarQube service, perform the following steps:
 
-1. [Install the latest sonarqube](https://www.sonarsource.com/products/sonarqube/downloads/), either via the zip file
-   or via Docker. 
-2. If you install sonarqube via a zip file, you'll need to adjust its default config as both it and our kafka-junit tests
-   try to use the same port (and we haven't figured out yet how to make kafka-junit use a different port). To do so, 
-   edit the `./conf/sonar.properties` file in the directory where you unzipped the zip file. Uncomment the 
-   `sonar.embeddedDatabase.port` property and change the port from 9092 to 9093. 
-3. Follow the sonarqube docs for starting sonarqube up, logging in, and setting up a "manual" project in your local 
-   clone of this repository; make sure you generate a token, which can be set to never expire
-4. Configure `systemProp.sonar.login` in your gradle-local.properties (creating that file in the root of this project if necessary)
-5. Run `./gradlew sonar` or `./gradlew test sonar` if you want code coverage to be reported
+1. Go to http://localhost:9000 .
+2. Login as admin/admin. SonarQube will ask you to change this password; you can choose whatever you want ("password" works).
+3. Click on "Create project manually".
+4. Enter "marklogic-kafka-connector" for the Project Display Name; use that as the Project Key as well.
+5. Enter "master" as the main branch name.
+6. Click on "Next".
+8. Click on "Use the global setting" and then "Create project".
+8. On the "Analysis Method" page, click on "Locally".
+9. In the "Provide a token" panel, click on "Generate". Copy the token.
+10. Update `systemProp.sonar.token=<Replace With Your Sonar Token>` in `gradle.properties` in the root of your project.
+
+To run SonarQube, run the following Gradle tasks, which will run all the tests with code coverage and then generate
+a quality report with SonarQube:
+
+    ./gradlew test sonar
+
+If you do not update `systemProp.sonar.token` in your `gradle.properties` file, you can specify the token via the
+following:
+
+    ./gradlew test sonar -Dsonar.token=paste your token here
+
+When that completes, you can find the results at http://localhost:9000/dashboard?id=marklogic-kafka-connector
+
+Click on that link. If it's the first time you've run the report, you'll see all issues. If you've run the report
+before, then SonarQube will show "New Code" by default. That's handy, as you can use that to quickly see any issues
+you've introduced on the feature branch you're working on. You can then click on "Overall Code" to see all issues.
+
+Note that if you only need results on code smells and vulnerabilities, you can repeatedly run `./gradlew sonar`
+without having to re-run the tests.
 
 For more assistance with Sonar and Gradle, see the [Sonar Gradle plugin docs](https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner-for-gradle/).
 

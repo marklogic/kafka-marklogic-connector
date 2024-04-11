@@ -1,0 +1,50 @@
+version: '3.8'
+name: marklogic-kafka
+
+services:
+
+  marklogic:
+    image: "marklogicdb/marklogic-db:11.1.0-centos-1.1.0"
+    platform: linux/amd64
+    environment:
+      - INSTALL_CONVERTERS=true
+      - MARKLOGIC_INIT=true
+      - MARKLOGIC_ADMIN_USERNAME=admin
+      - MARKLOGIC_ADMIN_PASSWORD=admin
+    volumes:
+      - ./docker/marklogic/logs:/var/opt/MarkLogic/Logs
+    ports:
+      - "8000-8002:8000-8002"
+      - "8018-8019:8018-8019"
+
+  # Copied from https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/install-the-server/#example-docker-compose-configuration .
+  sonarqube:
+    image: sonarqube:10.3.0-community
+    depends_on:
+      - postgres
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql:
+  postgresql_data:
