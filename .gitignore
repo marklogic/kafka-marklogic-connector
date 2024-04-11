@@ -4,9 +4,10 @@
 build
 out
 gradle-local.properties
+docker
 
 bin
-.vscode  
+.vscode
 *.class
 
 .classpath
