@@ -18,7 +18,6 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.MarkLogicIOException;
 import com.marklogic.client.document.JSONDocumentManager;
 import com.marklogic.client.document.XMLDocumentManager;
-import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.junit5.PermissionsTester;
@@ -149,8 +148,7 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
 
     private void givenConstraintStoreWithoutPermissions() {
         DocumentMetadataHandle metadataHandle = new DocumentMetadataHandle();
-        DefaultDocumentPermissionsParser permissionsParser = new DefaultDocumentPermissionsParser();
-        permissionsParser.parsePermissions("admin,read,admin,update", metadataHandle.getPermissions());
+        metadataHandle.getPermissions().addFromDelimitedString("admin,read,admin,update");
         String badConstraintState = "{\"A\": \"a\"}";
         JSONDocumentManager mgr = getDatabaseClient().newJSONDocumentManager();
         StringHandle handle = new StringHandle(badConstraintState);
