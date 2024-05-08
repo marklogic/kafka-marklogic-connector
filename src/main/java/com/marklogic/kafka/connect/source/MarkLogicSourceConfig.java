@@ -15,7 +15,6 @@
  */
 package com.marklogic.kafka.connect.source;
 
-import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.kafka.connect.MarkLogicConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -51,7 +50,6 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
     public static final String WAIT_TIME = "ml.source.waitTime";
 
     public static final ConfigDef CONFIG_DEF = getConfigDef();
-    private static final DefaultDocumentPermissionsParser permissionsParser = new DefaultDocumentPermissionsParser();
     private static final String GROUP = "MarkLogic Source Settings";
 
     private static ConfigDef getConfigDef() {
@@ -113,7 +111,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
             if (StringUtils.hasText((String) value)) {
                 DocumentMetadataHandle metadata = new DocumentMetadataHandle();
                 try {
-                    permissionsParser.parsePermissions((String) value, metadata.getPermissions());
+                    metadata.getPermissions().addFromDelimitedString((String) value);
                 } catch (IllegalArgumentException ex) {
                     throw new ConfigException(ex.getMessage());
                 }

@@ -314,7 +314,7 @@ class WriteFailureHandler extends LoggingObject implements WriteFailureListener 
 
     private void logFailedWriteEvent(WriteEvent writeEvent, DocumentMetadataHandle metadata) {
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
-        if (values != null) {
+        if ((values != null) && logger.isErrorEnabled()) {
             logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
                 writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
                 values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
