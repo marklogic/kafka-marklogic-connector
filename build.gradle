@@ -40,7 +40,7 @@ dependencies {
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  implementation 'com.marklogic:ml-javaclient-util:4.6.0'
+  implementation 'com.marklogic:ml-javaclient-util:4.7.0'
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
   implementation "com.marklogic:ml-app-deployer:4.6.0"
 
