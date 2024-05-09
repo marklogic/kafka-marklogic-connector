@@ -6,7 +6,7 @@
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "tasks.max": "1",
-    "ml.connection.host": "localhost",
+    "ml.connection.host": "marklogic",
     "ml.connection.port": 8018,
     "ml.connection.username": "kafka-test-user",
     "ml.connection.password": "kafkatest",

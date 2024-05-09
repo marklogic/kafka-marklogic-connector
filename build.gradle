@@ -214,72 +214,47 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
   destinationDirectory = file('build/distro')
 }
 
-task installConnectorInConfluent(type: Exec, group: confluentTestingGroup, dependsOn: [connectorArchive]) {
-  description = "Uses 'Confluent-hub' to install the connector in your local Confluent Platform"
-  commandLine "confluent-hub", "install", "--no-prompt", "build/distro/${baseArchiveName}.zip"
-  ignoreExitValue = true
-}
+// Tasks for working with Confluent Platform running locally.
+// See "Testing with Confluent Platform" in CONTRIBUTING.md
 
-// See https://docs.confluent.io/confluent-cli/current/command-reference/local/confluent_local_destroy.html
-task destroyLocalConfluent(type: Exec, group: confluentTestingGroup) {
-  description = "Destroy the local Confluent Platform instance"
-  commandLine "confluent", "local", "destroy"
-  // Main reason this will fail is because Confluent is not running, which shouldn't cause a failure
-  ignoreExitValue = true
-}
-
-// See https://docs.confluent.io/confluent-cli/current/command-reference/local/services/confluent_local_services_start.html
-task startLocalConfluent(type: Exec, group: confluentTestingGroup) {
-  description = "Convenience task for starting a local instance of Confluent Platform"
-  commandLine "confluent", "local", "services", "start"
+task installConnectorInConfluent(type: Copy, dependsOn: connectorArchive, group: confluentTestingGroup) {
+  description = "Copies the connector's archive directory to the Docker volume shared with the Connect server"
+  from "build/connectorArchive"
+  into "src/test/confluent-platform-example/docker/confluent-marklogic-components"
 }
 
 task loadDatagenPurchasesConnector(type: Exec, group: confluentTestingGroup) {
   description = "Load an instance of the Datagen connector into Confluent Platform for sending JSON documents to " +
     "the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "datagen-purchases-source", "-c",
-    "src/test/resources/confluent/datagen-purchases-source.json"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@src/test/resources/confluent/datagen-purchases-source.json", "http://localhost:8083/connectors"
 }
 
 task loadMarkLogicPurchasesSinkConnector(type: Exec, group: confluentTestingGroup) {
   description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
     "MarkLogic from the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-sink", "-c",
-    "src/test/resources/confluent/marklogic-purchases-sink.json"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@src/test/resources/confluent/marklogic-purchases-sink.json", "http://localhost:8083/connectors"
 }
 
 task loadMarkLogicPurchasesSourceConnector(type: Exec, group: confluentTestingGroup) {
   description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for reading rows from " +
     "the demo/purchases view"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-source", "-c",
-    "src/test/resources/confluent/marklogic-purchases-source.json"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@src/test/resources/confluent/marklogic-purchases-source.json", "http://localhost:8083/connectors"
 }
 
 task loadMarkLogicAuthorsSourceConnector(type: Exec, group: confluentTestingGroup) {
   description = "Loads a source connector that retrieves authors from the citations.xml file, which is also used for " +
     "all the automated tests"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-authors-source", "-c",
-    "src/test/resources/confluent/marklogic-authors-source.json"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@src/test/resources/confluent/marklogic-authors-source.json", "http://localhost:8083/connectors"
 }
 
 task loadMarkLogicEmployeesSourceConnector(type: Exec, group: confluentTestingGroup) {
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-employees-source", "-c",
-    "src/test/resources/confluent/marklogic-employees-source.json"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@src/test/resources/confluent/marklogic-employees-source.json", "http://localhost:8083/connectors"
 }
-
-task setupLocalConfluent(group: confluentTestingGroup) {
-  description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
-}
-
-// Temporarily only loading the source connector to make manual testing easier, will re-enable all of these before 1.8.0
-//setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
-setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicEmployeesSourceConnector
-
-loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
-loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
-loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
-loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
-loadMarkLogicEmployeesSourceConnector.mustRunAfter startLocalConfluent
 
 task insertAuthors(type: Test) {
   useJUnitPlatform()
