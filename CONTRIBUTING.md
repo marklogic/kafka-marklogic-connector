@@ -1,5 +1,5 @@
 This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
-develop and test the connector, either via a local install of Confluent Platform or of the regular Kafka distribution.
+develop and test the connector, either via a Docker cluster install of Confluent Platform or of the regular Kafka distribution.
 
 Before beginning, you will need to install Java (either version 8, 11, or 17) and also have a MarkLogic instance
 available. It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in Confluent 7.x and is
@@ -12,7 +12,7 @@ points to your Java installation.
 # Running the test suite
 
 The test suite for the MarkLogic Kafka connector, found at `src/test/resources`, requires that an application first be
-deployed to a MarkLogic instance. This application is deployed via Docker and [ml-gradle](https://github.com/marklogic-community/ml-gradle). 
+deployed to a MarkLogic instance. This application is deployed via Docker and [ml-gradle](https://github.com/marklogic-community/ml-gradle).
 
 Note that you do not need to install [Gradle](https://gradle.org/) - the `gradlew` program used below will install the
 appropriate version of Gradle if you do not have it installed already. 
@@ -82,74 +82,60 @@ web application.
 
 To try out the MarkLogic Kafka connector via the Confluent Platform, follow the steps below.
 
-## Install Confluent Platform with the MarkLogic Kafka connector
+## Build a Confluent Platform cluster with the MarkLogic and the Kafka connector
 
-First, [install the Confluent Platform](https://docs.confluent.io/platform/current/installation/installing_cp/zip-tar.html)
-(the "Docker" option has not yet been tested). It is recommended to configure `CONFLUENT_HOME` as described at that
-page, as that simplifies running the `confluent` commands below. 
+### Build the Confluent Platform cluster via Docker
 
-To verify that you have Confluent Platform installed successfully, run the following:
+**Note** - This installs a separate Docker cluster and is not the same as the Docker cluster described in the test
+section at the top of this document.
 
-    confluent local services status
-
-This should show that each component of Confluent Platform is not running; you should see something like the following
-displayed:
-
+Use the docker-compose file in "src/test/confluent-platform-example" to build the Confluent Platform Docker cluster
+with the command ```docker-compose -f src/test/confluent-platform-example/docker-compose.yml up -d --build```.
+This file is based on the Confluent files and instructions at
+[Install a Confluent Platform cluster in Docker using a Confluent docker-compose file]
+(https://docs.confluent.io/platform/current/platform-quickstart.html).
+When the setup is complete, you should be able to run
+```docker-compose -f src/test/confluent-platform-example/docker-compose.yml ps``` and see the following results.
 ```
-Connect is [DOWN]
-Control Center is [DOWN]
-Kafka is [DOWN]
-Kafka REST is [DOWN]
-ksqlDB Server is [DOWN]
-Schema Registry is [DOWN]
-ZooKeeper is [DOWN]
-```
-
-The Kafka [Datagen Source Connector](https://www.confluent.io/hub/confluentinc/kafka-connect-datagen) is a convenient 
-tool for local development and testing. Install it via the following:
-
-    confluent-hub install confluentinc/kafka-connect-datagen:0.6.0
-
-Then build and install the connector to the Confluent Platform indicated by your $CONFLUENT_HOME environment variable:
-
-    ./gradlew clean installConnectorInConfluent
-
-Note that any time you modify the MarkLogic Kafka connector code, you'll need to repeat the 
-`./gradlew clean installConnectorInConfluent` step. Note that `clean` is included to ensure that in case you've changed 
-any connector dependencies, old dependencies will not be included in the connector archive.
-
-Next, start Confluent:
-
-    confluent local services start
-
-To verify that your Confluent installation is running properly, you can run `confluent local services status` and
-see logging similar to this:
-
-```
-Connect is [UP]
-Control Center is [UP]
-Kafka is [UP]
-Kafka REST is [UP]
-ksqlDB Server is [UP]
-Schema Registry is [UP]
-ZooKeeper is [UP]
+    Name                    Command               State                               Ports
+--------------------------------------------------------------------------------------------------------------
+broker            /etc/confluent/docker/run        Up      0.0.0.0:9092->9092/tcp,:::9092->9092/tcp,
+0.0.0.0:9101->9101/tcp,:::9101->9101/tcp
+connect           /etc/confluent/docker/run        Up      0.0.0.0:8083->8083/tcp,:::8083->8083/tcp, 9092/tcp
+control-center    /etc/confluent/docker/run        Up      0.0.0.0:9021->9021/tcp,:::9021->9021/tcp
+ksql-datagen      bash -c echo Waiting for K ...   Up
+ksqldb-cli        /bin/sh                          Up
+ksqldb-server     /etc/confluent/docker/run        Up      0.0.0.0:8088->8088/tcp,:::8088->8088/tcp
+rest-proxy        /etc/confluent/docker/run        Up      0.0.0.0:8082->8082/tcp,:::8082->8082/tcp
+schema-registry   /etc/confluent/docker/run        Up      0.0.0.0:8081->8081/tcp,:::8081->8081/tcp
 ```
 
-You can now visit http://localhost:9021 to access [Confluent's Control Center](https://docs.confluent.io/platform/current/control-center/index.html)
-application.
+You can now visit http://localhost:9021 to access [Confluent's Control Center](https://docs.confluent.io/platform/current/control-center/index.html) application.
 
 Within Control Center, click on "controlcenter.cluster" to access the configuration for the Kafka cluster.
 
+### Build and install the MarkLogic Kafka Connector
+1. Build the connectorArchive target using ```./gradlew installConnectorInConfluent```.
+2. Restart the "connect" server in the Docker "confluent-platform-example" cluster.
+3. Verify the connector has loaded properly.
+   1. Click on "Connect" in the left sidebar.
+   2. Click on the "connect-default" cluster.
+   3. Click on the "+ Add connector" tile.
+   4. The "Browse" screen should several tiles including "MarkLogicSinkConnector" and "MarkLogicSourceConnector".
+
+
+### Install the test application on the MarkLogic server in the Docker cluster
+In the project root directory, run ```./gradlew -i mlDeploy```
 
 ## Load a Datagen connector instance
 
-To test out the MarkLogic Kafka connector, you should first load an instance of the [Kafka Datagen connector]
-(https://github.com/confluentinc/kafka-connect-datagen). The Datagen connector is a Kafka source connector that can
-generate test data which can then be fed to the MarkLogic Kafka connector. The following Gradle command will automate
-loading an instance of the Datagen connector that will write JSON messages to a `purchases` topic every second:
+### Via Gradle
+```./gradlew -i loadDatagenPurchasesConnector```
 
-    ./gradlew loadDatagenPurchasesConnector
+### Via curl
+```curl -X POST -H "Content-Type: application/json" --data @src/test/resources/confluent/datagen-purchases-source.json http://localhost:8083/connectors```
 
+### Verifying the new connector instance
 In the Control Center GUI, you can verify the Datagen connector instance:
 
 1. Click on "Connect" in the left sidebar
@@ -164,12 +150,13 @@ Additionally, you can examine the data sent by the Datagen connector to the `pur
 
 ## Load a MarkLogic Kafka sink connector instance
 
-Next, load an instance of the MarkLogic Kafka connector that will read data from the `purchases` topic and write
-it to MarkLogic. The `src/test/resources/confluent/marklogic-purchases-sink.json` file defines the connection
-properties for MarkLogic. You can adjust this file to suit your testing needs.
+### Via Gradle
+```./gradlew -i loadMarkLogicPurchasesSinkConnector```
 
-    ./gradlew loadMarkLogicPurchasesSinkConnector
+### Via curl
+```curl -X POST -H "Content-Type: application/json" --data @src/test/resources/confluent/marklogic-purchases-sink.json http://localhost:8083/connectors```
 
+### Verifying the new connector instance
 In the Control Center GUI, you can verify the MarkLogic Kafka connector instance:
 
 1. Click on "Connect" in the left sidebar
@@ -179,6 +166,7 @@ In the Control Center GUI, you can verify the MarkLogic Kafka connector instance
 You can then verify that data is being written to MarkLogic by using MarkLogic's qconsole application to inspect the
 contents of the `kafka-test-content` database.
 
+### Via the web application
 You can also manually configure an instance of the sink connector:
 
 1. Click on "Connect" in the left sidebar
@@ -196,14 +184,16 @@ In the list of connectors in Control Center, the connector will initially have a
 After it starts successfully, it will have a status of "Running". 
 
 ## Load a MarkLogic Kafka source connector instance
+You can also load an instance of the MarkLogic Kafka source connector that will read rows from the `demo/purchases`
+view that is created via the TDE template at `src/test/ml-schemas/tde/purchases.json`.
 
-You can also load an instance of the MarkLogic Kafka source connector that will read rows from the `demo/purchases` 
-view that is created via the TDE template at `src/test/ml-schemas/tde/purchases.json`. 
-The `src/test/reosurces/confluent/marklogic-purchases-source.json` file defines the connection properties for MarkLogic.
-You can adjust this file to suit your testing needs.
+### Via Gradle
+```./gradlew -i loadMarkLogicPurchasesSourceConnector```
 
-    ./gradlew loadMarkLogicPurchasesSourceConnector
+### Via curl
+```curl -X POST -H "Content-Type: application/json" --data @src/test/resources/confluent/marklogic-purchases-source.json http://localhost:8083/connectors```
 
+### Verifying the new connector instance
 In the Control Center GUI, you can verify the MarkLogic Kafka connector instance:
 
 1. Click on "Connect" in the left sidebar
@@ -213,6 +203,7 @@ In the Control Center GUI, you can verify the MarkLogic Kafka connector instance
 You can verify that data is being read from the `demo/purchases` view and sent to the `marklogic-purchases` topic 
 by clicking on "Topics" in Confluent Platform and then selecting "marklogic-purchases".
 
+### Via the web application
 You can also manually configure an instance of the source connector:
 
 1. Click on "Connect" in the left sidebar
