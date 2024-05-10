@@ -84,7 +84,7 @@ class InsertAuthorsTest extends AbstractIntegrationTest {
         }
 
         DatabaseClientConfig config = testConfig.databaseClientConfig();
-        config.setPort(8018);
+        config.setPort(8010);
         DatabaseClient client = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(config);
 
         XMLDocumentManager mgr = client.newXMLDocumentManager();

@@ -6,7 +6,7 @@
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "tasks.max": "1",
     "ml.connection.host": "marklogic",
-    "ml.connection.port": 8018,
+    "ml.connection.port": 8011,
     "ml.connection.username": "admin",
     "ml.connection.password": "admin",
     "ml.connection.securityContextType": "DIGEST",
