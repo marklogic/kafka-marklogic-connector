@@ -1,6 +1,10 @@
 {
-  "database-name": "%%DATABASE%%",
-  "schema-database": "%%SCHEMAS_DATABASE%%",
+  "database-name": "%%mlFinalDbName%%",
+  "schema-database": "%%mlFinalSchemasDbName%%",
+  "triggers-database": "%%mlFinalTriggersDbName%%",
+  "triple-index": true,
+  "collection-lexicon": true,
+  "uri-lexicon": true,
   "range-element-index": [
     {
       "collation": "",

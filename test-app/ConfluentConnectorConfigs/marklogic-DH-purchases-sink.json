@@ -1,5 +1,5 @@
 {
-  "name": "marklogic-purchases-sink",
+  "name": "marklogic-DH-purchases-sink",
   "config": {
     "topics": "purchases",
     "connector.class": "com.marklogic.kafka.connect.sink.MarkLogicSinkConnector",
@@ -7,14 +7,17 @@
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "tasks.max": "1",
     "ml.connection.host": "marklogic",
-    "ml.connection.port": 8018,
-    "ml.connection.username": "kafka-test-user",
-    "ml.connection.password": "kafkatest",
+    "ml.connection.port": 8010,
+    "ml.connection.username": "dhf-developer-user",
+    "ml.connection.password": "dhftest",
     "ml.connection.securityContextType": "DIGEST",
     "ml.document.format": "JSON",
     "ml.document.uriPrefix": "/purchase/",
     "ml.document.uriSuffix": ".json",
     "ml.document.collections": "purchases,kafka-data",
-    "ml.document.permissions": "kafka-test-minimal-user,read,kafka-test-minimal-user,update"
+    "ml.document.permissions": "kafka-test-minimal-user,read,kafka-test-minimal-user,update",
+    "ml.datahub.flow.name": "example1",
+    "ml.datahub.flow.steps": "1",
+    "ml.datahub.flow.logResponse": true
   }
 }
