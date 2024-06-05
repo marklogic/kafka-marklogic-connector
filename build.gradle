@@ -5,7 +5,7 @@ plugins {
   id "com.github.jk1.dependency-license-report" version "1.19"
 
   // Only used for testing
-  id 'com.marklogic.ml-gradle' version '4.7.0'
+  id 'com.marklogic.ml-gradle' version '4.8.0'
   id 'jacoco'
   id "org.sonarqube" version "4.4.1.3373"
 
@@ -42,9 +42,9 @@ dependencies {
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly "org.slf4j:slf4j-api:2.0.13"
 
-  implementation 'com.marklogic:ml-javaclient-util:4.7.0'
+  implementation 'com.marklogic:ml-javaclient-util:4.8.0'
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:4.7.0"
+  implementation "com.marklogic:ml-app-deployer:4.8.0"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.15.3"
 
