@@ -37,6 +37,8 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
     public static final String DMSDK_TRANSFORM_PARAMS = "ml.dmsdk.transformParams";
     public static final String DMSDK_TRANSFORM_PARAMS_DELIMITER = "ml.dmsdk.transformParamsDelimiter";
     public static final String DMSDK_INCLUDE_KAFKA_METADATA = "ml.dmsdk.includeKafkaMetadata";
+    public static final String DMSDK_INCLUDE_KAFKA_HEADERS = "ml.dmsdk.includeKafkaHeaders";
+    public static final String DMSDK_INCLUDE_KAFKA_HEADERS_PREFIX = "ml.dmsdk.includeKafkaHeaders.prefix";
 
     public static final String BULK_DS_ENDPOINT_URI = "ml.sink.bulkds.endpointUri";
     public static final String BULK_DS_BATCH_SIZE = "ml.sink.bulkds.batchSize";
@@ -118,6 +120,12 @@ public class MarkLogicSinkConfig extends MarkLogicConfig {
             .define(DMSDK_INCLUDE_KAFKA_METADATA, Type.BOOLEAN, null, Importance.LOW,
                 "Set to true so that Kafka record metadata is added to document metadata before it is written. If the document fails to be written, the Kafka record metadata will be logged as well.",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "DMSDK Include Kafka Metadata")
+            .define(DMSDK_INCLUDE_KAFKA_HEADERS, Type.BOOLEAN, null, Importance.LOW,
+                "Set to true so that Kafka record headers are added to document metadata before it is written. If the document fails to be written, the Kafka record headers will be logged as well.",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "DMSDK Include Kafka Headers")
+            .define(DMSDK_INCLUDE_KAFKA_HEADERS_PREFIX, Type.STRING, null, Importance.LOW,
+                "Optional value of the prefix to be added to the Kafka headers when included in document metadata.",
+                GROUP, -1, ConfigDef.Width.MEDIUM, "DMSDK Kafka Header Prefix")
 
             .define(BULK_DS_ENDPOINT_URI, Type.STRING, null, Importance.LOW,
                 "Defines the URI of a Bulk Data Services endpoint for writing data. " +

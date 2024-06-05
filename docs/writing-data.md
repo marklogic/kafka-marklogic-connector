@@ -113,6 +113,24 @@ This will result in the following pieces of Kafka record metadata being in each 
 - `kafka.partition` = the partition of the Kafka record
 - `kafka.timestamp` = the timestamp of the Kafka record
 
+### Including Kafka headers
+
+Each Kafka record passed to the MarkLogic connector also has headers that may contain useful information which can be
+included in the metadata written with documents. This includes the headers that are included in Kafka records by
+default as well as any custom headers. Kafka headers can be included in each document by configuring the following
+property:
+
+- `ml.dmsdk.includeKafkaHeaders` = `true` to include Kafka headers
+
+When the headers are added to the document metadata, they are simply given the same name as the key for the header.
+However, you may also specify a prefix that will be prepended to each header key. To set that prefix, use the following
+property:
+
+- `ml.dmsdk.includeKafkaHeaders.prefix` = `<prefix>` to be prepended to header keys in the metadata.
+
+The headers that are on the Kafka records will depend on the Kafka distribution you are using and the message producer
+configuration.
+
 ### Configuring DMSDK performance
 
 The performance of how data is written to MarkLogic can be configured via the following properties:
