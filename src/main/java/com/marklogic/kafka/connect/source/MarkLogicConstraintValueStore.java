@@ -18,7 +18,6 @@ package com.marklogic.kafka.connect.source;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.document.DocumentDescriptor;
 import com.marklogic.client.document.JSONDocumentManager;
-import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.JacksonHandle;
@@ -29,7 +28,6 @@ import org.springframework.util.StringUtils;
 import java.util.Map;
 
 public class MarkLogicConstraintValueStore extends ConstraintValueStore {
-    private final DefaultDocumentPermissionsParser permissionsParser = new DefaultDocumentPermissionsParser();
     private final DatabaseClient databaseClient;
     private final String constraintStorageUri;
     private String constraintStoragePermissions;
@@ -69,7 +67,7 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
 
     private void insertPermissions(DocumentMetadataHandle metadataHandle) {
         if (StringUtils.hasText(constraintStoragePermissions)) {
-            permissionsParser.parsePermissions(constraintStoragePermissions, metadataHandle.getPermissions());
+            metadataHandle.getPermissions().addFromDelimitedString(constraintStoragePermissions);
         }
     }
 

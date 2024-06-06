@@ -1,0 +1,8 @@
+{
+  "user-name": "dhf-developer-user",
+  "password": "dhftest",
+  "role": [
+    "kafka-test-minimal-user",
+    "data-hub-developer"
+  ]
+}

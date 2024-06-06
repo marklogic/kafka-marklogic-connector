@@ -1,0 +1,55 @@
+plugins {
+  id 'net.saliman.properties' version '1.5.2'
+  id "com.marklogic.ml-data-hub" version "6.0.0"
+}
+
+// Tasks for working with Confluent Platform running locally.
+// See "Testing with Confluent Platform" in CONTRIBUTING.md
+
+task loadDatagenPurchasesConnector(type: Exec) {
+  description = "Load an instance of the Datagen connector into Confluent Platform for sending JSON documents to " +
+    "the 'purchases' topic"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/datagen-purchases-source.json", "http://localhost:8083/connectors"
+}
+
+task loadMarkLogicPurchasesSinkConnector(type: Exec) {
+  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
+    "MarkLogic from the 'purchases' topic"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/marklogic-purchases-sink.json", "http://localhost:8083/connectors"
+}
+
+task loadMarkLogicPurchasesSourceConnector(type: Exec) {
+  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for reading rows from " +
+    "the demo/purchases view"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/marklogic-purchases-source.json", "http://localhost:8083/connectors"
+}
+
+task loadMarkLogicAuthorsSourceConnector(type: Exec) {
+  description = "Loads a source connector that retrieves authors from the citations.xml file, which is also used for " +
+    "all the automated tests"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/marklogic-authors-source.json", "http://localhost:8083/connectors"
+}
+
+task loadMarkLogicEmployeesSourceConnector(type: Exec) {
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/marklogic-employees-source.json", "http://localhost:8083/connectors"
+}
+
+task insertAuthors(type: Test) {
+  useJUnitPlatform()
+  systemProperty "AUTHOR_IDS", authorIds
+  description = "Insert a new author into the kafka-test-content database via a new citations XML document; " +
+    "use e.g. -PauthorIds=7,8,9 to insert 3 new authors with IDs of 7, 8, and 9"
+  include "com/marklogic/kafka/connect/source/debug/InsertAuthorsTest.class"
+}
+
+task loadMarkLogicDHPurchasesSinkConnector(type: Exec) {
+  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
+    "MarkLogic from the 'purchases' topic"
+  commandLine "curl", "-s", "-X", "POST", "-H", "Content-Type: application/json",
+    "--data", "@ConfluentConnectorConfigs/marklogic-DH-purchases-sink.json", "http://localhost:8083/connectors"
+}

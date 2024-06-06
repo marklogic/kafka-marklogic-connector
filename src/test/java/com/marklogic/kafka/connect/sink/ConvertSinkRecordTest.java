@@ -24,13 +24,13 @@ import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
 import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -78,7 +78,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void noPropertiesSet() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
@@ -221,7 +221,7 @@ class ConvertSinkRecordTest {
 
     @Test
     void includeKafkaMetadata() {
-        Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        Map<String, Object> kafkaConfig = new HashMap<>();
         kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, true);
         converter = new DefaultSinkRecordConverter(kafkaConfig);
 
@@ -258,6 +258,89 @@ class ConvertSinkRecordTest {
         assertNull(values.get("kafka-partition"));
         assertNull(values.get("kafka-timestamp"));
         assertNull(values.get("kafka-topic"));
+    }
+
+    @Test
+    void includeKafkaHeadersWithPrefix() {
+        Map<String, Object> kafkaConfig = new HashMap<>();
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS, true);
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS_PREFIX, "kafkaHeader_");
+        converter = new DefaultSinkRecordConverter(kafkaConfig);
+
+        final int partition = 5;
+        final long offset = 2;
+        final String key = "some-key";
+        final Long timestamp = System.currentTimeMillis();
+        List<Header> headers = new ArrayList<Header>() {{
+            add(new TestHeaders("A", "1"));
+            add(new TestHeaders("B", "2"));
+        }};
+        DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
+            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        assertEquals("1", values.get("kafkaHeader_A"));
+        assertEquals("2", values.get("kafkaHeader_B"));
+        assertNull(values.get("kafka-offset"));
+    }
+
+    @Test
+    void includeKafkaHeadersWithoutPrefix() {
+        Map<String, Object> kafkaConfig = new HashMap<>();
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS, true);
+        converter = new DefaultSinkRecordConverter(kafkaConfig);
+
+        final int partition = 5;
+        final long offset = 2;
+        final String key = "some-key";
+        final Long timestamp = System.currentTimeMillis();
+        List<Header> headers = new ArrayList<Header>() {{
+            add(new TestHeaders("A", "1"));
+            add(new TestHeaders("B", "2"));
+        }};
+        DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
+            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        assertEquals("1", values.get("A"));
+        assertEquals("2", values.get("B"));
+        assertNull(values.get("kafka-offset"));
+    }
+
+    static class TestHeaders implements Header {
+        private final String key;
+        private final String value;
+        TestHeaders(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String key() {
+            return key;
+        }
+
+        @Override
+        public Schema schema() {
+            return null;
+        }
+
+        @Override
+        public Object value() {
+            return value;
+        }
+
+        @Override
+        public Header with(Schema schema, Object o) {
+            return null;
+        }
+
+        @Override
+        public Header rename(String s) {
+            return null;
+        }
     }
 
     private SinkRecord newSinkRecord(Object value) {

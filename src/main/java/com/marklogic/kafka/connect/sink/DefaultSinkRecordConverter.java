@@ -52,13 +52,19 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
     private DocumentWriteOperationBuilder documentWriteOperationBuilder;
     private Format format;
     private String mimeType;
-    private boolean addTopicToCollections = false;
-    private boolean includeKafkaMetadata = false;
-    private IdStrategy idStrategy;
+    private final boolean addTopicToCollections;
+    private final boolean includeKafkaMetadata;
+    private final boolean includeKafkaHeaders;
+    private final String kafkaHeadersPrefix;
+
+    private final IdStrategy idStrategy;
 
     public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
         this.addTopicToCollections = ConfigUtil.getBoolean(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, parsedConfig);
         this.includeKafkaMetadata = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig);
+        this.includeKafkaHeaders = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS, parsedConfig);
+        String configPrefixValue = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS_PREFIX);
+        this.kafkaHeadersPrefix = (configPrefixValue == null) ? "" : configPrefixValue;
 
         documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
             .withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
@@ -94,8 +100,20 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
         if (this.addTopicToCollections) {
             metadata.getCollections().add(sinkRecord.topic());
         }
-        if (this.includeKafkaMetadata) {
+        if (this.includeKafkaMetadata || this.includeKafkaHeaders) {
             DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+            addKafkaMetadataToDocumentMetadata(sinkRecord, values);
+            if (this.includeKafkaHeaders) {
+                sinkRecord.headers().forEach(
+                    header -> values.add(kafkaHeadersPrefix + header.key(), header.value().toString())
+                );
+            }
+        }
+        return metadata;
+    }
+
+    private void addKafkaMetadataToDocumentMetadata(SinkRecord sinkRecord, DocumentMetadataHandle.DocumentMetadataValues values) {
+        if (this.includeKafkaMetadata) {
             Object key = sinkRecord.key();
             if (key != null) {
                 values.add("kafka-key", key.toString());
@@ -111,7 +129,6 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
             }
             values.add("kafka-topic", sinkRecord.topic());
         }
-        return metadata;
     }
 
     /**

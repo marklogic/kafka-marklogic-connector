@@ -16,7 +16,6 @@
 package com.marklogic.kafka.connect.source;
 
 import com.marklogic.client.document.DocumentWriteOperation;
-import com.marklogic.client.ext.util.DefaultDocumentPermissionsParser;
 import com.marklogic.client.impl.DocumentWriteOperationImpl;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.marker.AbstractWriteHandle;
@@ -43,7 +42,7 @@ public class DocumentWriteOperationBuilder {
             metadata.getCollections().addAll(collections.trim().split(","));
         }
         if (StringUtils.hasText(permissions)) {
-            new DefaultDocumentPermissionsParser().parsePermissions(permissions.trim(), metadata.getPermissions());
+            metadata.getPermissions().addFromDelimitedString(permissions.trim());
         }
 
         if (StringUtils.hasText(uriPrefix)) {

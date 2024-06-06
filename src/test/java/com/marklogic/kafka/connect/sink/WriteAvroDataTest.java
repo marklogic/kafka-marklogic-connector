@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class WriteAvroDataTest extends AbstractIntegrationSinkTest {
+class WriteAvroDataTest extends AbstractIntegrationSinkTest {
 
     /**
      * Verifies that an instance of an Avro-generated class - AvroTestClass - can be serialized to a byte array and

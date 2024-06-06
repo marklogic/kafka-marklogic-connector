@@ -113,6 +113,24 @@ This will result in the following pieces of Kafka record metadata being in each 
 - `kafka.partition` = the partition of the Kafka record
 - `kafka.timestamp` = the timestamp of the Kafka record
 
+### Including Kafka headers
+
+Each Kafka record passed to the MarkLogic connector also has headers that may contain useful information which can be
+included in the metadata written with documents. This includes the headers that are included in Kafka records by
+default as well as any custom headers. Kafka headers can be included in each document by configuring the following
+property:
+
+- `ml.dmsdk.includeKafkaHeaders` = `true` to include Kafka headers
+
+When the headers are added to the document metadata, they are simply given the same name as the key for the header.
+However, you may also specify a prefix that will be prepended to each header key. To set that prefix, use the following
+property:
+
+- `ml.dmsdk.includeKafkaHeaders.prefix` = `<prefix>` to be prepended to header keys in the metadata.
+
+The headers that are on the Kafka records will depend on the Kafka distribution you are using and the message producer
+configuration.
+
 ### Configuring DMSDK performance
 
 The performance of how data is written to MarkLogic can be configured via the following properties:
@@ -211,7 +229,7 @@ endpointConstants = fn.head(xdmp.fromJSON(endpointConstants));
 
 for (let item of inputSequence) {
   item = fn.head(xdmp.fromJSON(item));
-  // TODO Determine what to do with each item
+  // Determine what to do with each item
 }
 ```
 
@@ -311,3 +329,10 @@ required to catch any error that occurs, an unexpected error in the sink connect
 and logged by Kafka. However, nothing will be sent to the user-configured DLQ topic in this scenario as the error will
 not be associated with a particular sink record. Kafka and MarkLogic server logs should be examined to determine the
 cause of the error. 
+
+## JSON-based Connector Configuration
+
+Some Kafka environments permit REST-based instantiation of connectors. Confluent is one of those environments.
+[Please see the Confluent documentation](https://docs.confluent.io/kafka-connectors/maprdb/current/map_r_d_b_sink_connector_example.html)
+to read about this technique. Examples of JSON files to use with the REST service can be found in
+examples/ConfluentConnectorConfigs.

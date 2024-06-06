@@ -5,7 +5,7 @@ plugins {
   id "com.github.jk1.dependency-license-report" version "1.19"
 
   // Only used for testing
-  id 'com.marklogic.ml-gradle' version '4.6.0'
+  id 'com.marklogic.ml-gradle' version '4.8.0'
   id 'jacoco'
   id "org.sonarqube" version "4.4.1.3373"
 
@@ -31,24 +31,26 @@ configurations {
 }
 
 ext {
-  kafkaVersion = "3.5.1"
+  // Even though Kafka Connect 3.7.0 is out, we're staying with 3.6.1 in order to continue
+  // using the third-party Kafka JUnit tool. See https://github.com/mguenther/kafka-junit?tab=readme-ov-file
+  kafkaVersion = "3.6.1"
 }
 
 dependencies {
   compileOnly "org.apache.kafka:connect-api:${kafkaVersion}"
   compileOnly "org.apache.kafka:connect-json:${kafkaVersion}"
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
-  compileOnly "org.slf4j:slf4j-api:1.7.36"
+  compileOnly "org.slf4j:slf4j-api:2.0.13"
 
-  implementation 'com.marklogic:ml-javaclient-util:4.6.0'
+  implementation 'com.marklogic:ml-javaclient-util:4.8.0'
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:4.6.0"
+  implementation "com.marklogic:ml-app-deployer:4.8.0"
 
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.15.2"
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.15.3"
 
   // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
   // may work together, but that behavior is not guaranteed.
-  implementation("com.marklogic:marklogic-data-hub:5.8.0") {
+  implementation("com.marklogic:marklogic-data-hub:6.0.0") {
     exclude module: "marklogic-client-api"
     exclude module: "ml-javaclient-util"
     exclude module: "ml-app-deployer"
@@ -63,13 +65,13 @@ dependencies {
 
   testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
-  testImplementation 'net.mguenther.kafka:kafka-junit:3.5.1'
+  testImplementation 'net.mguenther.kafka:kafka-junit:3.6.0'
 
-  testImplementation "org.apache.avro:avro-compiler:1.11.1"
+  testImplementation "org.apache.avro:avro-compiler:1.11.3"
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.3.5"
-  testImplementation "org.slf4j:jcl-over-slf4j:1.7.36"
+  testImplementation "ch.qos.logback:logback-classic:1.3.14"
+  testImplementation "org.slf4j:jcl-over-slf4j:2.0.13"
 
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
@@ -113,29 +115,6 @@ shadowJar {
   exclude "ml-config/**"
   exclude "ml-modules*/**"
   exclude "scaffolding/**"
-}
-
-task copyJarToKafka(type: Copy, dependsOn: shadowJar) {
-  description = "Used for local development and testing; copies the jar to your local Kafka install"
-  from "build/libs"
-  into "${kafkaHome}/libs"
-}
-
-task copyPropertyFilesToKafka(type: Copy) {
-  description = "Used for local development and testing; copies the properties files to your local Kafka install"
-  from "config"
-  into "${kafkaHome}/config"
-  filter { String line ->
-    line.startsWith('ml.connection.username=') ? 'ml.connection.username=' + kafkaMlUsername : line
-  }
-  filter { String line ->
-    line.startsWith('ml.connection.password=') ? 'ml.connection.password=' + kafkaMlPassword : line
-  }
-}
-
-task deploy {
-  description = "Used for local development and testing; builds the jar and copies it and the properties files to your local Kafka install"
-  dependsOn = ["copyJarToKafka", "copyPropertyFilesToKafka"]
 }
 
 ext {
@@ -212,77 +191,10 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
   destinationDirectory = file('build/distro')
 }
 
-task installConnectorInConfluent(type: Exec, group: confluentTestingGroup, dependsOn: [connectorArchive]) {
-  description = "Uses 'Confluent-hub' to install the connector in your local Confluent Platform"
-  commandLine "confluent-hub", "install", "--no-prompt", "build/distro/${baseArchiveName}.zip"
-  ignoreExitValue = true
-}
+// Tasks for using the connector with Confluent Platform on Docker
 
-// See https://docs.confluent.io/confluent-cli/current/command-reference/local/confluent_local_destroy.html
-task destroyLocalConfluent(type: Exec, group: confluentTestingGroup) {
-  description = "Destroy the local Confluent Platform instance"
-  commandLine "confluent", "local", "destroy"
-  // Main reason this will fail is because Confluent is not running, which shouldn't cause a failure
-  ignoreExitValue = true
-}
-
-// See https://docs.confluent.io/confluent-cli/current/command-reference/local/services/confluent_local_services_start.html
-task startLocalConfluent(type: Exec, group: confluentTestingGroup) {
-  description = "Convenience task for starting a local instance of Confluent Platform"
-  commandLine "confluent", "local", "services", "start"
-}
-
-task loadDatagenPurchasesConnector(type: Exec, group: confluentTestingGroup) {
-  description = "Load an instance of the Datagen connector into Confluent Platform for sending JSON documents to " +
-    "the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "datagen-purchases-source", "-c",
-    "src/test/resources/confluent/datagen-purchases-source.json"
-}
-
-task loadMarkLogicPurchasesSinkConnector(type: Exec, group: confluentTestingGroup) {
-  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for writing data to " +
-    "MarkLogic from the 'purchases' topic"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-sink", "-c",
-    "src/test/resources/confluent/marklogic-purchases-sink.json"
-}
-
-task loadMarkLogicPurchasesSourceConnector(type: Exec, group: confluentTestingGroup) {
-  description = "Load an instance of the MarkLogic Kafka connector into Confluent Platform for reading rows from " +
-    "the demo/purchases view"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-purchases-source", "-c",
-    "src/test/resources/confluent/marklogic-purchases-source.json"
-}
-
-task loadMarkLogicAuthorsSourceConnector(type: Exec, group: confluentTestingGroup) {
-  description = "Loads a source connector that retrieves authors from the citations.xml file, which is also used for " +
-    "all the automated tests"
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-authors-source", "-c",
-    "src/test/resources/confluent/marklogic-authors-source.json"
-}
-
-task loadMarkLogicEmployeesSourceConnector(type: Exec, group: confluentTestingGroup) {
-  commandLine "confluent", "local", "services", "connect", "connector", "load", "marklogic-employees-source", "-c",
-    "src/test/resources/confluent/marklogic-employees-source.json"
-}
-
-task setupLocalConfluent(group: confluentTestingGroup) {
-  description = "Start a local Confluent Platform instance and load the Datagen and MarkLogic connectors"
-}
-
-// Temporarily only loading the source connector to make manual testing easier, will re-enable all of these before 1.8.0
-//setupLocalConfluent.dependsOn startLocalConfluent, loadDatagenPurchasesConnector, loadMarkLogicPurchasesSinkConnector, loadMarkLogicPurchasesSourceConnector
-setupLocalConfluent.dependsOn startLocalConfluent, loadMarkLogicEmployeesSourceConnector
-
-loadDatagenPurchasesConnector.mustRunAfter startLocalConfluent
-loadMarkLogicPurchasesSinkConnector.mustRunAfter startLocalConfluent
-loadMarkLogicPurchasesSourceConnector.mustRunAfter startLocalConfluent
-loadMarkLogicAuthorsSourceConnector.mustRunAfter startLocalConfluent
-loadMarkLogicEmployeesSourceConnector.mustRunAfter startLocalConfluent
-
-task insertAuthors(type: Test) {
-  useJUnitPlatform()
-  systemProperty "AUTHOR_IDS", authorIds
-  description = "Insert a new author into the kafka-test-content database via a new citations XML document; " +
-    "use e.g. -PauthorIds=7,8,9 to insert 3 new authors with IDs of 7, 8, and 9"
-  include "com/marklogic/kafka/connect/source/debug/InsertAuthorsTest.class"
+task copyConnectorToDockerVolume(type: Copy, dependsOn: connectorArchive, group: confluentTestingGroup) {
+  description = "Copies the connector's archive directory to the Docker volume shared with the Connect server"
+  from "build/connectorArchive"
+  into "test-app/docker/confluent-marklogic-components"
 }
