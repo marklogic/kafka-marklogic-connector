@@ -229,7 +229,7 @@ endpointConstants = fn.head(xdmp.fromJSON(endpointConstants));
 
 for (let item of inputSequence) {
   item = fn.head(xdmp.fromJSON(item));
-  // TODO Determine what to do with each item
+  // Determine what to do with each item
 }
 ```
 
@@ -329,3 +329,10 @@ required to catch any error that occurs, an unexpected error in the sink connect
 and logged by Kafka. However, nothing will be sent to the user-configured DLQ topic in this scenario as the error will
 not be associated with a particular sink record. Kafka and MarkLogic server logs should be examined to determine the
 cause of the error. 
+
+## JSON-based Connector Configuration
+
+Some Kafka environments permit REST-based instantiation of connectors. Confluent is one of those environments.
+[Please see the Confluent documentation](https://docs.confluent.io/kafka-connectors/maprdb/current/map_r_d_b_sink_connector_example.html)
+to read about this technique. Examples of JSON files to use with the REST service can be found in
+examples/ConfluentConnectorConfigs.
