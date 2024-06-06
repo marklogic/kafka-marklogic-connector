@@ -310,3 +310,11 @@ You can also use a Kafka tool to pull messages from the Topic. If you run this c
 it will monitor the topic and output the records as they are delivered:
 
     bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic Authors
+
+## Testing the Docs service
+
+User documents designed to be published with GitHub Pages and are maintained in the /docs directory of the
+project. You must have Ruby installed. Additionally, there seems to be a bug with running jekyll with Ruby 3.3.
+The server needs to be run with Ruby 3.2.3, so you will need to run `chruby ruby-3.2.3` before starting the jekyll
+server. To start the jekyll server, cd into the /docs directory and run the command `bundle exec jekyll server`.
+This will start the server and the user documents will be available at http://127.0.0.1:4000/.
