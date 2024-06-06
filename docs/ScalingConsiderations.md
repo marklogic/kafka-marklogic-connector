@@ -1,3 +1,9 @@
+---
+layout: default
+title: Scaling Considerations
+nav_order: 7
+---
+
 # Scaling Considerations
 Each of the three parts of parts (Kafka, MarkLogic, and this connector) of this system maybe easily scaled to handle
 your throughput requirements. To use the connector in a clustered environment you only need to ensure a couple of
@@ -11,8 +17,8 @@ started or shutdown, this information is also relayed to the connectors so that 
 ## MarkLogic
 MarkLogic is designed to be used in large clusters of servers. In order to spread the load of data I/O across the
 cluster, a load balancer is typically used. In this case, the connector should be configured to be aware of the use
-of a load balancer. This is accomplished by setting the "ml.connection.host" to point to the load balancer, and by setting "ml.connection.type" to "gateway" in the marklogic-sink.properties
-file.
+of a load balancer. This is accomplished by setting the "ml.connection.host" to point to the load balancer, and by
+setting "ml.connection.type" to "gateway" in the marklogic-sink.properties file.
 
 <pre><code># A MarkLogic host to connect to. The connector uses the Data Movement SDK, and thus it will connect to each of the
 # hosts in a cluster.
@@ -21,6 +27,9 @@ ml.connection.host=MarkLogic-LoadBalancer-1024238516.us-east-1.elb.amazonaws.com
 # Optional - set to "gateway" when using a load balancer, else leave blank.
 # See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.
 ml.connection.type=gateway</code></pre>
+
+For additional information regarding scaling a MarkLogic cluster, please see the MarkLogic
+[Scalability, Availability, and Failover Guide](https://docs.marklogic.com/guide/cluster/scalability).
 
 ## Connector
 When configuring multiple instances of the connector to consume the same topic(s), the Kafka Connect framework
