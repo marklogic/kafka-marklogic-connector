@@ -318,3 +318,7 @@ project. You must have Ruby installed. Additionally, there seems to be a bug wit
 The server needs to be run with Ruby 3.2.3, so you will need to run `chruby ruby-3.2.3` before starting the jekyll
 server. To start the jekyll server, cd into the /docs directory and run the command `bundle exec jekyll server`.
 This will start the server and the user documents will be available at http://127.0.0.1:4000/.
+
+# Publishing the Connector to Confluent
+
+Please refer to the internal Wiki page for information regarding the process for releasing the connector to the Confluent Hub.
