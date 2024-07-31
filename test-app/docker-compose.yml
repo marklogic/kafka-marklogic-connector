@@ -177,7 +177,6 @@ services:
   marklogic:
     image: "marklogicdb/marklogic-db:11.2.0-centos-1.1.2"
     hostname: marklogic
-    container_name: marklogic
     platform: linux/amd64
     environment:
       - INSTALL_CONVERTERS=true

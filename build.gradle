@@ -23,6 +23,7 @@ java {
 
 repositories {
   mavenCentral()
+  mavenLocal()
 }
 
 configurations {
@@ -42,9 +43,12 @@ dependencies {
   compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly "org.slf4j:slf4j-api:2.0.13"
 
-  implementation 'com.marklogic:ml-javaclient-util:4.8.0'
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:4.8.0"
+  implementation ("com.marklogic:ml-app-deployer:4.8.0") {
+    exclude module: "marklogic-client-api"
+  }
+
+  implementation "com.marklogic:marklogic-client-api:7.0-SNAPSHOT"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.15.3"
 
@@ -61,7 +65,9 @@ dependencies {
     exclude module: "logback-classic"
   }
 
-  testImplementation 'com.marklogic:marklogic-junit5:1.4.0'
+  testImplementation ('com.marklogic:marklogic-junit5:1.4.0') {
+    exclude module: "marklogic-client-api"
+  }
 
   testImplementation "org.apache.kafka:connect-api:${kafkaVersion}"
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
