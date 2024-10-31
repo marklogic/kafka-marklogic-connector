@@ -35,6 +35,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.runtime.InternalSinkRecord;
 import org.apache.kafka.connect.sink.ErrantRecordReporter;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -52,6 +54,8 @@ import static com.marklogic.kafka.connect.sink.AbstractSinkTask.MARKLOGIC_WRITE_
  * Uses MarkLogic's Data Movement SDK (DMSDK) to write data to MarkLogic.
  */
 public class WriteBatcherSinkTask extends AbstractSinkTask {
+
+    protected static final Logger classLogger = LoggerFactory.getLogger(WriteBatcherSinkTask.class);
 
     private DatabaseClient databaseClient;
     private DataMovementManager dataMovementManager;
@@ -101,20 +105,35 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
 
     static void addFailureHeaders(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
         if (sinkRecord instanceof InternalSinkRecord) {
-            ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).context().original();
-            originalRecord.headers().add(MARKLOGIC_MESSAGE_FAILURE_HEADER, getBytesHandleNull(failureHeaderValue));
-            originalRecord.headers().add(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, getBytesHandleNull(e.getMessage()));
-            originalRecord.headers().add(MARKLOGIC_ORIGINAL_TOPIC, getBytesHandleNull(sinkRecord.topic()));
-            if (writeEvent != null) {
-                originalRecord.headers().add(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri().getBytes(StandardCharsets.UTF_8));
+            try {
+                ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).context().original();
+                addFailureHeadersToOriginalSinkRecord(originalRecord, e, failureHeaderValue, writeEvent);
+            } catch (NoSuchMethodError methodException) {
+                classLogger.warn("This version of the MarkLogic Kafka Connector requires Kafka version 3.8.0 or" +
+                    " higher in order to store failure information on the original sink record. Instead, the failure" +
+                    " information will be on the wrapper sink record.");
+                addFailureHeadersToNonInternalSinkRecord(sinkRecord, e, failureHeaderValue, writeEvent);
             }
         } else {
-            sinkRecord.headers().addString(MARKLOGIC_MESSAGE_FAILURE_HEADER, failureHeaderValue);
-            sinkRecord.headers().addString(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, e.getMessage());
-            sinkRecord.headers().addString(MARKLOGIC_ORIGINAL_TOPIC, sinkRecord.topic());
-            if (writeEvent != null) {
-                sinkRecord.headers().addString(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri());
-            }
+            addFailureHeadersToNonInternalSinkRecord(sinkRecord, e, failureHeaderValue, writeEvent);
+        }
+    }
+
+    static void addFailureHeadersToNonInternalSinkRecord(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+        sinkRecord.headers().addString(MARKLOGIC_MESSAGE_FAILURE_HEADER, failureHeaderValue);
+        sinkRecord.headers().addString(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, e.getMessage());
+        sinkRecord.headers().addString(MARKLOGIC_ORIGINAL_TOPIC, sinkRecord.topic());
+        if (writeEvent != null) {
+            sinkRecord.headers().addString(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri());
+        }
+    }
+
+    static void addFailureHeadersToOriginalSinkRecord(ConsumerRecord<byte[], byte[]> originalRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+        originalRecord.headers().add(MARKLOGIC_MESSAGE_FAILURE_HEADER, getBytesHandleNull(failureHeaderValue));
+        originalRecord.headers().add(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, getBytesHandleNull(e.getMessage()));
+        originalRecord.headers().add(MARKLOGIC_ORIGINAL_TOPIC, getBytesHandleNull(originalRecord.topic()));
+        if (writeEvent != null) {
+            originalRecord.headers().add(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri().getBytes(StandardCharsets.UTF_8));
         }
     }
 
