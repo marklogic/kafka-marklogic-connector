@@ -101,7 +101,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
 
     static void addFailureHeaders(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
         if (sinkRecord instanceof InternalSinkRecord) {
-            ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).originalRecord();
+            ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).context().original();
             originalRecord.headers().add(MARKLOGIC_MESSAGE_FAILURE_HEADER, getBytesHandleNull(failureHeaderValue));
             originalRecord.headers().add(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, getBytesHandleNull(e.getMessage()));
             originalRecord.headers().add(MARKLOGIC_ORIGINAL_TOPIC, getBytesHandleNull(sinkRecord.topic()));

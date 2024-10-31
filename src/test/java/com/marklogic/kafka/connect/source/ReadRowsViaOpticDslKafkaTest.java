@@ -20,6 +20,7 @@ import net.mguenther.kafka.junit.EmbeddedConnectConfig;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -48,6 +49,7 @@ class ReadRowsViaOpticDslKafkaTest extends AbstractIntegrationSourceTest {
 
     @SuppressWarnings("java:S2699") // The assertion happens via kafka.observe
     @Test
+    @Disabled("This test is disabled because kafka-junit is not compatible with kafka > 3.6.0")
     void shouldWaitForKeyedRecordsToBePublished() throws InterruptedException {
         kafka.observe(on(AUTHORS_TOPIC, 15));
     }
