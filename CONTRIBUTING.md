@@ -4,8 +4,8 @@ distribution.
 
 ### Requirements:
 * MarkLogic Server 11+
-* Java (either version 8, 11, or 17). It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in
-  Confluent 7.x and is removing it in Confluent 8.x. Additionally, Sonar requires the use of Java 11 or 17. 
+* Java, either version 11 or 17, is required to use the Gradle tools.
+Additionally, SonarQube requires the use of Java 17. 
 
 See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
 for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
@@ -76,7 +76,7 @@ application must be deployed. From the "test-app" directory, follow these steps:
 
 ## Automated Testing
 Now that your MarkLogic server is configured and the test-app is deployed, you can run the tests via from the root
-directory:
+directory. Note that you must be using Java 11 or Java 17 for this command due to the latest version of Gradle.
 ```
 ./gradlew test
 ```
