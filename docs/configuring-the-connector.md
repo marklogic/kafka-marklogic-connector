@@ -57,15 +57,15 @@ Both digest and basic authentication require the following properties to be conf
 - `ml.connection.username` = the name of the MarkLogic user to authenticate as
 - `ml.connection.password` = the password of the MarkLogic user
 
-### Configuring MarkLogic Cloud authentication
+### Configuring Progress Data Cloud authentication
 
-Cloud authentication requires the following properties to be configured:
+Progress Data Cloud authentication requires the following properties to be configured:
 
-- `ml.connection.basePath` = the base path in your MarkLogic Cloud instance that points to the REST API server you
+- `ml.connection.basePath` = the base path in your Progress Data Cloud instance that points to the REST API server you
   wish to connect to
-- `ml.connection.cloudApiKey` = the API key for authenticating with your MarkLogic Cloud instance
+- `ml.connection.cloudApiKey` = the API key for authenticating with your Progress Data Cloud instance
 
-You should also set `ml.connection.port` to 443 for connecting to MarkLogic Cloud.
+You should also set `ml.connection.port` to 443 for connecting to Progress Data Cloud.
 
 ### Configuring certificate authentication
 
