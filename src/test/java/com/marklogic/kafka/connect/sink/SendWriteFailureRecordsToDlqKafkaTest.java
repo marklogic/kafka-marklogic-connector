@@ -22,10 +22,7 @@ import net.mguenther.kafka.junit.KeyValue;
 import net.mguenther.kafka.junit.ReadKeyValues;
 import net.mguenther.kafka.junit.SendKeyValues;
 import org.apache.kafka.common.header.Headers;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -68,6 +65,7 @@ class SendWriteFailureRecordsToDlqKafkaTest extends AbstractIntegrationSinkTest 
     }
 
     @Test
+    @Disabled("This test is disabled because kafka-junit is not compatible with kafka > 3.6.0")
     void failedBatchesShouldGoToTheDlq() throws InterruptedException {
         sendSomeJsonMessages(NUM_RECORDS);
 

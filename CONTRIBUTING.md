@@ -4,8 +4,8 @@ distribution.
 
 ### Requirements:
 * MarkLogic Server 11+
-* Java (either version 8, 11, or 17). It is recommended to use 11 or 17, as Confluent has deprecated Java 8 support in
-  Confluent 7.x and is removing it in Confluent 8.x. Additionally, Sonar requires the use of Java 11 or 17. 
+* Java, either version 11 or 17, is required to use the Gradle tools.
+Additionally, SonarQube requires the use of Java 17. 
 
 See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
 for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
@@ -76,7 +76,7 @@ application must be deployed. From the "test-app" directory, follow these steps:
 
 ## Automated Testing
 Now that your MarkLogic server is configured and the test-app is deployed, you can run the tests via from the root
-directory:
+directory. Note that you must be using Java 11 or Java 17 for this command due to the latest version of Gradle.
 ```
 ./gradlew test
 ```
@@ -318,3 +318,7 @@ project. You must have Ruby installed. Additionally, there seems to be a bug wit
 The server needs to be run with Ruby 3.2.3, so you will need to run `chruby ruby-3.2.3` before starting the jekyll
 server. To start the jekyll server, cd into the /docs directory and run the command `bundle exec jekyll server`.
 This will start the server and the user documents will be available at http://127.0.0.1:4000/.
+
+# Publishing the Connector to Confluent
+
+Please refer to the internal Wiki page for information regarding the process for releasing the connector to the Confluent Hub.

@@ -2,6 +2,7 @@ package com.marklogic.kafka.connect.sink;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.avro.Schema;
+import org.apache.avro.CanonicalSchemaFormatterFactory;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
@@ -83,7 +84,7 @@ class WriteAvroDataTest extends AbstractIntegrationSinkTest {
                               .endRecord();
 
         FileCopyUtils.copy(
-            mySchema.toString(true).getBytes(),
+            new CanonicalSchemaFormatterFactory().getDefaultFormatter().format(mySchema).getBytes(),
             new File(Paths.get("src", "test", "avro").toFile(), "avroTestClass-schema.avsc")
         );
     }

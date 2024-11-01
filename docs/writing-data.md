@@ -298,13 +298,16 @@ sent to the DLQ.
   MarkLogic then each of the records in the batch will be sent to the DLQ. The entire batch must be sent to the DLQ since
   the connector is unable to determine the cause of the failure.
 
-When a record is sent to the DLQ, the connector first adds headers to the record providing information about the cause
+When a record is sent to the DLQ, the connector first adds headers to the record, providing information about the cause
 of the failure in order to assist with troubleshooting and potential routing.
 - "marklogic-failure-type" : Either "Write failure" or "Record conversion"
 - "marklogic-exception-message" : Information from MarkLogic when there is a write failure
 - "marklogic-original-topic" : The name of the topic that this record came from
 - "marklogic-target-uri" : For write failures, this contains the target URI for the document
 
+For those headers to be populated properly, the version of this connector must be compatible with the version of Kafka
+that is being used. The 1.8.0 and 1.9.0 versions of the connector work with Kafka versions before 3.8. Starting with
+the connector version 1.10.0, the Kafka version must be 3.8 or later.
 
 ## Sink connector error handling
 
