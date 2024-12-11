@@ -4,7 +4,6 @@ plugins {
   id 'com.gradleup.shadow' version '8.3.4'
 
   // Only used for testing
-  id 'com.marklogic.ml-gradle' version '5.0.0'
   id 'jacoco'
   id "org.sonarqube" version "5.1.0.4882"
 
@@ -30,8 +29,6 @@ configurations {
 }
 
 ext {
-  // Even though Kafka Connect 3.7.0 is out, we're staying with 3.6.1 in order to continue
-  // using the third-party Kafka JUnit tool. See https://github.com/mguenther/kafka-junit?tab=readme-ov-file
   kafkaVersion = "3.8.1"
 }
 
