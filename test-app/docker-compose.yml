@@ -175,9 +175,7 @@ services:
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
 
   marklogic:
-    image: "marklogicdb/marklogic-db:11.2.0-centos-1.1.2"
-    hostname: marklogic
-    container_name: marklogic
+    image: "marklogicdb/marklogic-db:latest-11"
     platform: linux/amd64
     environment:
       - INSTALL_CONVERTERS=true
