@@ -173,7 +173,7 @@ In the Control Center GUI, you can verify the MarkLogic Kafka connector instance
 3. Click on the "marklogic-purchases-sink" connector
 
 You can then verify that data is being written to MarkLogic by using MarkLogic's qconsole application to inspect the
-contents of the `kafka-test-content` database.
+contents of the `data-hub-FINAL` database.
 
 ### Load a MarkLogic Kafka source connector instance
 You can also load an instance of the MarkLogic Kafka source connector that will read rows from the `demo/purchases`

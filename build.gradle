@@ -26,6 +26,14 @@ repositories {
 configurations {
   documentation
   assets
+
+  // Force v3.18 of commons-lang3 to avoid security vulnerabilities, without also
+  // upgrading ml-app-deployer to 6.0.0, which we are not ready to do yet.
+  configurations.all {
+    resolutionStrategy {
+        force 'org.apache.commons:commons-lang3:3.18.0'
+    }
+  }
 }
 
 ext {
