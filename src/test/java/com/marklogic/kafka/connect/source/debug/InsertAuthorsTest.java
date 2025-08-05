@@ -34,41 +34,44 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Convenience program for inserting a new author into the kafka-test-content database to facilitate testing the
- * source connector on the authors TDE. This reuses the test plumbing so we don't have to collect host/port/etc
- * information, but it adjusts the DatabaseClient config to use port 8018 instead of 8019 so that documents are
- * inserted into the kafka-test-content database instead of kafka-test-test-content.
+ * Convenience program for inserting a new author into the data-hub-STAGING
+ * database to facilitate testing the
+ * source connector on the authors TDE. This reuses the test plumbing so we
+ * don't have to collect host/port/etc
+ * information, but it adjusts the DatabaseClient config to use port 8010
+ * instead of 8011 so that documents are
+ * inserted into the data-hub-STAGING database instead of data-hub-FINAL.
  */
 class InsertAuthorsTest extends AbstractIntegrationTest {
 
     // Only intended for inserting new authors with a user-provided ID. Can easily expand this to make the data more
     // random and/or controlled by the user.
     private final static String CITATIONS_DOC = "<Citations>\n" +
-        "  <Citation>\n" +
-        "    <ID>%%AUTHOR_ID%%</ID>\n" +
-        "    <Article>\n" +
-        "      <Journal>\n" +
-        "        <ISSN>61296-004</ISSN>\n" +
-        "        <JournalIssue>\n" +
-        "          <Volume>44</Volume>\n" +
-        "          <PubDate>\n" +
-        "            <Date>2022-07-13</Date>\n" +
-        "            <Year>2022</Year>\n" +
-        "            <Month>07</Month>\n" +
-        "            <Day>13</Day>\n" +
-        "            <Time>09:00:00</Time>\n" +
-        "          </PubDate>\n" +
-        "        </JournalIssue>\n" +
-        "      </Journal>\n" +
-        "      <AuthorList>\n" +
-        "        <Author>\n" +
-        "          <LastName>LastName%%AUTHOR_ID%%</LastName>\n" +
-        "          <ForeName>ForeName%%AUTHOR_ID%%</ForeName>\n" +
-        "        </Author>\n" +
-        "      </AuthorList>\n" +
-        "    </Article>\n" +
-        "  </Citation>\n" +
-        "</Citations>\n";
+            "  <Citation>\n" +
+            "    <ID>%%AUTHOR_ID%%</ID>\n" +
+            "    <Article>\n" +
+            "      <Journal>\n" +
+            "        <ISSN>61296-004</ISSN>\n" +
+            "        <JournalIssue>\n" +
+            "          <Volume>44</Volume>\n" +
+            "          <PubDate>\n" +
+            "            <Date>2022-07-13</Date>\n" +
+            "            <Year>2022</Year>\n" +
+            "            <Month>07</Month>\n" +
+            "            <Day>13</Day>\n" +
+            "            <Time>09:00:00</Time>\n" +
+            "          </PubDate>\n" +
+            "        </JournalIssue>\n" +
+            "      </Journal>\n" +
+            "      <AuthorList>\n" +
+            "        <Author>\n" +
+            "          <LastName>LastName%%AUTHOR_ID%%</LastName>\n" +
+            "          <ForeName>ForeName%%AUTHOR_ID%%</ForeName>\n" +
+            "        </Author>\n" +
+            "      </AuthorList>\n" +
+            "    </Article>\n" +
+            "  </Citation>\n" +
+            "</Citations>\n";
 
     @Autowired
     SimpleTestConfig testConfig;
