@@ -41,7 +41,8 @@ ext {
 }
 
 dependencies {
-  compileOnly "org.apache.kafka:connect-runtime:${kafkaVersion}"
+  def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
+  compileOnly kafkaConnectRuntime
   compileOnly "org.slf4j:slf4j-api:1.7.36"
 
   // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
@@ -65,9 +66,7 @@ dependencies {
   testImplementation 'com.marklogic:marklogic-junit5:1.5.0'
 
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
-
-  // Can be deleted when the disabled kafka-junit tests are deleted.
-  testImplementation 'net.mguenther.kafka:kafka-junit:3.6.0'
+  testImplementation kafkaConnectRuntime
 
   testImplementation "org.apache.avro:avro-compiler:1.12.0"
 
