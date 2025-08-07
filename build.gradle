@@ -14,9 +14,10 @@ plugins {
   // id "com.github.davidmc24.gradle.plugin.avro" version "1.6.0"
 }
 
+// With the upgrade to Spring Framework v6, we need to use Java 17 or later.
 java {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = 17
+  targetCompatibility = 17
 }
 
 repositories {
@@ -32,12 +33,22 @@ configurations {
       // Force v4.5.0 of commons-collections4 to avoid CVEs in v4.4.0 from transitive dependecies:
       // CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924) and
       // CVE-2020-15250 (https://www.cve.org/CVERecord?id=CVE-2020-15250)
-      force "org.apache.commons:commons-collections4:4.5.0"
+      force 'org.apache.commons:commons-collections4:4.5.0'
 
       // Force v3.18 of commons-lang3 to avoid CVE-2025-48924
       // (https://www.cve.org/CVERecord?id=CVE-2025-48924), without also
       // upgrading ml-app-deployer to 6.0.0, which we are not ready to do yet.
       force 'org.apache.commons:commons-lang3:3.18.0'
+
+      // Force Spring Framework v6 to avaoid CVEs in v5.3.9 and earlier.
+      // These dependencies are used by marklogic-junit5.
+      force 'org.springframework:spring-aop:6.2.9'
+      force 'org.springframework:spring-beans:6.2.9'
+      force 'org.springframework:spring-context:6.2.9'
+      force 'org.springframework:spring-core:6.2.9'
+      force 'org.springframework:spring-expression:6.2.9'
+      force 'org.springframework:spring-test:6.2.9'
+      force 'org.springframework:spring-web:6.2.9'
     }
   }
 }
