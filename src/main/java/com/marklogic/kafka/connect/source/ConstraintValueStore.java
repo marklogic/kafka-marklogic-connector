@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,21 @@ public abstract class ConstraintValueStore extends LoggingObject {
 
     public abstract String retrievePreviousMaxConstraintColumnValue();
 
-    protected String buildConstraintState(String previousMaxConstraintColumnValue, int lastRowCount) throws JsonProcessingException {
-        ConstraintState constraintState = new ConstraintState(constraintColumn, previousMaxConstraintColumnValue, lastRowCount);
+    protected String buildConstraintState(String previousMaxConstraintColumnValue, int lastRowCount)
+            throws JsonProcessingException {
+        ConstraintState constraintState = new ConstraintState(constraintColumn, previousMaxConstraintColumnValue,
+                lastRowCount);
         return objectMapper.writeValueAsString(constraintState);
     }
 
-    static ConstraintValueStore newConstraintValueStore(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
+    static ConstraintValueStore newConstraintValueStore(DatabaseClient databaseClient,
+            Map<String, Object> parsedConfig) {
         String constraintColumn = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         if (StringUtils.hasText(constraintColumn)) {
             String constraintStorageUri = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_STORAGE_URI);
             if (StringUtils.hasText(constraintStorageUri)) {
-                return new MarkLogicConstraintValueStore(databaseClient, constraintStorageUri, constraintColumn, parsedConfig);
+                return new MarkLogicConstraintValueStore(databaseClient, constraintStorageUri, constraintColumn,
+                        parsedConfig);
             } else {
                 return new InMemoryConstraintValueStore(constraintColumn);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
-    // While a Transformer is not thread-safe and must therefore be created for each batch - though we could consider
-    // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
+    // While a Transformer is not thread-safe and must therefore be created for each batch - though we could consider a
+    // pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
     public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
@@ -53,9 +53,8 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
     public Results invokePlan(PlanBuilder.Plan plan, String topic) {
         DOMHandle baseHandle = new DOMHandle();
         DOMHandle result = newRowManager().resultDoc(plan, baseHandle);
-        List<SourceRecord> records = result.get() != null ?
-            convertRowsToSourceRecords(result, topic) :
-            new ArrayList<>();
+        List<SourceRecord> records = result.get() != null ? convertRowsToSourceRecords(result, topic)
+                : new ArrayList<>();
         return new Results(records, baseHandle.getServerTimestamp());
     }
 
@@ -89,7 +88,7 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
                 NamedNodeMap attributes = column.getAttributes();
                 // The 'name' attribute is expected to exist; trust but verify
                 if (attributes != null && attributes.getNamedItem("name") != null &&
-                    keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
+                        keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
                     return column.getTextContent();
                 }
             }

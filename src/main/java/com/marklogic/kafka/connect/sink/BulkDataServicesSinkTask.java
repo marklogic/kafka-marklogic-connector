@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,11 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import java.util.Map;
 
 /**
- * Uses Bulk Data Services - https://github.com/marklogic/java-client-api/wiki/Bulk-Data-Services - to allow the user
- * to provide their own endpoint implementation, thus giving the user full control over how data is written to
+ * Uses Bulk Data Services -
+ * https://github.com/marklogic/java-client-api/wiki/Bulk-Data-Services - to
+ * allow the user
+ * to provide their own endpoint implementation, thus giving the user full
+ * control over how data is written to
  * MarkLogic.
  */
 public class BulkDataServicesSinkTask extends AbstractSinkTask {
@@ -55,14 +58,16 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
 
     @Override
     protected void onStart(Map<String, Object> parsedConfig) {
-        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
+        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder()
+                .buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
 
         JacksonHandle modulesHandle = new JacksonHandle(buildApiDeclaration(parsedConfig));
-        InputCaller<JsonNode> inputCaller = InputCaller.on(databaseClient, modulesHandle, new JacksonHandle().withFormat(Format.JSON));
+        InputCaller<JsonNode> inputCaller = InputCaller.on(databaseClient, modulesHandle,
+                new JacksonHandle().withFormat(Format.JSON));
 
         IOEndpoint.CallContext callContext = inputCaller.newCallContext()
-            .withEndpointConstants(new JacksonHandle(buildEndpointConstants(parsedConfig)));
+                .withEndpointConstants(new JacksonHandle(buildEndpointConstants(parsedConfig)));
         this.bulkInputCaller = inputCaller.bulkCaller(callContext);
         this.configureErrorListenerOnBulkInputCaller();
 
@@ -70,12 +75,16 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * When Kafka calls - the frequency of which can be controlled by the user - perform a synchronous flush of any
-     * records waiting to be written to MarkLogic. {@code BulkInputCaller} does not yet have an asynchronous flush
-     * like DMSDK does, but the use of a synchronous flush seems appropriate - i.e. Kafka seems to be okay with a
+     * When Kafka calls - the frequency of which can be controlled by the user -
+     * perform a synchronous flush of any
+     * records waiting to be written to MarkLogic. {@code BulkInputCaller} does not
+     * yet have an asynchronous flush
+     * like DMSDK does, but the use of a synchronous flush seems appropriate - i.e.
+     * Kafka seems to be okay with a
      * synchronous call here, while {@code put} is expected to be async.
      * <p>
-     * For a good reference, see https://stackoverflow.com/questions/44871377/put-vs-flush-in-kafka-connector-sink-task
+     * For a good reference, see
+     * https://stackoverflow.com/questions/44871377/put-vs-flush-in-kafka-connector-sink-task
      *
      * @param currentOffsets
      */
@@ -97,7 +106,8 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Queues up the sink record for writing to MarkLogic. Once the batch size, as defined in the Bulk API declaration,
+     * Queues up the sink record for writing to MarkLogic. Once the batch size, as
+     * defined in the Bulk API declaration,
      * is reached, the {@code BulkInputCaller} will write the data to MarkLogic.
      *
      * @param sinkRecord
@@ -110,10 +120,14 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Build an API declaration based on the user inputs for an endpoint URI and optional batch size. It's feasible to
-     * do this because the connector knows what the {@code params} array must be, and the documentation instructs the
-     * endpoint developer to use the same array of parameters. Building the API here also avoids having to read it
-     * from a modules database which requires either the xdmp-eval-in or xdbc-eval privilege.
+     * Build an API declaration based on the user inputs for an endpoint URI and
+     * optional batch size. It's feasible to
+     * do this because the connector knows what the {@code params} array must be,
+     * and the documentation instructs the
+     * endpoint developer to use the same array of parameters. Building the API here
+     * also avoids having to read it
+     * from a modules database which requires either the xdmp-eval-in or xdbc-eval
+     * privilege.
      *
      * @param parsedConfig
      * @return
@@ -142,7 +156,8 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * When using Bulk Data Services, include all "ml.document" config options in the endpoint constants in case the
+     * When using Bulk Data Services, include all "ml.document" config options in
+     * the endpoint constants in case the
      * endpoint developer wishes to use these.
      *
      * @param parsedConfig
@@ -150,7 +165,7 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
      */
     private ObjectNode buildEndpointConstants(Map<String, Object> parsedConfig) {
         ObjectNode endpointConstants = this.objectMapper.createObjectNode();
-        for (Map.Entry<String,Object> entry : parsedConfig.entrySet()) {
+        for (Map.Entry<String, Object> entry : parsedConfig.entrySet()) {
             if (entry.getKey().startsWith("ml.document") && entry.getValue() != null) {
                 endpointConstants.put(entry.getKey(), entry.getValue().toString());
             }
@@ -159,7 +174,8 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * An envelope structure is used so that both the content and Kafka metadata from the sink record can be sent to
+     * An envelope structure is used so that both the content and Kafka metadata
+     * from the sink record can be sent to
      * the endpoint.
      *
      * @param writeOp
@@ -168,8 +184,10 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
      */
     private JsonNode buildBulkDataServiceInput(DocumentWriteOperation writeOp, SinkRecord sinkRecord) {
         AbstractWriteHandle handle = writeOp.getContent();
-        // This assumes that the SinkRecordConverter always constructs either a BytesHandle or StringHandle. This is an
-        // implementation detail not exposed to the user, and sufficient testing should ensure that this assumption
+        // This assumes that the SinkRecordConverter always constructs either a
+        // BytesHandle or StringHandle. This is an
+        // implementation detail not exposed to the user, and sufficient testing should
+        // ensure that this assumption
         // holds up over time.
         String content;
         if (handle instanceof BytesHandle) {
@@ -199,17 +217,21 @@ public class BulkDataServicesSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * For the initial release of this capability, applying the "skip" approach that behaves in the same manner as
-     * the existing WriteBatcher approach - i.e. log the failure and keep processing other records/batches. Can make
+     * For the initial release of this capability, applying the "skip" approach that
+     * behaves in the same manner as
+     * the existing WriteBatcher approach - i.e. log the failure and keep processing
+     * other records/batches. Can make
      * this configurable in the future if a client wants "stop all calls" support.
      */
     private void configureErrorListenerOnBulkInputCaller() {
         this.bulkInputCaller.setErrorListener((retryCount, throwable, callContext, input) -> {
-            // The stacktrace is not included here, as it will only contain references to Bulk Data Services code and
-            // connector code, which won't help with debugging. The MarkLogic error log will be of much more value,
+            // The stacktrace is not included here, as it will only contain references to
+            // Bulk Data Services code and
+            // connector code, which won't help with debugging. The MarkLogic error log will
+            // be of much more value,
             // along with seeing the error message here.
             logger.error("Skipping failed write; cause: {}; check the MarkLogic error " +
-                "log file for additional information as to the cause of the failed write", throwable.getMessage());
+                    "log file for additional information as to the cause of the failed write", throwable.getMessage());
             return IOEndpoint.BulkIOEndpointCaller.ErrorDisposition.SKIP_CALL;
         });
     }

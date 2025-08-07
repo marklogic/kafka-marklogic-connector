@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,22 @@ import com.marklogic.kafka.connect.MarkLogicConnectorException;
 interface QueryHandlerUtil {
 
     /**
-     * Convenience method for executing a plan to get the maximum value for a particular constraint column; exists
+     * Convenience method for executing a plan to get the maximum value for a
+     * particular constraint column; exists
      * primarily to provide consistent error handling in case the query fails.
      *
      * @param rowManager
-     * @param maxValuePlan    the plan for getting a maximum value; the assumption is this will return a column named 'constraint'
+     * @param maxValuePlan    the plan for getting a maximum value; the assumption
+     *                        is this will return a column named 'constraint'
      *                        that contains the value
-     * @param serverTimestamp the MarkLogic server timestamp at which to run the plan's query
-     * @param maxValueQuery   a human-readable representation of the query; used solely for error handling
+     * @param serverTimestamp the MarkLogic server timestamp at which to run the
+     *                        plan's query
+     * @param maxValueQuery   a human-readable representation of the query; used
+     *                        solely for error handling
      * @return
      */
-    static String executeMaxValuePlan(RowManager rowManager, PlanBuilder.Plan maxValuePlan, long serverTimestamp, String maxValueQuery) {
+    static String executeMaxValuePlan(RowManager rowManager, PlanBuilder.Plan maxValuePlan, long serverTimestamp,
+            String maxValueQuery) {
         JacksonHandle handle = new JacksonHandle();
         handle.setPointInTimeQueryTimestamp(serverTimestamp);
 
@@ -43,16 +48,15 @@ interface QueryHandlerUtil {
             result = rowManager.resultDoc(maxValuePlan, handle);
         } catch (Exception e) {
             throw new MarkLogicConnectorException(String.format(
-                "Unable to get max constraint value; query: %s; server timestamp: %d; cause: %s",
-                maxValueQuery, serverTimestamp, e.getMessage()
-            ), e);
+                    "Unable to get max constraint value; query: %s; server timestamp: %d; cause: %s",
+                    maxValueQuery, serverTimestamp, e.getMessage()), e);
         }
 
         JsonNode valueNode = result.get().at("/rows/0/constraint/value");
         if (valueNode == null) {
             String message = String.format(
-                "Unable to get max constraint value; query returned null; query: %s; server timestamp: %d; response: %s",
-                maxValueQuery, serverTimestamp, result.get());
+                    "Unable to get max constraint value; query returned null; query: %s; server timestamp: %d; response: %s",
+                    maxValueQuery, serverTimestamp, result.get());
             throw new MarkLogicConnectorException(message);
         }
         return valueNode.asText();

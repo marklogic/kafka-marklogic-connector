@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,24 @@ class HandleInvalidSinkRecordTest extends AbstractIntegrationSinkTest {
     void sinkRecordWithNullContent() {
         final String collection = "empty-test";
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, collection
-        );
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, collection);
 
         putAndFlushRecords(task, newSinkRecord(null));
         assertCollectionSize("Kafka is not expected to send a record with null content, but in case this happens " +
-            "somehow, the record should be ignored", collection, 0);
+                "somehow, the record should be ignored", collection, 0);
     }
 
     @Test
     void nullSinkRecord() {
         final String collection = "null-test";
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, collection
-        );
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, collection);
 
         List<SinkRecord> list = new ArrayList<>();
         list.add(null);
         task.put(list);
         task.flush(null);
         assertCollectionSize("Kafka is not expected to send a null record, but in case this happens " +
-            "somehow, the record should be ignored", collection, 0);
+                "somehow, the record should be ignored", collection, 0);
     }
 }

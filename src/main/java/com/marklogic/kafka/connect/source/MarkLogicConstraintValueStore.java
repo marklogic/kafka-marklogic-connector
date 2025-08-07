@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
     private String constraintStorageCollections;
 
     MarkLogicConstraintValueStore(DatabaseClient databaseClient, String constraintStorageUri, String constraintColumn,
-                                  Map<String, Object> parsedConfig) {
+            Map<String, Object> parsedConfig) {
         super(constraintColumn);
         this.databaseClient = databaseClient;
         this.constraintStorageUri = constraintStorageUri;
@@ -60,7 +60,7 @@ public class MarkLogicConstraintValueStore extends ConstraintValueStore {
             mgr.write(constraintStorageUri, metadataHandle, handle);
         } catch (Exception e) {
             String errorMessage = String.format("Unable to store constraint document %s at URI: %s; cause: %s",
-                constraintStateJson, constraintStorageUri, e.getMessage());
+                    constraintStateJson, constraintStorageUri, e.getMessage());
             throw new MarkLogicConnectorException(errorMessage, e);
         }
     }

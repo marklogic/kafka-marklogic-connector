@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class InsertAuthorsTest extends AbstractIntegrationTest {
 
-    // Only intended for inserting new authors with a user-provided ID. Can easily expand this to make the data more
+    // Only intended for inserting new authors with a user-provided ID. Can easily
+    // expand this to make the data more
     // random and/or controlled by the user.
     private final static String CITATIONS_DOC = "<Citations>\n" +
             "  <Citation>\n" +
@@ -81,8 +82,9 @@ class InsertAuthorsTest extends AbstractIntegrationTest {
     void insertAuthors() {
         final String authorIds = System.getProperty("AUTHOR_IDS");
         if (authorIds == null || authorIds.trim().length() < 1) {
-            System.out.println("Please specify AUTHOR_IDS as a system property containing a comma-delimited list of author IDs; \n" +
-                "if running this via Gradle, use -PauthorId=someNumber to specify the value");
+            System.out.println(
+                    "Please specify AUTHOR_IDS as a system property containing a comma-delimited list of author IDs; \n" +
+                            "if running this via Gradle, use -PauthorId=someNumber to specify the value");
             return;
         }
 
@@ -94,7 +96,8 @@ class InsertAuthorsTest extends AbstractIntegrationTest {
         DocumentWriteSet writeSet = mgr.newWriteSet();
         List<String> uris = new ArrayList<>();
         DocumentMetadataHandle metadata = new DocumentMetadataHandle()
-            .withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE);
+                .withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ,
+                        DocumentMetadataHandle.Capability.UPDATE);
 
         for (String authorId : authorIds.split(",")) {
             final String uri = "/citation/author/" + authorId + ".xml";

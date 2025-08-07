@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,8 @@ class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
-        );
+                MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC);
 
         List<SourceRecord> newSourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(newSourceRecords, ReadRowsViaOpticDslTest.JSON_RESULT);
@@ -40,12 +39,11 @@ class ReadRowsViaOpticSerializedTest extends AbstractIntegrationSourceTest {
     @Test
     void noRowsReturned() throws InterruptedException {
         List<SourceRecord> records = startSourceTask(
-            MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC
-        ).poll();
+                MarkLogicSourceConfig.SERIALIZED_QUERY, AUTHORS_OPTIC_SERIALIZED,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC).poll();
 
         assertNull(records, "When no rows exist, null should be returned; an exception should not be thrown. " +
-            "This ensures that bug https://bugtrack.marklogic.com/58240 does not cause an error when a user instead " +
-            "expects no data to be returned.");
+                "This ensures that bug https://bugtrack.marklogic.com/58240 does not cause an error when a user instead " +
+                "expects no data to be returned.");
     }
 }

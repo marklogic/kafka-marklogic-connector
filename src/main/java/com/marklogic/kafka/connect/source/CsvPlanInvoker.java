@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class CsvPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
         this.csvMapper = new CsvMapper();
         if (ConfigUtil.getBoolean(MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, parsedConfig)) {
             logger.warn("The option {} is not supported and is ignored when CSV is the output format",
-                MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES);
+                    MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES);
         }
     }
 
@@ -79,7 +79,7 @@ class CsvPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
                 headerNames = (ArrayNode) csvMapper.readTree(headerLine);
             } catch (JsonProcessingException e) {
                 throw new MarkLogicConnectorException(
-                    String.format("Unable to parse CSV; line: %s; cause: %s", headerLine, e.getMessage()));
+                        String.format("Unable to parse CSV; line: %s; cause: %s", headerLine, e.getMessage()));
             }
             for (int i = 0; i < headerNames.size(); i++) {
                 if (keyColumn.equals(headerNames.get(i).asText())) {
@@ -97,7 +97,7 @@ class CsvPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
                 return columns.get(keyColumnIndex.get()).asText();
             } catch (JsonProcessingException e) {
                 throw new MarkLogicConnectorException(String.format("Unable to read CSV; line: %s; cause: %s",
-                    line, e.getMessage()));
+                        line, e.getMessage()));
             }
         }
         return null;

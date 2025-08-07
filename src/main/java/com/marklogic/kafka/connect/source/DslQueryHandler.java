@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.marklogic.client.row.RowManager;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
-
 
 public class DslQueryHandler extends LoggingObject implements QueryHandler {
 
@@ -59,7 +58,8 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
             String constraintPhrase = "";
             if (StringUtils.hasText(previousMaxConstraintColumnValue)) {
                 String sanitizedValue = previousMaxConstraintColumnValue.replaceAll(VALUE_SANITIZATION_PATTERN, "");
-                constraintPhrase = String.format(".where(op.gt(op.col('%s'), '%s'))", constraintColumnName, sanitizedValue);
+                constraintPhrase = String.format(".where(op.gt(op.col('%s'), '%s'))", constraintColumnName,
+                        sanitizedValue);
             }
             constraintPhrase += ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
             constrainedDsl = userDslQuery + constraintPhrase;
@@ -73,15 +73,15 @@ public class DslQueryHandler extends LoggingObject implements QueryHandler {
         logger.debug("Query for max constraint value: {}", maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();
         return QueryHandlerUtil.executeMaxValuePlan(rowMgr, rowMgr.newRawQueryDSLPlan(new StringHandle(maxValueQuery)),
-            serverTimestamp, maxValueQuery);
+                serverTimestamp, maxValueQuery);
     }
 
     private String buildMaxValueDslQuery() {
         return String.format("%s" +
-            ".orderBy(op.desc(op.col('%s')))" +
-            ".limit(1)" +
-            ".select([op.as('constraint', op.col('%s'))])",
-            currentDslQuery, constraintColumnName, constraintColumnName);
+                ".orderBy(op.desc(op.col('%s')))" +
+                ".limit(1)" +
+                ".select([op.as('constraint', op.col('%s'))])",
+                currentDslQuery, constraintColumnName, constraintColumnName);
     }
 
     public String getCurrentQuery() {

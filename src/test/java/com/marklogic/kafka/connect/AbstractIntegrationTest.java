@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ public abstract class AbstractIntegrationTest extends AbstractSpringMarkLogicTes
     protected final static ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * @return a config map containing connection values based on the test application configuration
+     * @return a config map containing connection values based on the test
+     *         application configuration
      */
     protected Map<String, String> newMarkLogicConfig(SimpleTestConfig testConfig) {
         Map<String, String> config = new HashMap<>();
@@ -46,11 +47,13 @@ public abstract class AbstractIntegrationTest extends AbstractSpringMarkLogicTes
     }
 
     /**
-     * Convenience for getting a JSON object from a String of JSON without having to worry
+     * Convenience for getting a JSON object from a String of JSON without having to
+     * worry
      * about the annoying checked exception.
      *
      * @param json - A String representation of a JSON object.
-     * @return - An ObjectNode mapped from the incoming String using a Jackson ObjectMapper.
+     * @return - An ObjectNode mapped from the incoming String using a Jackson
+     *         ObjectMapper.
      */
     protected ObjectNode readJsonObject(String json) {
         try {

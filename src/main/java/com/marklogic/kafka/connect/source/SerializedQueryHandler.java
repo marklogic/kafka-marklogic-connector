@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             this.currentSerializedQuery = mapper.readTree(userSerializedQuery);
         } catch (JsonProcessingException e) {
             throw new MarkLogicConnectorException(
-                String.format("Unable to read serialized query; cause: %s", e.getMessage()), e);
+                    String.format("Unable to read serialized query; cause: %s", e.getMessage()), e);
         }
         this.constraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
@@ -69,7 +69,8 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         rootArgsArray.add(limitNode);
     }
 
-    protected void appendConstraintAndOrderByToQuery(JsonNode currentSerializedQuery, String previousMaxConstraintColumnValue) {
+    protected void appendConstraintAndOrderByToQuery(JsonNode currentSerializedQuery,
+            String previousMaxConstraintColumnValue) {
         if (StringUtils.hasText(constraintColumnName)) {
             ObjectNode orderByNode = buildOrderByNode(true);
             ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
@@ -86,8 +87,9 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
         JsonNode maxValueQuery = buildMaxValueSerializedQuery();
         logger.debug("Query for max constraint value: {}", maxValueQuery);
         RowManager rowMgr = databaseClient.newRowManager();
-        return QueryHandlerUtil.executeMaxValuePlan(rowMgr, rowMgr.newRawPlanDefinition(new JacksonHandle(maxValueQuery)),
-            serverTimestamp, maxValueQuery.toString());
+        return QueryHandlerUtil.executeMaxValuePlan(rowMgr,
+                rowMgr.newRawPlanDefinition(new JacksonHandle(maxValueQuery)),
+                serverTimestamp, maxValueQuery.toString());
     }
 
     private JsonNode buildMaxValueSerializedQuery() {
@@ -104,61 +106,54 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
 
     private ObjectNode buildMaxValueQueryConstraintNode() {
         return mapper.createObjectNode()
-            .put("ns", "op")
-            .put("fn", "select")
-            .set("args", mapper.createArrayNode()
-                .add(mapper.createArrayNode()
-                    .add(mapper.createObjectNode()
-                        .put("ns", "op")
-                        .put("fn", "as")
-                        .set("args", mapper.createArrayNode()
-                            .add("constraint")
-                            .add(mapper.createObjectNode()
-                                .put("ns", "op")
-                                .put("fn", "col")
-                                .set("args", mapper.createArrayNode().add(constraintColumnName))
-                            )
-                        )
-                )
-            ));
+                .put("ns", "op")
+                .put("fn", "select")
+                .set("args", mapper.createArrayNode()
+                        .add(mapper.createArrayNode()
+                                .add(mapper.createObjectNode()
+                                        .put("ns", "op")
+                                        .put("fn", "as")
+                                        .set("args", mapper.createArrayNode()
+                                                .add("constraint")
+                                                .add(mapper.createObjectNode()
+                                                        .put("ns", "op")
+                                                        .put("fn", "col")
+                                                        .set("args", mapper.createArrayNode()
+                                                                .add(constraintColumnName)))))));
     }
 
     private ObjectNode buildLimitNode(Integer limit) {
         return mapper.createObjectNode()
-            .put("ns", "op")
-            .put("fn", "limit")
-            .set("args", mapper.createArrayNode().add(limit));
+                .put("ns", "op")
+                .put("fn", "limit")
+                .set("args", mapper.createArrayNode().add(limit));
     }
 
     private ObjectNode buildOrderByNode(boolean ascending) {
         return mapper.createObjectNode()
-            .put("ns", "op")
-            .put("fn", "order-by")
-            .set("args", mapper.createArrayNode()
-                .add(mapper.createObjectNode()
-                    .put("ns", "op")
-                    .put("fn", ascending ? "asc" : "desc")
-                    .set("args", mapper.createArrayNode().add(constraintColumnName))
-            ));
+                .put("ns", "op")
+                .put("fn", "order-by")
+                .set("args", mapper.createArrayNode()
+                        .add(mapper.createObjectNode()
+                                .put("ns", "op")
+                                .put("fn", ascending ? "asc" : "desc")
+                                .set("args", mapper.createArrayNode().add(constraintColumnName))));
     }
 
     private ObjectNode buildConstraintNode(String previousMaxConstraintColumnValue) {
         return mapper.createObjectNode()
-            .put("ns", "op")
-            .put("fn", "where")
-            .set("args", mapper.createArrayNode()
-                .add(mapper.createObjectNode()
-                    .put("ns", "op")
-                    .put("fn", "gt")
-                    .set("args", mapper.createArrayNode()
+                .put("ns", "op")
+                .put("fn", "where")
+                .set("args", mapper.createArrayNode()
                         .add(mapper.createObjectNode()
-                            .put("ns", "op")
-                            .put("fn", "col")
-                            .set("args", mapper.createArrayNode().add(constraintColumnName))
-                        )
-                        .add(previousMaxConstraintColumnValue)
-                    )
-            ));
+                                .put("ns", "op")
+                                .put("fn", "gt")
+                                .set("args", mapper.createArrayNode()
+                                        .add(mapper.createObjectNode()
+                                                .put("ns", "op")
+                                                .put("fn", "col")
+                                                .set("args", mapper.createArrayNode().add(constraintColumnName)))
+                                        .add(previousMaxConstraintColumnValue))));
     }
 
     public String getCurrentQuery() {

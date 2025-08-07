@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,21 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
     private boolean logResponse;
 
     /**
-     * The flowName and steps are assumed to have been read in by the client that is reading from system configuration
-     * - in the Kafka case, this will be from the Kafka config map that is passed to a source task.
+     * The flowName and steps are assumed to have been read in by the client that is
+     * reading from system configuration
+     * - in the Kafka case, this will be from the Kafka config map that is passed to
+     * a source task.
      * <p>
-     * The DatabaseClientConfig object is needed because it's not yet possible for DHF to reuse the DatabaseClient that
-     * Kafka constructs. While it's assumed that that DatabaseClient will write to staging, DHF needs to be able to
-     * connect to the staging, final, and job app servers. And in order to do that, it needs all of the authentication
-     * information that can be held by a DatabaseClientConfig. Though as of 5.2.0, DHF only supports basic/digest
-     * authentication, and thus it's assumed that username/password will be used for authentication.
+     * The DatabaseClientConfig object is needed because it's not yet possible for
+     * DHF to reuse the DatabaseClient that
+     * Kafka constructs. While it's assumed that that DatabaseClient will write to
+     * staging, DHF needs to be able to
+     * connect to the staging, final, and job app servers. And in order to do that,
+     * it needs all of the authentication
+     * information that can be held by a DatabaseClientConfig. Though as of 5.2.0,
+     * DHF only supports basic/digest
+     * authentication, and thus it's assumed that username/password will be used for
+     * authentication.
      *
      * @param flowName             required name of the flow to run
      * @param steps                optional list of steps
@@ -62,15 +69,22 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
     }
 
     /**
-     * None of this is specific to Kafka. It assumes a pattern of - given the URIs that were just ingested (and are
-     * available in the given WriteBatch), override the source query for each step to be executed with a document query
+     * None of this is specific to Kafka. It assumes a pattern of - given the URIs
+     * that were just ingested (and are
+     * available in the given WriteBatch), override the source query for each step
+     * to be executed with a document query
      * that constrains on those URIs.
      * <p>
-     * The need to construct a source query is unfortunate. When DHF executes a non-ingestion step, it always runs the
-     * collector. Thus, it's not yet possible to tell DHF - just process these URIs (specifically, it's not yet
-     * possible to do that via FlowRunner). So it's necessary to use the URIs to construct a document query and override
-     * each step's source query with that. Ideally, DHF can be enhanced here so a client can just pass in the URIs to
-     * process, and then there's no call to the collector nor need to override the source query.
+     * The need to construct a source query is unfortunate. When DHF executes a
+     * non-ingestion step, it always runs the
+     * collector. Thus, it's not yet possible to tell DHF - just process these URIs
+     * (specifically, it's not yet
+     * possible to do that via FlowRunner). So it's necessary to use the URIs to
+     * construct a document query and override
+     * each step's source query with that. Ideally, DHF can be enhanced here so a
+     * client can just pass in the URIs to
+     * process, and then there's no call to the collector nor need to override the
+     * source query.
      *
      * @param batch
      */
@@ -78,13 +92,13 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
     public void processEvent(WriteBatch batch) {
         FlowInputs inputs = buildFlowInputs(batch);
 
-        // Current plan for 1.9.0 is to support Java Client 6.1.0, at which point we may be able to support any auth
+        // Current plan for 1.9.0 is to support Java Client 6.1.0, at which point we may
+        // be able to support any auth
         // technique here as well.
         FlowRunner flowRunner = new FlowRunnerImpl(HubClient.withHubClientConfig(new HubClientConfig(
-            databaseClientConfig.getHost(),
-            databaseClientConfig.getUsername(),
-            databaseClientConfig.getPassword()
-        )));
+                databaseClientConfig.getHost(),
+                databaseClientConfig.getUsername(),
+                databaseClientConfig.getPassword())));
 
         RunFlowResponse response = flowRunner.runFlow(inputs);
         flowRunner.awaitCompletion();

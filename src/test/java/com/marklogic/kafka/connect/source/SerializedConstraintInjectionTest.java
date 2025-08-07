@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,12 @@ class SerializedConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void testAccessorOnlyQuery() throws IOException {
         String originalQuery = loadTestResourceFileIntoString("serializedAccessorOnlyQuery.json");
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
-        }};
+        Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
+            }
+        };
         JsonNode jsonQuery = objectMapper.readTree(originalQuery);
 
         SerializedQueryHandler serializedQueryHandler = new SerializedQueryHandler(null, parsedConfig);
@@ -46,11 +48,13 @@ class SerializedConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void testSerializedLimitQuerySingleLine() throws IOException {
         String originalQuery = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
-            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
-        }};
+        Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
+                put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+            }
+        };
         JsonNode jsonQuery = objectMapper.readTree(originalQuery);
 
         SerializedQueryHandler serializedQueryHandler = new SerializedQueryHandler(null, parsedConfig);
@@ -63,11 +67,13 @@ class SerializedConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void testSerializedLimitQueryPrettyPrinted() throws IOException {
         String originalQuery = loadTestResourceFileIntoString("serializedQueryWithLimit.json");
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
-            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
-        }};
+        Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.SERIALIZED_QUERY, originalQuery);
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumn);
+                put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+            }
+        };
         JsonNode jsonQuery = objectMapper.readTree(originalQuery);
 
         SerializedQueryHandler serializedQueryHandler = new SerializedQueryHandler(null, parsedConfig);

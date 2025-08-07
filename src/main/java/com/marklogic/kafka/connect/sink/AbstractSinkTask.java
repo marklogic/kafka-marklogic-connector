@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 /**
- * Base class for concrete SinkTask implementations, providing some generic functionality.
+ * Base class for concrete SinkTask implementations, providing some generic
+ * functionality.
  */
 abstract class AbstractSinkTask extends SinkTask {
 
@@ -46,15 +47,18 @@ abstract class AbstractSinkTask extends SinkTask {
     public static final String MARKLOGIC_CONVERSION_FAILURE = "Record conversion";
 
     /**
-     * Subclasses implement this to pull their necessary config from Kafka. Invoked by the {@code start} method.
+     * Subclasses implement this to pull their necessary config from Kafka. Invoked
+     * by the {@code start} method.
      *
      * @param parsedConfig
      */
     protected abstract void onStart(Map<String, Object> parsedConfig);
 
     /**
-     * Subclasses implement this to determine how to write each {@code SinkRecord}. This is invoked by the
-     * {@code put} method, which subclasses can override if necessary - e.g. to provide their own behavior after all
+     * Subclasses implement this to determine how to write each {@code SinkRecord}.
+     * This is invoked by the
+     * {@code put} method, which subclasses can override if necessary - e.g. to
+     * provide their own behavior after all
      * records have been processed.
      *
      * @param sinkRecord
@@ -87,14 +91,16 @@ abstract class AbstractSinkTask extends SinkTask {
     }
 
     /**
-     * Invoked by Kafka each time it determines that it has data to send to a connector.
+     * Invoked by Kafka each time it determines that it has data to send to a
+     * connector.
      *
      * @param records the set of records to send
      */
     @Override
     public void put(Collection<SinkRecord> records) {
         records.forEach(sinkRecord -> {
-            // It is not known if either of these scenarios will ever occur; it would seem that Kafka would never pass
+            // It is not known if either of these scenarios will ever occur; it would seem
+            // that Kafka would never pass
             // a null record nor a record with a null value to a connector.
             if (sinkRecord == null) {
                 logger.debug("Skipping null record");
@@ -106,8 +112,10 @@ abstract class AbstractSinkTask extends SinkTask {
                     this.writeSinkRecord(sinkRecord);
                 } catch (Exception ex) {
                     // Including the stacktrace here as this could happen for a variety of reasons
-                    throw new MarkLogicConnectorException("Unable to write sink record; record offset: " + sinkRecord.kafkaOffset() +
-                        "cause: " + ex.getMessage(), ex);
+                    throw new MarkLogicConnectorException(
+                            "Unable to write sink record; record offset: " + sinkRecord.kafkaOffset() +
+                                    "cause: " + ex.getMessage(),
+                            ex);
                 }
             }
         });
@@ -119,7 +127,8 @@ abstract class AbstractSinkTask extends SinkTask {
         }
         if (logHeaders) {
             List<String> headers = new ArrayList<>();
-            sinkRecord.headers().forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
+            sinkRecord.headers()
+                    .forEach(header -> headers.add(String.format("%s:%s", header.key(), header.value().toString())));
             logger.info("Record headers: {}", headers);
         }
         if (logger.isTraceEnabled()) {

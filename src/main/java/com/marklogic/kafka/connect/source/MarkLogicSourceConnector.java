@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ public class MarkLogicSourceConnector extends SourceConnector {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    static final String MARKLOGIC_SOURCE_CONNECTOR_VERSION = MarkLogicSourceConnector.class.getPackage().getImplementationVersion();
+    static final String MARKLOGIC_SOURCE_CONNECTOR_VERSION = MarkLogicSourceConnector.class.getPackage()
+            .getImplementationVersion();
 
     private Map<String, String> config;
 
@@ -52,9 +53,8 @@ public class MarkLogicSourceConnector extends SourceConnector {
         Boolean configuredForSerialized = StringUtils.hasText(config.get(MarkLogicSourceConfig.SERIALIZED_QUERY));
         if ((!(configuredForDsl || configuredForSerialized)) || (configuredForDsl && configuredForSerialized)) {
             throw new ConfigException(
-                format("Either a DSL Optic query (%s) or a serialized Optic query (%s), but not both, are required",
-                    MarkLogicSourceConfig.DSL_QUERY, MarkLogicSourceConfig.SERIALIZED_QUERY)
-            );
+                    format("Either a DSL Optic query (%s) or a serialized Optic query (%s), but not both, are required",
+                            MarkLogicSourceConfig.DSL_QUERY, MarkLogicSourceConfig.SERIALIZED_QUERY));
         }
         this.config = config;
     }
@@ -72,7 +72,8 @@ public class MarkLogicSourceConnector extends SourceConnector {
     @Override
     public List<Map<String, String>> taskConfigs(final int taskCount) {
         if (taskCount > 1) {
-            logger.warn("As of the 1.8.0 release, the Kafka tasks.max property is ignored and a single source connector " +
+            logger.warn(
+                    "As of the 1.8.0 release, the Kafka tasks.max property is ignored and a single source connector " +
                             "task is created. This prevents duplicate records from being created via multiple instances of " +
                             "the task with the exact same config.");
         }

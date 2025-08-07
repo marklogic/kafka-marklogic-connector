@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies that a DocumentWriteOperation is created correctly based on a SinkRecord.
+ * Verifies that a DocumentWriteOperation is created correctly based on a
+ * SinkRecord.
  */
 class ConvertSinkRecordTest {
 
@@ -59,7 +60,6 @@ class ConvertSinkRecordTest {
 
         assertTrue(op.getUri().startsWith("/example/"));
         assertTrue(op.getUri().endsWith(".json"));
-
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         Iterator<String> collections = metadata.getCollections().iterator();
@@ -171,8 +171,8 @@ class ConvertSinkRecordTest {
 
         assertNotNull(op.getUri());
         assertEquals("", op.getUri(), "This is the current behavior as of 1.8.0 but it does not seem correct; seems " +
-            "like a UUID should be returned instead so that duplicate URIs are not generated. DEVEXP-541 was " +
-            "opened to fix this.");
+                "like a UUID should be returned instead so that duplicate URIs are not generated. DEVEXP-541 was " +
+                "opened to fix this.");
     }
 
     @Test
@@ -230,7 +230,7 @@ class ConvertSinkRecordTest {
         final String key = "some-key";
         final Long timestamp = System.currentTimeMillis();
         DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
-            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME));
+                null, "some-value", offset, timestamp, TimestampType.CREATE_TIME));
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
@@ -240,8 +240,8 @@ class ConvertSinkRecordTest {
         assertEquals(timestamp, Long.parseLong(values.get("kafka-timestamp")));
         assertEquals("topic1", values.get("kafka-topic"));
         assertEquals(5, values.keySet().size(), "Only expecting the above 5 keys; bump this expected" +
-            " number up in the future if we add metadata that should exist regardless of the setting for including " +
-            "Kafka metadata");
+                " number up in the future if we add metadata that should exist regardless of the setting for including " +
+                "Kafka metadata");
     }
 
     @Test
@@ -249,7 +249,7 @@ class ConvertSinkRecordTest {
         converter = new DefaultSinkRecordConverter(new HashMap<>());
 
         DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", 5, null, "key1",
-            null, "some-value", 123, System.currentTimeMillis(), TimestampType.CREATE_TIME));
+                null, "some-value", 123, System.currentTimeMillis(), TimestampType.CREATE_TIME));
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
@@ -271,12 +271,14 @@ class ConvertSinkRecordTest {
         final long offset = 2;
         final String key = "some-key";
         final Long timestamp = System.currentTimeMillis();
-        List<Header> headers = new ArrayList<Header>() {{
-            add(new TestHeaders("A", "1"));
-            add(new TestHeaders("B", "2"));
-        }};
+        List<Header> headers = new ArrayList<Header>() {
+            {
+                add(new TestHeaders("A", "1"));
+                add(new TestHeaders("B", "2"));
+            }
+        };
         DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
-            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
+                null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
@@ -295,12 +297,14 @@ class ConvertSinkRecordTest {
         final long offset = 2;
         final String key = "some-key";
         final Long timestamp = System.currentTimeMillis();
-        List<Header> headers = new ArrayList<Header>() {{
-            add(new TestHeaders("A", "1"));
-            add(new TestHeaders("B", "2"));
-        }};
+        List<Header> headers = new ArrayList<Header>() {
+            {
+                add(new TestHeaders("A", "1"));
+                add(new TestHeaders("B", "2"));
+            }
+        };
         DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", partition, null, key,
-            null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
+                null, "some-value", offset, timestamp, TimestampType.CREATE_TIME, headers));
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
@@ -312,6 +316,7 @@ class ConvertSinkRecordTest {
     static class TestHeaders implements Header {
         private final String key;
         private final String value;
+
         TestHeaders(String key, String value) {
             this.key = key;
             this.value = value;

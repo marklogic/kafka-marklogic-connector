@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
     protected final String CSV_RESULT = "Medical.Authors.ID,Medical.Authors.LastName,Medical.Authors.ForeName,Medical.Authors.Date,Medical.Authors.DateTime\n" +
-        "2,Pulhoster,Misty,2022-05-11,2022-05-11T10:00:00";
+            "2,Pulhoster,Misty,2022-05-11,2022-05-11T10:00:00";
 
     @Test
     void readFifteenAuthorsAsCsv() throws InterruptedException {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
-            MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
-        );
+                MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+                MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+                MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID");
 
         List<SourceRecord> newSourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT);
@@ -57,11 +56,10 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
-            MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, "true"
-        );
+                MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+                MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+                MarkLogicSourceConfig.INCLUDE_COLUMN_TYPES, "true");
 
         List<SourceRecord> newSourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(newSourceRecords, CSV_RESULT);
@@ -72,32 +70,30 @@ class ReadCsvRowsTest extends AbstractIntegrationSourceTest {
         loadFifteenAuthorsIntoMarkLogic();
 
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
-            MarkLogicSourceConfig.KEY_COLUMN, "column-doesnt-exist"
-        );
+                MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+                MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString(),
+                MarkLogicSourceConfig.KEY_COLUMN, "column-doesnt-exist");
 
         List<SourceRecord> sourceRecords = task.poll();
         verifyQueryReturnsFifteenAuthors(sourceRecords, CSV_RESULT);
 
         sourceRecords.forEach(sourceRecord -> {
             assertNull(sourceRecord.key(), "If the column is not found, it should not throw an error; a key will " +
-                "just not be generated");
+                    "just not be generated");
         });
     }
 
     @Test
     void noMatchingRows() throws InterruptedException {
         RowManagerSourceTask task = startSourceTask(
-            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
-            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-            MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString()
-        );
+                MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL,
+                MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+                MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.CSV.toString());
 
         List<SourceRecord> records = task.poll();
         assertNull(records, "Should get null back when no rows match; also, check the logging to ensure that " +
-            "no exception was thrown");
+                "no exception was thrown");
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     private static final String CONSTRAINT_COLUMN = "ID";
     private static final String CONSTRAINT_VALUE = "2";
-    private static final Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-        put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
-        put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
-        put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
-    }};
+    private static final Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+        {
+            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
+            put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
+            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+        }
+    };
 
     @Test
     void testAccessorOnlyQuery() {
@@ -44,33 +46,37 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase').joinDoc('abc'))";
         String expectedResult = userDsl + ".where(op.gt(op.col('ID'), '2')).orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, parsedConfig, "2"),
-            "The where clause should have been injected just after the closing paren of the fromDocUris function");
+                "The where clause should have been injected just after the closing paren of the fromDocUris function");
     }
 
     @Test
     void wordQueryWithOrderBy() {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase'))";
         String expectedResult = userDsl + ".where(op.gt(op.col('uri'), '2')).orderBy(op.asc(op.col('uri')))";
-        Map<String, Object> localParsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
-            put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
-            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
-        }};
+        Map<String, Object> localParsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
+                put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
+                put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+            }
+        };
         assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, localParsedConfig, "2"),
-            "The where clause should have been injected just after the closing paren of the fromDocUris function");
+                "The where clause should have been injected just after the closing paren of the fromDocUris function");
     }
 
     @Test
     void wordQueryWithOrderByNoConstraintValue() {
         String userDsl = "op.fromDocUris(cts.wordQuery('my phrase'))";
         String expectedResult = userDsl + ".orderBy(op.asc(op.col('uri')))";
-        Map<String, Object> localParsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
-            put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
-            put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
-        }};
+        Map<String, Object> localParsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "uri");
+                put(MarkLogicSourceConfig.OUTPUT_FORMAT, MarkLogicSourceConfig.OUTPUT_TYPE.JSON.toString());
+                put(MarkLogicSourceConfig.ROW_LIMIT, 1000);
+            }
+        };
         assertEquals(expectedResult, appendConstraintOntoQuery(userDsl, localParsedConfig, null),
-            "The where clause should have been injected just after the closing paren of the fromDocUris function");
+                "The where clause should have been injected just after the closing paren of the fromDocUris function");
     }
 
     @Test
@@ -107,7 +113,7 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
 
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
         assertEquals(expectedResult, result,
-            "The where clause should have been injected just after the closing paren of the fromView function");
+                "The where clause should have been injected just after the closing paren of the fromView function");
 
         verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
         verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
@@ -116,42 +122,45 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     @Test
     void valueWithSingleQuotes() {
         String expectedQuery = "op.fromView('Medical', 'Authors')" +
-            ".where(op.gt(op.col('ID'), 'my odd value'))" +
-            ".orderBy(op.asc(op.col('ID')))";
+                ".where(op.gt(op.col('ID'), 'my odd value'))" +
+                ".orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedQuery, injectValue("my 'odd' value"),
-            "To prevent the modified query from breaking, single quotes are removed from the previous max value");
+                "To prevent the modified query from breaking, single quotes are removed from the previous max value");
     }
 
     @Test
     void valueWithDoubleQuotes() {
         String expectedQuery = "op.fromView('Medical', 'Authors')" +
-            ".where(op.gt(op.col('ID'), 'my odd value'))" +
-            ".orderBy(op.asc(op.col('ID')))";
+                ".where(op.gt(op.col('ID'), 'my odd value'))" +
+                ".orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedQuery, injectValue("my \"odd\" value"),
-            "To prevent the modified query from breaking, double quotes are removed from the previous max value");
+                "To prevent the modified query from breaking, double quotes are removed from the previous max value");
     }
 
     @Test
     void valueWithParens() {
         String expectedQuery = "op.fromView('Medical', 'Authors')" +
-            ".where(op.gt(op.col('ID'), 'my odd value'))" +
-            ".orderBy(op.asc(op.col('ID')))";
+                ".where(op.gt(op.col('ID'), 'my odd value'))" +
+                ".orderBy(op.asc(op.col('ID')))";
         assertEquals(expectedQuery, injectValue("my (odd) value"),
-            "To prevent the modified query from breaking, parentheses are removed from the previous max value");
+                "To prevent the modified query from breaking, parentheses are removed from the previous max value");
     }
 
     private String injectValue(String value) {
         String originalDsl = "op.fromView('Medical', 'Authors')";
-        Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
-        }};
+        Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+            {
+                put(MarkLogicSourceConfig.DSL_QUERY, originalDsl);
+                put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, CONSTRAINT_COLUMN);
+            }
+        };
         return appendConstraintOntoQuery(originalDsl, parsedConfig, value);
     }
 
     private void assertUserQueryIsModifiedCorrectly(String userDsl, String expectedResult) {
         String result = appendConstraintOntoQuery(userDsl, parsedConfig, "2");
-        assertEquals(expectedResult, result, "The where clause should have been injected just after the closing paren of the accesor function");
+        assertEquals(expectedResult, result,
+                "The where clause should have been injected just after the closing paren of the accesor function");
 
         verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
         verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);

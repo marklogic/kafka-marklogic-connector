@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ public class DocumentWriteOperationBuilder {
     }
 
     /**
-     * Exists to give a subclass a chance to further customize the contents of a DocumentWriteOperation before
+     * Exists to give a subclass a chance to further customize the contents of a
+     * DocumentWriteOperation before
      * it's created.
      *
      * @param operationType
@@ -65,7 +66,8 @@ public class DocumentWriteOperationBuilder {
      * @param content
      * @return
      */
-    protected DocumentWriteOperation build(DocumentWriteOperation.OperationType operationType, String uri, DocumentMetadataHandle metadata, AbstractWriteHandle content) {
+    protected DocumentWriteOperation build(DocumentWriteOperation.OperationType operationType, String uri,
+            DocumentMetadataHandle metadata, AbstractWriteHandle content) {
         return new DocumentWriteOperationImpl(operationType, uri, metadata, content);
     }
 

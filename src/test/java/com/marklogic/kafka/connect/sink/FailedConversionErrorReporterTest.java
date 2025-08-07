@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,30 +37,37 @@ class FailedConversionErrorReporterTest extends AbstractIntegrationSinkTest {
     void sinkRecordWithNullValueCausesCallToErrorReporter() {
         String someOtherValidJson = "{ \"B\": \"b\"}";
         WriteBatcherSinkTask task = (WriteBatcherSinkTask) startSinkTask(
-            (SinkRecord record, Throwable e) -> { reportedSinkRecord = record; reportedException = e; },
-            MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
-            MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true",
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, targetCollection
-        );
-        task.setErrorReporterMethod((SinkRecord record, Throwable e) -> { reportedSinkRecord = record; reportedException = e; });
+                (SinkRecord record, Throwable e) -> {
+                    reportedSinkRecord = record;
+                    reportedException = e;
+                },
+                MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
+                MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true",
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, targetCollection);
+        task.setErrorReporterMethod((SinkRecord record, Throwable e) -> {
+            reportedSinkRecord = record;
+            reportedException = e;
+        });
         task.setSinkRecordConverter(new ContrivedSinkRecordConverter(getTaskConfig()));
 
         String targetTopic = "someTopic";
         SinkRecord badRecord = new SinkRecord(targetTopic, 1, null, null,
-            null, someValidJsonToSignalAContrivedException, 123);
+                null, someValidJsonToSignalAContrivedException, 123);
         SinkRecord goodRecord = new SinkRecord(targetTopic, 1, null, null,
-            null, someOtherValidJson, 123);
+                null, someOtherValidJson, 123);
         putAndFlushRecords(task, badRecord, goodRecord);
 
         assertCollectionSize(targetCollection, 1);
         Assertions.assertNotNull(reportedException,
-            "The mock error reporter should have been called with an exception");
+                "The mock error reporter should have been called with an exception");
         assertEquals("Contrived Exception for testing", reportedException.getMessage(),
-            "The reported exception message does not match the expected message");
+                "The reported exception message does not match the expected message");
         Headers headers = reportedSinkRecord.headers();
         assertEquals(3, headers.size());
-        assertEquals(AbstractSinkTask.MARKLOGIC_CONVERSION_FAILURE, headers.lastWithName(AbstractSinkTask.MARKLOGIC_MESSAGE_FAILURE_HEADER).value());
-        assertEquals("Contrived Exception for testing", headers.lastWithName(AbstractSinkTask.MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE).value());
+        assertEquals(AbstractSinkTask.MARKLOGIC_CONVERSION_FAILURE,
+                headers.lastWithName(AbstractSinkTask.MARKLOGIC_MESSAGE_FAILURE_HEADER).value());
+        assertEquals("Contrived Exception for testing",
+                headers.lastWithName(AbstractSinkTask.MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE).value());
         assertEquals(targetTopic, headers.lastWithName(AbstractSinkTask.MARKLOGIC_ORIGINAL_TOPIC).value());
     }
 

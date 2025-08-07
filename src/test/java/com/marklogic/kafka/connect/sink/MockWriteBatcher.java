@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
- * Using this to facilitate testing. Will likely bring in a real mock-testing library later, like mockito.
+ * Using this to facilitate testing. Will likely bring in a real mock-testing
+ * library later, like mockito.
  */
 public class MockWriteBatcher implements WriteBatcher {
 

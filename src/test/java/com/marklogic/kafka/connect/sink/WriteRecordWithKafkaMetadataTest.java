@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationSinkTest {
 
     /**
-     * Verifies that when the option is set for including Kafka metadata, that metadata is present in the document
-     * metadata of each written document. The primary use case for this is to help with error logging by ensuring that
-     * the Kafka metadata is available to a DMSDK failure listener. Users may benefit too from the document metadata
+     * Verifies that when the option is set for including Kafka metadata, that
+     * metadata is present in the document
+     * metadata of each written document. The primary use case for this is to help
+     * with error logging by ensuring that
+     * the Kafka metadata is available to a DMSDK failure listener. Users may
+     * benefit too from the document metadata
      * being available for inspection/query purposes.
      */
     @Test
@@ -37,14 +40,13 @@ class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationSinkTest {
         final String TEST_COLLECTION = "include-kafka-metadata-test";
 
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, TEST_COLLECTION,
-            MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true",
-            MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH",
-            MarkLogicSinkConfig.ID_STRATEGY_PATH, "/id",
-            MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/TEST/",
-            MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json"
-        );
+                MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, TEST_COLLECTION,
+                MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, "true",
+                MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH",
+                MarkLogicSinkConfig.ID_STRATEGY_PATH, "/id",
+                MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/TEST/",
+                MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json");
 
         ObjectNode content = new ObjectMapper().createObjectNode();
         content.put("id", 100);
@@ -57,13 +59,13 @@ class WriteRecordWithKafkaMetadataTest extends AbstractIntegrationSinkTest {
         final Long timestamp = System.currentTimeMillis();
 
         SinkRecord record = new SinkRecord(topic, partition, null, key, null, content.toString(),
-            offset, timestamp, TimestampType.CREATE_TIME);
+                offset, timestamp, TimestampType.CREATE_TIME);
         putAndFlushRecords(task, record);
 
         assertCollectionSize(TEST_COLLECTION, 1);
 
         DocumentMetadataHandle metadata = getDatabaseClient().newJSONDocumentManager()
-            .readMetadata("/TEST/100.json", new DocumentMetadataHandle());
+                .readMetadata("/TEST/100.json", new DocumentMetadataHandle());
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
         assertEquals(topic, values.get("kafka-topic"));
         assertEquals(partition, Integer.parseInt(values.get("kafka-partition")));

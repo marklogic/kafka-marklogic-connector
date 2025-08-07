@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class BuildServerTransformTest {
         try {
             task.buildServerTransform(config);
             fail("The call should have failed because the params property does not have an even number of parameter " +
-                "names and values");
+                    "names and values");
         } catch (IllegalArgumentException ex) {
             assertTrue(ex.getMessage().startsWith("The value of the ml.dmsdk.transformParams property"));
         }

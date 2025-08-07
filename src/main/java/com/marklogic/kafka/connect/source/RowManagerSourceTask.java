@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Uses a RowManager to read rows from MarkLogic in a single call. RowBatcher is not used as it
- * introduces a significant amount of complexity, along with a limitation where users can only use the
- * fromView accessor. And the performance benefits associated with RowBatcher and its support for parallel reads
- * and batches are realized more when a user is reading large numbers of rows - like hundreds of thousands
- * or more - but at that point, the user runs the risk of running out of memory in Kafka Connect due to a
- * very large list. The thought then is that users are far more likely to want to read smaller numbers of
- * rows at one time and use a constraint column to throttle how much is returned at once.
+ * Uses a RowManager to read rows from MarkLogic in a single call. RowBatcher is
+ * not used as it
+ * introduces a significant amount of complexity, along with a limitation where
+ * users can only use the
+ * fromView accessor. And the performance benefits associated with RowBatcher
+ * and its support for parallel reads
+ * and batches are realized more when a user is reading large numbers of rows -
+ * like hundreds of thousands
+ * or more - but at that point, the user runs the risk of running out of memory
+ * in Kafka Connect due to a
+ * very large list. The thought then is that users are far more likely to want
+ * to read smaller numbers of
+ * rows at one time and use a constraint column to throttle how much is returned
+ * at once.
  */
 public class RowManagerSourceTask extends SourceTask {
 
@@ -66,7 +73,8 @@ public class RowManagerSourceTask extends SourceTask {
     public final void start(Map<String, String> config) {
         logger.info("Starting RowManagerSourceTask");
         parsedConfig = MarkLogicSourceConfig.CONFIG_DEF.parse(config);
-        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
+        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder()
+                .buildDatabaseClientConfig(parsedConfig);
         databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         pollDelayMs = (Long) parsedConfig.get(MarkLogicSourceConfig.WAIT_TIME);
         constraintValueStore = ConstraintValueStore.newConstraintValueStore(databaseClient, parsedConfig);
@@ -82,14 +90,16 @@ public class RowManagerSourceTask extends SourceTask {
 
         String currentQuery = "<Not Built Yet>";
         try {
-            final String previousMaxConstraintColumnValue = constraintValueStore != null ?
-                constraintValueStore.retrievePreviousMaxConstraintColumnValue() : null;
+            final String previousMaxConstraintColumnValue = constraintValueStore != null
+                    ? constraintValueStore.retrievePreviousMaxConstraintColumnValue()
+                    : null;
 
             QueryHandler queryHandler = QueryHandler.newQueryHandler(databaseClient, parsedConfig);
             PlanBuilder.Plan plan = queryHandler.newPlan(previousMaxConstraintColumnValue);
             currentQuery = queryHandler.getCurrentQuery();
             final long start = System.currentTimeMillis();
-            PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan, topic);
+            PlanInvoker.Results results = PlanInvoker.newPlanInvoker(databaseClient, parsedConfig).invokePlan(plan,
+                    topic);
             final long duration = System.currentTimeMillis() - start;
             List<SourceRecord> newSourceRecords = results.getSourceRecords();
             if (!newSourceRecords.isEmpty()) {
@@ -100,7 +110,8 @@ public class RowManagerSourceTask extends SourceTask {
             updateMaxConstraintValue(results, queryHandler);
             return newSourceRecords.isEmpty() ? null : newSourceRecords;
         } catch (Exception ex) {
-            final String message = String.format("Unable to poll for source records; cause: %s; query: %s", ex.getMessage(), currentQuery);
+            final String message = String.format("Unable to poll for source records; cause: %s; query: %s",
+                    ex.getMessage(), currentQuery);
             if (logger.isDebugEnabled()) {
                 logger.error(message, ex);
             } else {
@@ -110,9 +121,12 @@ public class RowManagerSourceTask extends SourceTask {
         }
     }
 
-    // Based on https://docs.confluent.io/platform/current/connect/devguide.html#task-example-source-task
-    // This method needs to be synchronized "because SourceTasks are given a dedicated thread which they can block
-    // indefinitely, so they need to be stopped with a call from a different thread in the Worker."
+    // Based on
+    // https://docs.confluent.io/platform/current/connect/devguide.html#task-example-source-task
+    // This method needs to be synchronized "because SourceTasks are given a
+    // dedicated thread which they can block
+    // indefinitely, so they need to be stopped with a call from a different thread
+    // in the Worker."
     @Override
     public synchronized void stop() {
         logger.info("Stop called; releasing DatabaseClient");
@@ -136,7 +150,6 @@ public class RowManagerSourceTask extends SourceTask {
         }
         return null;
     }
-
 
     /**
      * Exists only for testing.

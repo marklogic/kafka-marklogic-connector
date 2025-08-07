@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,31 +36,35 @@ import static org.junit.jupiter.api.Assertions.*;
 class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest {
 
     private final String constraintColumnName = "ID";
-    private final String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName + "')))";
+    private final String limitedAuthorsDsl = AUTHORS_OPTIC_DSL + ".orderBy(op.asc(op.col('" + constraintColumnName
+            + "')))";
     private final String constraintStorageUri = "/kafka/currentConstrainInfo";
     private final String roleName = "kafka-test-minimal-user";
     private final String constraintStoragePermissions = roleName + ",read," + roleName + ",update";
     private final String constraintStorageCollections = "kafka,maxValue";
     private final String[] taskConfigStrings = new String[] {
-        MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
-        MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
-        MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
-        MarkLogicSourceConfig.CONSTRAINT_STORAGE_URI, constraintStorageUri,
-        MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, constraintStoragePermissions,
-        MarkLogicSourceConfig.CONSTRAINT_STORAGE_COLLECTIONS, constraintStorageCollections
+            MarkLogicSourceConfig.DSL_QUERY, limitedAuthorsDsl,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, constraintColumnName,
+            MarkLogicSourceConfig.CONSTRAINT_STORAGE_URI, constraintStorageUri,
+            MarkLogicSourceConfig.CONSTRAINT_STORAGE_PERMISSIONS, constraintStoragePermissions,
+            MarkLogicSourceConfig.CONSTRAINT_STORAGE_COLLECTIONS, constraintStorageCollections
     };
-    private final Map<String, Object> parsedConfig = new HashMap<String, Object>() {{
-        for (int i = 0; i < taskConfigStrings.length/2; i++) {
-            put(taskConfigStrings[i*2], taskConfigStrings[(i*2)+1]);
+    private final Map<String, Object> parsedConfig = new HashMap<String, Object>() {
+        {
+            for (int i = 0; i < taskConfigStrings.length / 2; i++) {
+                put(taskConfigStrings[i * 2], taskConfigStrings[(i * 2) + 1]);
+            }
         }
-    }};
+    };
     ConstraintValueStore constraintValueStore;
     RowManagerSourceTask task;
 
     @BeforeEach
     void givenFifteenAuthors() {
         loadFifteenAuthorsIntoMarkLogic();
-        constraintValueStore = new MarkLogicConstraintValueStore(getDatabaseClient(), constraintStorageUri, constraintColumnName, parsedConfig);
+        constraintValueStore = new MarkLogicConstraintValueStore(getDatabaseClient(), constraintStorageUri,
+                constraintColumnName, parsedConfig);
         task = startSourceTask(taskConfigStrings);
     }
 
@@ -70,16 +74,13 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
         assertEquals(15, newRecords.size(), "All initial records should be returned");
         assertConstraintStateDocumentPermissionsCollectionsAndValue(task.getPreviousMaxConstraintColumnValue());
 
-
         givenNewRowsWithIdsBeforeAndAfterTheCurrentMaxValue();
         newRecords = task.poll();
         assertOnlyRowsWithIdsAfterTheCurrentMaxValueGetDelivered(newRecords);
 
-
         String newLastValue = constraintValueStore.retrievePreviousMaxConstraintColumnValue();
         assertEquals(task.getPreviousMaxConstraintColumnValue(), newLastValue,
-            "The stored lastValue should have been updated to the value from the second run of the task");
-
+                "The stored lastValue should have been updated to the value from the second run of the task");
 
         String evenLaterTime = "03:01:00";
         loadSingleAuthorRowIntoMarkLogicWithCustomTime("thirdHigherId", "8", evenLaterTime, "thirdHigherId");
@@ -87,9 +88,9 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
 
         storeBadConstraintState();
         Assertions.assertThrows(
-            MarkLogicIOException.class,
-            () -> constraintValueStore.retrievePreviousMaxConstraintColumnValue(),
-            "Attempting to retrieve the Max Constraint Value should fail");
+                MarkLogicIOException.class,
+                () -> constraintValueStore.retrievePreviousMaxConstraintColumnValue(),
+                "Attempting to retrieve the Max Constraint Value should fail");
 
         Assertions.assertNull(task.poll(), "Since the stored state document is invalid, poll() should fail");
     }
@@ -111,13 +112,13 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
         givenConstraintStoreWithoutPermissions();
 
         Assertions.assertNull(task.poll(),
-            "Attempting to retrieve the Max Constraint Value should fail, causing poll() to fail");
+                "Attempting to retrieve the Max Constraint Value should fail, causing poll() to fail");
     }
 
     private void assertConstraintStateDocumentPermissionsCollectionsAndValue(String previousMaxConstraintColumnValue) {
         String lastValue = constraintValueStore.retrievePreviousMaxConstraintColumnValue();
         assertEquals(previousMaxConstraintColumnValue, lastValue,
-            "The stored lastValue should equal the value from the Task");
+                "The stored lastValue should equal the value from the Task");
         PermissionsTester permTester = this.readDocumentPermissions(constraintStorageUri);
         permTester.assertReadPermissionExists(roleName);
         permTester.assertUpdatePermissionExists(roleName);
@@ -134,9 +135,9 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
     private void assertOnlyRowsWithIdsAfterTheCurrentMaxValueGetDelivered(List<SourceRecord> newRecords) {
         assertEquals(2, newRecords.size(), "Only 2 of the 3 new records should be returned");
         assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":6"),
-            newRecords + " did not contain the expected value");
+                newRecords + " did not contain the expected value");
         assertTrue(newRecords.toString().contains("\"Medical.Authors.ID\":7"),
-            newRecords + " did not contain the expected value");
+                newRecords + " did not contain the expected value");
     }
 
     private void storeBadConstraintState() {

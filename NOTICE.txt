@@ -1,6 +1,8 @@
 MarkLogic® Connector for Kafka
 
-Copyright © 2023 MarkLogic Corporation.  MarkLogic and MarkLogic logo are trademarks or registered trademarks of MarkLogic Corporation in the United States and other countries.  All other trademarks are the property of their respective owners.
+Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+
+MarkLogic and MarkLogic logo are trademarks or registered trademarks of MarkLogic Corporation in the United States and other countries.  All other trademarks are the property of their respective owners.
  
 This project is licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at
 
@@ -10,12 +12,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 To the extent required by the applicable open-source license, a complete machine-readable copy of the source code corresponding to such code is available upon request. This offer is valid to anyone in receipt of this information and shall expire three years following the date of the final distribution of this product version by MarkLogic Corporation. To obtain such source code, send an email to Legal-thirdpartyreview@progress.com. Please specify the product and version for which you are requesting source code.
 
-The following software may be included in this project (last updated October 3, 2023):
+The following software may be included in this project (last updated August 7, 2025):
 
 -------------------------------------------------------------------------
 Third Party Components
 
-Jackson Annotations 2.14.1
+Jackson Annotations 2.17.2
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -27,7 +29,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: http://github.com/FasterXML/jackson
 
-Jackson Core 2.14.1
+Jackson Core 2.17.2
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -39,7 +41,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/FasterXML/jackson-core
 
-Jackson Databind 2.14.1
+Jackson Databind 2.17.2
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -51,7 +53,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/FasterXML/jackson-databind
 
-Jackson Dataformat 2.14.1
+Jackson Dataformat 2.17.2
 Attribution Statements
 http://wiki.fasterxml.com/JacksonHome
 
@@ -63,7 +65,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/FasterXML/jackson-databind
 
-OkHttp 4.10.0
+OkHttp 4.12.0
 Attribution Statements
 http://square.github.io/okhttp/
 
@@ -75,7 +77,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 
-Okio 3.0.0
+Okio 3.6.0
 Attribution Statements
 https://square.github.io/okio/2.x/okio/jvm/okio/index.html
 
@@ -87,7 +89,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/square/okio
 
-JavaMail 1.6.2
+JavaMail 2.0.1
 Attribution Statements
 https://javaee.github.io/javamail/
 
@@ -99,7 +101,7 @@ Made available under the Common Development and Distribution License 1.1. See Ap
 
 Source materials are available for download at: https://mvnrepository.com/artifact/com.sun.mail/javax.mail
 
-JavaBeans Activation Framework 1.1
+JavaBeans Activation Framework 2.0.1
 Attribution Statements
 https://www.oracle.com/technetwork/java/index.html
 
@@ -111,7 +113,7 @@ Made available under the Common Development and Distribution License 1.0. See Ap
 
 Source materials are available for download at: https://www.oracle.com/technetwork/java/jaf11-139815.html
 
-SLF4J API 1.7.36
+SLF4J API 2.0.16
 Attribution Statements
 http://www.slf4j.org
 
@@ -143,7 +145,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Source materials are available for download at: https://github.com/qos-ch/slf4j/tree/master/slf4j-api
 
-Java™ Architecture for XML Binding (JAXB) 2.3.3
+Java™ Architecture for XML Binding (JAXB) 3.0.2
 Attribution Statements
 https://javaee.github.io/jaxb-v2/
 
@@ -180,7 +182,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/apache/commons-codec
 
-Apache Commons IO™ 2.11.0
+Apache Commons IO™ 2.15.1
 Attribution Statements
 http://commons.apache.org/proper/commons-io/
 
@@ -241,7 +243,7 @@ Made available under the Common Development and Distribution License 1.1. See Ap
 
 Source materials are available for download at: https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
 
-Apache Commons Collections™ 4.2
+Apache Commons Collections™ 4.5
 Attribution Statements
 https://commons.apache.org/proper/commons-collections/
 
@@ -253,7 +255,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://mvnrepository.com/artifact/commons-collections/commons-collections
 
-Apache Commons Lang™ 3.12.0
+Apache Commons Lang™ 3.18.0
 Attribution Statements
 http://commons.apache.org/proper/commons-lang/
 
@@ -271,7 +273,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/apache/commons-lang
 
-Apache HttpComponents™ HttpClient 4.5.13
+Apache HttpComponents™ HttpClient 5.3.1
 Attribution Statements
 http://hc.apache.org/httpcomponents-client
 
@@ -283,7 +285,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/apache/httpcomponents-client
 
-Apache HttpComponents™ HttpCore 4.4.13
+Apache HttpComponents™ HttpCore 5.2.4
 Attribution Statements
 http://hc.apache.org/httpcomponents-core-ga
 
@@ -360,7 +362,7 @@ Copyright (C) 2000-2012 Jason Hunter & Brett McLaughlin.
 
 Source materials are available for download at: https://github.com/hunterhacker/jdom/
 
-Kotlin Standard Library JDK 1.6.20
+Kotlin Standard Library JDK 1.9.10
 Attribution Statements
 http://kotlinlang.org/
 
@@ -372,7 +374,7 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk8
 
-Spring Framework 5.3.24
+Spring Framework 5.3.39
 Attribution Statements
 https://projects.spring.io/spring-framework/
 
@@ -384,12 +386,12 @@ Made available under the Apache License 2.0. See Appendix for full text.
 
 Source materials are available for download at: https://github.com/spring-projects/spring-framework
 
-Group: com.flipkart.zjsonpatch Name: zjsonpatch Version: 0.4.12
+Group: com.flipkart.zjsonpatch Name: zjsonpatch Version: 0.4.16
 POM Project URL: https://github.com/flipkart-incubator/zjsonpatch/
 POM License: The Apache Software License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0.txt
 Copyright 2016 flipkart.com zjsonpatch.
 
-Group: jaxen Name: jaxen Version: 1.2.0
+Group: jaxen Name: jaxen Version: 2.0.0
 Project URL: http://www.cafeconleche.org/jaxen
 POM License: BSD License 2.0 - https://raw.githubusercontent.com/jaxen-xpath/jaxen/master/LICENSE.txt
 Embedded license files: jaxen-1.2.0.jar/META-INF/LICENSE.txt

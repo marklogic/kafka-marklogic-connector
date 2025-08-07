@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
 
     @Override
     protected void onStart(Map<String, Object> parsedConfig) {
-        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder().buildDatabaseClientConfig(parsedConfig);
+        DatabaseClientConfig databaseClientConfig = new DefaultDatabaseClientConfigBuilder()
+                .buildDatabaseClientConfig(parsedConfig);
         this.databaseClient = new DefaultConfiguredDatabaseClientFactory().newDatabaseClient(databaseClientConfig);
         if (errorReporterMethod == null) {
             errorReporterMethod = getErrorReporter();
@@ -87,7 +88,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     @Override
     public void put(Collection<SinkRecord> records) {
         super.put(records);
-        // An async flush can be performed here since Kafka expects any writes to be async within this method
+        // An async flush can be performed here since Kafka expects any writes to be
+        // async within this method
         this.writeBatcher.flushAsync();
     }
 
@@ -103,15 +105,16 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         }
     }
 
-    static void addFailureHeaders(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+    static void addFailureHeaders(SinkRecord sinkRecord, Throwable e, String failureHeaderValue,
+            WriteEvent writeEvent) {
         if (sinkRecord instanceof InternalSinkRecord) {
             try {
                 ConsumerRecord<byte[], byte[]> originalRecord = ((InternalSinkRecord) sinkRecord).context().original();
                 addFailureHeadersToOriginalSinkRecord(originalRecord, e, failureHeaderValue, writeEvent);
             } catch (NoSuchMethodError methodException) {
                 classLogger.warn("This version of the MarkLogic Kafka Connector requires Kafka version 3.8.0 or" +
-                    " higher in order to store failure information on the original sink record. Instead, the failure" +
-                    " information will be on the wrapper sink record.");
+                        " higher in order to store failure information on the original sink record. Instead, the failure" +
+                        " information will be on the wrapper sink record.");
                 addFailureHeadersToNonInternalSinkRecord(sinkRecord, e, failureHeaderValue, writeEvent);
             }
         } else {
@@ -119,7 +122,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         }
     }
 
-    static void addFailureHeadersToNonInternalSinkRecord(SinkRecord sinkRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+    static void addFailureHeadersToNonInternalSinkRecord(SinkRecord sinkRecord, Throwable e, String failureHeaderValue,
+            WriteEvent writeEvent) {
         sinkRecord.headers().addString(MARKLOGIC_MESSAGE_FAILURE_HEADER, failureHeaderValue);
         sinkRecord.headers().addString(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, e.getMessage());
         sinkRecord.headers().addString(MARKLOGIC_ORIGINAL_TOPIC, sinkRecord.topic());
@@ -128,12 +132,14 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         }
     }
 
-    static void addFailureHeadersToOriginalSinkRecord(ConsumerRecord<byte[], byte[]> originalRecord, Throwable e, String failureHeaderValue, WriteEvent writeEvent) {
+    static void addFailureHeadersToOriginalSinkRecord(ConsumerRecord<byte[], byte[]> originalRecord, Throwable e,
+            String failureHeaderValue, WriteEvent writeEvent) {
         originalRecord.headers().add(MARKLOGIC_MESSAGE_FAILURE_HEADER, getBytesHandleNull(failureHeaderValue));
         originalRecord.headers().add(MARKLOGIC_MESSAGE_EXCEPTION_MESSAGE, getBytesHandleNull(e.getMessage()));
         originalRecord.headers().add(MARKLOGIC_ORIGINAL_TOPIC, getBytesHandleNull(originalRecord.topic()));
         if (writeEvent != null) {
-            originalRecord.headers().add(MARKLOGIC_TARGET_URI, writeEvent.getTargetUri().getBytes(StandardCharsets.UTF_8));
+            originalRecord.headers().add(MARKLOGIC_TARGET_URI,
+                    writeEvent.getTargetUri().getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -142,12 +148,16 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Because each call to {@code put} results in the records being flushed asynchronously, it is not expected that
-     * anything will need to be flushed here. But just in case, {@code flushAndWait} is used here to ensure that a
+     * Because each call to {@code put} results in the records being flushed
+     * asynchronously, it is not expected that
+     * anything will need to be flushed here. But just in case, {@code flushAndWait}
+     * is used here to ensure that a
      * user expection of all data being flushed is met.
      *
-     * @param currentOffsets– the current offset state as of the last call to put(Collection)}, provided for
-     *                        convenience but could also be determined by tracking all offsets included in the
+     * @param currentOffsets– the current offset state as of the last call to
+     *                        put(Collection)}, provided for
+     *                        convenience but could also be determined by tracking
+     *                        all offsets included in the
      *                        SinkRecords passed to put.
      */
     @Override
@@ -169,7 +179,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Configure the given WriteBatcher based on DMSDK-related options in the parsedConfig.
+     * Configure the given WriteBatcher based on DMSDK-related options in the
+     * parsedConfig.
      *
      * @param parsedConfig
      * @param writeBatcher
@@ -201,11 +212,13 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         }
 
         writeBatcher.onBatchFailure(new WriteFailureHandler(
-            ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig), errorReporterMethod));
+                ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig),
+                errorReporterMethod));
     }
 
     /**
-     * This is all specific to Kafka, as it involves reading inputs from the Kafka config map and then using them to
+     * This is all specific to Kafka, as it involves reading inputs from the Kafka
+     * config map and then using them to
      * construct the reusable RunFlowWriteBatchListener.
      *
      * @param flowName
@@ -213,7 +226,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
      * @param databaseClientConfig
      */
     protected RunFlowWriteBatchListener buildRunFlowListener(String flowName, Map<String, Object> parsedConfig,
-                                                             DatabaseClientConfig databaseClientConfig) {
+            DatabaseClientConfig databaseClientConfig) {
         String logMessage = String.format("After ingesting a batch, will run flow '%s'", flowName);
         final String flowSteps = (String) parsedConfig.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
         List<String> steps = null;
@@ -231,10 +244,12 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     }
 
     /**
-     * Builds a REST ServerTransform object based on the DMSDK parameters in the given config. If no transform name
+     * Builds a REST ServerTransform object based on the DMSDK parameters in the
+     * given config. If no transform name
      * is configured, then null will be returned.
      *
-     * @param parsedConfig - The complete configuration object including any transform parameters.
+     * @param parsedConfig - The complete configuration object including any
+     *                     transform parameters.
      * @return - The ServerTransform that will operate on each record, or null
      */
     protected Optional<ServerTransform> buildServerTransform(final Map<String, Object> parsedConfig) {
@@ -248,7 +263,8 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
                     addTransformParameters(transform, params, delimiter);
                 } else {
                     logger.warn("Unable to apply transform parameters to transform: {}; please set the " +
-                        "delimiter via the {} property", transform, MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
+                            "delimiter via the {} property", transform,
+                            MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
                 }
             }
             return Optional.of(transform);
@@ -260,8 +276,10 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
         String[] tokens = params.split(delimiter);
         for (int i = 0; i < tokens.length; i += 2) {
             if (i + 1 >= tokens.length) {
-                throw new IllegalArgumentException(String.format("The value of the %s property does not have an even number of " +
-                    "parameter names and values; property value: %s", MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, params));
+                throw new IllegalArgumentException(String.format(
+                        "The value of the %s property does not have an even number of " +
+                                "parameter names and values; property value: %s",
+                        MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, params));
             }
             transform.addParameter(tokens[i], tokens[i + 1]);
         }
@@ -275,6 +293,7 @@ public class WriteBatcherSinkTask extends AbstractSinkTask {
     protected WriteBatcher getWriteBatcher() {
         return this.writeBatcher;
     }
+
     protected void setSinkRecordConverter(SinkRecordConverter sinkRecordConverter) {
         this.sinkRecordConverter = sinkRecordConverter;
     }
@@ -335,8 +354,8 @@ class WriteFailureHandler extends LoggingObject implements WriteFailureListener 
         DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
         if ((values != null) && logger.isErrorEnabled()) {
             logger.error("URI: {}; key: {}; partition: {}; offset: {}; timestamp: {}; topic: {}",
-                writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
-                values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
+                    writeEvent.getTargetUri(), values.get("kafka-key"), values.get("kafka-partition"),
+                    values.get("kafka-offset"), values.get("kafka-timestamp"), values.get("kafka-topic"));
         }
     }
 

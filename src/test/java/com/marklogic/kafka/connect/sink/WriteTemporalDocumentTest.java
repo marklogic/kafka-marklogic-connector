@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,16 +35,17 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
     private final static String TEMPORAL_COLLECTION = "kafka-temporal-collection";
 
     private final static String TEMPORAL_CONTENT = "<tempdoc>" +
-        "<content>hello world</content>" +
-        "<systemStart>2014-04-03T11:00:00</systemStart>" +
-        "<systemEnd>2014-04-03T16:00:00</systemEnd>" +
-        "<validStart>2014-04-03T11:00:00</validStart>" +
-        "<validEnd>2014-04-03T16:00:00</validEnd>" +
-        "</tempdoc>";
+            "<content>hello world</content>" +
+            "<systemStart>2014-04-03T11:00:00</systemStart>" +
+            "<systemEnd>2014-04-03T16:00:00</systemEnd>" +
+            "<validStart>2014-04-03T11:00:00</validStart>" +
+            "<validEnd>2014-04-03T16:00:00</validEnd>" +
+            "</tempdoc>";
 
     @AfterEach
     void clearDatabase() {
-        // Temporal documents must be removed by clearing the database; temporal.documentDelete only "logically" deletes
+        // Temporal documents must be removed by clearing the database;
+        // temporal.documentDelete only "logically" deletes
         // a document, and it otherwise cannot be deleted
         logger.info("Clearing database so that temporal documents are deleted");
         String script = "xdmp:database-forests(xdmp:database()) ! xdmp:forest-clear(.)";
@@ -52,8 +53,10 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
     }
 
     /**
-     * This doesn't test the Kafka connector; it's just a sanity check that the test application has a temporal
-     * collection configured correctly so that we can expect the Kafka connector to write to a temporal collection
+     * This doesn't test the Kafka connector; it's just a sanity check that the test
+     * application has a temporal
+     * collection configured correctly so that we can expect the Kafka connector to
+     * write to a temporal collection
      * correctly.
      */
     @Test
@@ -64,8 +67,7 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
         WriteBatcher writeBatcher = dmm.newWriteBatcher().withTemporalCollection(TEMPORAL_COLLECTION);
 
         writeBatcher.add(new DocumentWriteOperationImpl(uri,
-            new StringHandle(TEMPORAL_CONTENT).withFormat(Format.XML)
-        ));
+                new StringHandle(TEMPORAL_CONTENT).withFormat(Format.XML)));
 
         writeBatcher.flushAndWait();
         dmm.stopJob(writeBatcher);
@@ -77,11 +79,10 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
     @Test
     void kafkaConnectorCanWriteTemporalDocument() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "kafka1,kafka2",
-            MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, TEMPORAL_COLLECTION,
-            MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".xml",
-            MarkLogicSinkConfig.DOCUMENT_FORMAT, "xml"
-        );
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "kafka1,kafka2",
+                MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, TEMPORAL_COLLECTION,
+                MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".xml",
+                MarkLogicSinkConfig.DOCUMENT_FORMAT, "xml");
 
         putAndFlushRecords(task, newSinkRecord(TEMPORAL_CONTENT));
 
@@ -91,18 +92,17 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
         assertCollectionSize("kafka2", 1);
 
         String temporalDoc = getDatabaseClient().newServerEval()
-            .xquery(format("collection('%s')[1]/node()", TEMPORAL_COLLECTION))
-            .evalAs(String.class);
+                .xquery(format("collection('%s')[1]/node()", TEMPORAL_COLLECTION))
+                .evalAs(String.class);
         XmlNode doc = new XmlNode(temporalDoc);
         doc.assertElementExists("Verifying that the document was correctly written",
-            "/tempdoc/content[. = 'hello world']");
+                "/tempdoc/content[. = 'hello world']");
     }
 
     @Test
     void invalidTemporalCollection() {
         WriteBatcherSinkTask task = (WriteBatcherSinkTask) startSinkTask(
-            MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, "not-a-temporal-collection"
-        );
+                MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, "not-a-temporal-collection");
 
         List<String> errorMessages = new ArrayList<>();
         task.getWriteBatcher().onBatchFailure((batch, failure) -> {
@@ -113,7 +113,7 @@ class WriteTemporalDocumentTest extends AbstractIntegrationSinkTest {
 
         assertCollectionSize(TEMPORAL_COLLECTION, 0);
         assertEquals(1, errorMessages.size(), "An error should have been captured due to the configured " +
-            "temporal collection not being an actual temporal collection");
+                "temporal collection not being an actual temporal collection");
         String message = errorMessages.get(0);
         assertTrue(message.contains("TEMPORAL-COLLECTIONNOTFOUND"), "Unexpected message: " + message);
     }

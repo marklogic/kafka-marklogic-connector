@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,6 @@ class BuildDatabaseClientConfigTest {
         assertNotNull(clientConfig.getTrustManager());
     }
 
-
     @Test
     void digestAuthenticationAnd1WaySSL() {
 
@@ -192,20 +191,24 @@ class BuildDatabaseClientConfigTest {
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "IncorrectValue");
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(securityContextConfig),
-            "Should throw ConfigException when an invalid authentication type is provided.");
-        assertEquals("Invalid value: IncorrectValue; must be one of: [DIGEST, BASIC, CERTIFICATE, KERBEROS, NONE]", ex.getMessage());
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(securityContextConfig),
+                "Should throw ConfigException when an invalid authentication type is provided.");
+        assertEquals("Invalid value: IncorrectValue; must be one of: [DIGEST, BASIC, CERTIFICATE, KERBEROS, NONE]",
+                ex.getMessage());
     }
 
     @Test
     void invalidDocumentFormatConfig() {
-        Map<String, Object>  documentFormatConfig = new HashMap<>();
+        Map<String, Object> documentFormatConfig = new HashMap<>();
         documentFormatConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         documentFormatConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         documentFormatConfig.put(MarkLogicSinkConfig.DOCUMENT_FORMAT, "InvalidFormat");
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(documentFormatConfig),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value: InvalidFormat; must be one of: [JSON, XML, BINARY, TEXT, UNKNOWN, ]", ex.getMessage());
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(documentFormatConfig),
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value: InvalidFormat; must be one of: [JSON, XML, BINARY, TEXT, UNKNOWN, ]",
+                ex.getMessage());
     }
 
     @Test
@@ -214,9 +217,12 @@ class BuildDatabaseClientConfigTest {
         idStrategyConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         idStrategyConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         idStrategyConfig.put(MarkLogicSinkConfig.ID_STRATEGY, "InvalidStrategy");
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(idStrategyConfig),
-            "Should throw ConfigException when an Id Strategy format is provided.");
-        assertEquals("Invalid value: InvalidStrategy; must be one of: [JSONPATH, HASH, KAFKA_META_HASHED, KAFKA_META_WITH_SLASH, ]", ex.getMessage());
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(idStrategyConfig),
+                "Should throw ConfigException when an Id Strategy format is provided.");
+        assertEquals(
+                "Invalid value: InvalidStrategy; must be one of: [JSONPATH, HASH, KAFKA_META_HASHED, KAFKA_META_WITH_SLASH, ]",
+                ex.getMessage());
     }
 
     @Test
@@ -224,8 +230,9 @@ class BuildDatabaseClientConfigTest {
         Map<String, Object> invalidHostConfig = new HashMap<>();
         invalidHostConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "");
         invalidHostConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(invalidHostConfig),
-            "Should throw ConfigException when host is empty.");
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(invalidHostConfig),
+                "Should throw ConfigException when host is empty.");
         assertEquals("Invalid value  for configuration ml.connection.host: String must be non-empty", ex.getMessage());
     }
 
@@ -234,9 +241,11 @@ class BuildDatabaseClientConfigTest {
         Map<String, Object> invalidPortConfig = new HashMap<>();
         invalidPortConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         invalidPortConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, null);
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(invalidPortConfig),
-            "Should throw ConfigException when port is empty.");
-        assertEquals("Invalid value null for configuration ml.connection.port: Value must be non-null", ex.getMessage());
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(invalidPortConfig),
+                "Should throw ConfigException when port is empty.");
+        assertEquals("Invalid value null for configuration ml.connection.port: Value must be non-null",
+                ex.getMessage());
     }
 
     @Test
@@ -245,8 +254,9 @@ class BuildDatabaseClientConfigTest {
         sslHostVerifierConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         sslHostVerifierConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         sslHostVerifierConfig.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "InvalidValue");
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(sslHostVerifierConfig),
-            "Should throw ConfigException when port is empty.");
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(sslHostVerifierConfig),
+                "Should throw ConfigException when port is empty.");
         assertEquals("Invalid value: InvalidValue; must be one of: [ANY, COMMON, STRICT]", ex.getMessage());
     }
 
@@ -256,8 +266,9 @@ class BuildDatabaseClientConfigTest {
         connectTypeConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         connectTypeConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         connectTypeConfig.put(MarkLogicSinkConfig.CONNECTION_TYPE, "InvalidValue");
-        ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(connectTypeConfig),
-            "Should throw ConfigException when port is empty.");
+        ConfigException ex = assertThrows(ConfigException.class,
+                () -> MarkLogicSinkConfig.CONFIG_DEF.parse(connectTypeConfig),
+                "Should throw ConfigException when port is empty.");
         assertEquals("Invalid value: InvalidValue; must be one of: [DIRECT, GATEWAY, ]", ex.getMessage());
     }
 
@@ -270,15 +281,16 @@ class BuildDatabaseClientConfigTest {
         dmsdkNegBatchSizeConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         dmsdkNegBatchSizeConfig.put(MarkLogicSinkConfig.DMSDK_BATCH_SIZE, -1);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(dmsdkNegBatchSizeConfig),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value -1 for configuration ml.dmsdk.batchSize: Value must be at least 1", ex.getMessage());
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value -1 for configuration ml.dmsdk.batchSize: Value must be at least 1",
+                ex.getMessage());
 
         Map<String, Object> dmsdkZeroBatchSizeConfig = new HashMap<>();
         dmsdkZeroBatchSizeConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         dmsdkZeroBatchSizeConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         dmsdkZeroBatchSizeConfig.put(MarkLogicSinkConfig.DMSDK_BATCH_SIZE, 0);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(dmsdkZeroBatchSizeConfig),
-            "Should throw ConfigException when an invalid Document format is provided.");
+                "Should throw ConfigException when an invalid Document format is provided.");
         assertEquals("Invalid value 0 for configuration ml.dmsdk.batchSize: Value must be at least 1", ex.getMessage());
 
         Map<String, Object> dmsdkNegThreadCountConfig = new HashMap<>();
@@ -286,16 +298,18 @@ class BuildDatabaseClientConfigTest {
         dmsdkNegThreadCountConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         dmsdkNegThreadCountConfig.put(MarkLogicSinkConfig.DMSDK_THREAD_COUNT, -1);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(dmsdkNegThreadCountConfig),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value -1 for configuration ml.dmsdk.threadCount: Value must be at least 1", ex.getMessage());
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value -1 for configuration ml.dmsdk.threadCount: Value must be at least 1",
+                ex.getMessage());
 
         Map<String, Object> dmsdkZeroThreadCountConfig = new HashMap<>();
         dmsdkZeroThreadCountConfig.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         dmsdkZeroThreadCountConfig.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         dmsdkZeroThreadCountConfig.put(MarkLogicSinkConfig.DMSDK_THREAD_COUNT, 0);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(dmsdkZeroThreadCountConfig),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value 0 for configuration ml.dmsdk.threadCount: Value must be at least 1", ex.getMessage());
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value 0 for configuration ml.dmsdk.threadCount: Value must be at least 1",
+                ex.getMessage());
     }
 
     @Test
@@ -307,16 +321,18 @@ class BuildDatabaseClientConfigTest {
         negBulkDsBatchSize.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         negBulkDsBatchSize.put(MarkLogicSinkConfig.BULK_DS_BATCH_SIZE, -1);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(negBulkDsBatchSize),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value -1 for configuration ml.sink.bulkds.batchSize: Value must be at least 1", ex.getMessage());
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value -1 for configuration ml.sink.bulkds.batchSize: Value must be at least 1",
+                ex.getMessage());
 
         Map<String, Object> zeroBulkDsBatchSize = new HashMap<>();
         zeroBulkDsBatchSize.put(MarkLogicSinkConfig.CONNECTION_HOST, "localhost");
         zeroBulkDsBatchSize.put(MarkLogicSinkConfig.CONNECTION_PORT, 8000);
         zeroBulkDsBatchSize.put(MarkLogicSinkConfig.BULK_DS_BATCH_SIZE, 0);
         ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(zeroBulkDsBatchSize),
-            "Should throw ConfigException when an invalid Document format is provided.");
-        assertEquals("Invalid value 0 for configuration ml.sink.bulkds.batchSize: Value must be at least 1", ex.getMessage());
+                "Should throw ConfigException when an invalid Document format is provided.");
+        assertEquals("Invalid value 0 for configuration ml.sink.bulkds.batchSize: Value must be at least 1",
+                ex.getMessage());
     }
 
     @Test

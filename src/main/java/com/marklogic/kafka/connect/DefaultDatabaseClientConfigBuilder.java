@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicConfig.CONNECTION_PORT));
         clientConfig.setBasePath((String) parsedConfig.get(MarkLogicConfig.CONNECTION_BASE_PATH));
 
-        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
+        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE))
+                .toUpperCase();
         clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
 
         String database = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_DATABASE);
@@ -77,14 +78,16 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             configureSimpleSsl(clientConfig);
         }
 
-        clientConfig.setCloudApiKey((String)parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY));
+        clientConfig.setCloudApiKey((String) parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY));
 
         return clientConfig;
     }
 
     /**
-     * This provides a "simple" SSL configuration in that it uses the JVM's default SSLContext and
-     * a "trust everything" hostname verifier. No default TrustManager is configured because in the absence of one,
+     * This provides a "simple" SSL configuration in that it uses the JVM's default
+     * SSLContext and
+     * a "trust everything" hostname verifier. No default TrustManager is configured
+     * because in the absence of one,
      * the JVM's cacerts file will be used.
      *
      * @param clientConfig
@@ -113,10 +116,11 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
     private void configureCustomSslContext(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
         final SecurityContextType securityContextType = clientConfig.getSecurityContextType();
-        if (SecurityContextType.BASIC.equals(securityContextType) || SecurityContextType.DIGEST.equals(securityContextType)) {
-            SSLContext sslContext = ConfigUtil.getBoolean(MarkLogicConfig.SSL_MUTUAL_AUTH, parsedConfig) ?
-                buildTwoWaySslContext(clientConfig.getCertFile(), clientConfig.getCertPassword(), parsedConfig) :
-                buildOneWaySslContext(parsedConfig);
+        if (SecurityContextType.BASIC.equals(securityContextType)
+                || SecurityContextType.DIGEST.equals(securityContextType)) {
+            SSLContext sslContext = ConfigUtil.getBoolean(MarkLogicConfig.SSL_MUTUAL_AUTH, parsedConfig)
+                    ? buildTwoWaySslContext(clientConfig.getCertFile(), clientConfig.getCertPassword(), parsedConfig)
+                    : buildOneWaySslContext(parsedConfig);
             clientConfig.setSslContext(sslContext);
         }
     }
@@ -139,7 +143,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             keyManagerFactory.init(clientKeyStore, certPassword.toCharArray());
             sslContext = SSLContext.getInstance(tlsVersion);
 
-            TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
+            TrustManager[] trust = new TrustManager[] { new SimpleX509TrustManager() };
             KeyManager[] key = keyManagerFactory.getKeyManagers();
             sslContext.init(key, trust, null);
             return sslContext;
@@ -150,7 +154,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
     private SSLContext buildOneWaySslContext(Map<String, Object> parsedConfig) {
         final String tlsVersion = (String) parsedConfig.get(MarkLogicConfig.TLS_VERSION);
-        TrustManager[] trust = new TrustManager[]{new SimpleX509TrustManager()};
+        TrustManager[] trust = new TrustManager[] { new SimpleX509TrustManager() };
         SSLContext sslContext;
         try {
             sslContext = SSLContext.getInstance(tlsVersion);

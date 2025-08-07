@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Handles converting a SinkRecord into a DocumentWriteOperation via the properties in the given config map.
+ * Handles converting a SinkRecord into a DocumentWriteOperation via the
+ * properties in the given config map.
  */
 public class DefaultSinkRecordConverter implements SinkRecordConverter {
 
@@ -60,17 +61,19 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
     private final IdStrategy idStrategy;
 
     public DefaultSinkRecordConverter(Map<String, Object> parsedConfig) {
-        this.addTopicToCollections = ConfigUtil.getBoolean(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, parsedConfig);
-        this.includeKafkaMetadata = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, parsedConfig);
+        this.addTopicToCollections = ConfigUtil.getBoolean(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC,
+                parsedConfig);
+        this.includeKafkaMetadata = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA,
+                parsedConfig);
         this.includeKafkaHeaders = ConfigUtil.getBoolean(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS, parsedConfig);
         String configPrefixValue = (String) parsedConfig.get(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS_PREFIX);
         this.kafkaHeadersPrefix = (configPrefixValue == null) ? "" : configPrefixValue;
 
         documentWriteOperationBuilder = new DocumentWriteOperationBuilder()
-            .withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
-            .withPermissions((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
-            .withUriPrefix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
-            .withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
+                .withCollections((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS))
+                .withPermissions((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS))
+                .withUriPrefix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX))
+                .withUriSuffix((String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX));
 
         String val = (String) parsedConfig.get(MarkLogicSinkConfig.DOCUMENT_FORMAT);
         if (StringUtils.hasText(val)) {
@@ -91,7 +94,8 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
         AbstractWriteHandle content = toContent(sinkRecord);
         recordContent.setContent(content);
         recordContent.setAdditionalMetadata(buildAdditionalMetadata(sinkRecord));
-        recordContent.setId(idStrategy.generateId(content, sinkRecord.topic(), sinkRecord.kafkaPartition(), sinkRecord.kafkaOffset()));
+        recordContent.setId(idStrategy.generateId(content, sinkRecord.topic(), sinkRecord.kafkaPartition(),
+                sinkRecord.kafkaOffset()));
         return documentWriteOperationBuilder.build(recordContent);
     }
 
@@ -105,14 +109,14 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
             addKafkaMetadataToDocumentMetadata(sinkRecord, values);
             if (this.includeKafkaHeaders) {
                 sinkRecord.headers().forEach(
-                    header -> values.add(kafkaHeadersPrefix + header.key(), header.value().toString())
-                );
+                        header -> values.add(kafkaHeadersPrefix + header.key(), header.value().toString()));
             }
         }
         return metadata;
     }
 
-    private void addKafkaMetadataToDocumentMetadata(SinkRecord sinkRecord, DocumentMetadataHandle.DocumentMetadataValues values) {
+    private void addKafkaMetadataToDocumentMetadata(SinkRecord sinkRecord,
+            DocumentMetadataHandle.DocumentMetadataValues values) {
         if (this.includeKafkaMetadata) {
             Object key = sinkRecord.key();
             if (key != null) {
@@ -145,10 +149,11 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
         Object value = sinkRecord.value();
         Schema schema = sinkRecord.valueSchema();
 
-        /* Determine the converter based on the value of SinkRecord*/
+        /* Determine the converter based on the value of SinkRecord */
         if (schema != null && value instanceof Struct) {
             /* Avro, ProtoBuf or JSON with schema, ignore schema, handle only the value */
-            value = new String(JSON_CONVERTER.fromConnectData(sinkRecord.topic(), schema, value), StandardCharsets.UTF_8).getBytes();
+            value = new String(JSON_CONVERTER.fromConnectData(sinkRecord.topic(), schema, value),
+                    StandardCharsets.UTF_8).getBytes();
         }
 
         if (value instanceof Map) {

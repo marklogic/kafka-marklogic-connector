@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Base class for any test that wishes to connect to the "kafka-test-test-content" app server on port 8019.
- * AbstractSpringMarkLogicTest assumes it can find mlHost/mlTestRestPort/mlUsername/mlPassword properties in
- * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
+ * Base class for any test that wishes to connect to the
+ * "kafka-test-test-content" app server on port 8019.
+ * AbstractSpringMarkLogicTest assumes it can find
+ * mlHost/mlTestRestPort/mlUsername/mlPassword properties in
+ * gradle.properties and gradle-local.properties. It uses those to construct a
+ * DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
 public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationTest {
@@ -62,11 +65,12 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
     protected final String AUTHORS_OPTIC_SERIALIZED = "{\"$optic\":{\"ns\":\"op\", \"fn\":\"operators\", \"args\":[{\"ns\":\"op\", \"fn\":\"from-view\", \"args\":[\"Medical\", \"Authors\"]}]}}";
     protected final String AUTHORS_TOPIC = "Authors";
 
-
     /**
-     * @param configParamNamesAndValues - Configuration values that need to be set for the test.
-     * @return a MarkLogicSourceTask based on the default connection config and any optional config params provided by
-     * the caller
+     * @param configParamNamesAndValues - Configuration values that need to be set
+     *                                  for the test.
+     * @return a MarkLogicSourceTask based on the default connection config and any
+     *         optional config params provided by
+     *         the caller
      */
     protected RowManagerSourceTask startSourceTask(String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
@@ -89,8 +93,9 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
     void loadFifteenAuthorsIntoMarkLogic() {
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
         docMgr.write("citations.xml",
-            new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
-            new FileHandle(new File("src/test/ml-data/citations.xml")));
+                new DocumentMetadataHandle().withPermission("kafka-test-minimal-user",
+                        DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
+                new FileHandle(new File("src/test/ml-data/citations.xml")));
     }
 
     String loadTestResourceFileIntoString(String filename) throws IOException {
@@ -99,16 +104,17 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String id, String citationTime, String lastName) throws IOException {
+    void loadSingleAuthorRowIntoMarkLogicWithCustomTime(String uri, String id, String citationTime, String lastName)
+            throws IOException {
         String template = loadTestResourceFileIntoString("singleAuthorSingleCitation.xml");
         String documentContents = template.replaceAll("%%ID%%", id);
         documentContents = documentContents.replaceAll("%%TIME%%", citationTime);
         documentContents = documentContents.replaceAll("%%LASTNAME%%", lastName);
         XMLDocumentManager docMgr = getDatabaseClient().newXMLDocumentManager();
         docMgr.write(uri,
-            new DocumentMetadataHandle().withPermission("kafka-test-minimal-user", DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
-            new StringHandle(documentContents)
-        );
+                new DocumentMetadataHandle().withPermission("kafka-test-minimal-user",
+                        DocumentMetadataHandle.Capability.READ, DocumentMetadataHandle.Capability.UPDATE),
+                new StringHandle(documentContents));
     }
 
     void verifyQueryReturnsFifteenAuthors(List<SourceRecord> sourceRecords, String expectedValue) {
@@ -120,32 +126,38 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         AtomicReference<Boolean> foundExpectedValue = new AtomicReference<>(false);
         newSourceRecords.forEach(sourceRecord -> {
             assertEquals(AUTHORS_TOPIC, sourceRecord.topic());
-            assertTrue(sourceRecord.value() instanceof String, "Until we figure out how to return a JsonNode and make " +
-                "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: " + sourceRecord.value().getClass());
+            assertTrue(sourceRecord.value() instanceof String,
+                    "Until we figure out how to return a JsonNode and make " +
+                            "Confluent Platform happy, we expect the JsonNode to be toString'ed; type: "
+                            + sourceRecord.value().getClass());
             if (expectedValue.equals(sourceRecord.value())) {
                 foundExpectedValue.set(true);
             }
         });
         assertTrue(foundExpectedValue.get(),
-            "List of SourceRecords does not contain a record with the expected value");
+                "List of SourceRecords does not contain a record with the expected value");
     }
 
     /**
-     * Convenience for the common use case of wanting to access the value of each record as a JSON object.
+     * Convenience for the common use case of wanting to access the value of each
+     * record as a JSON object.
      *
      * @param records - A list of Kafka SourceRecord objects
-     * @return - A Stream of Jackson ObjectNodes built from the incoming SourceRecords
+     * @return - A Stream of Jackson ObjectNodes built from the incoming
+     *         SourceRecords
      */
     protected Stream<ObjectNode> recordsToJsonObjects(List<SourceRecord> records) {
         return records.stream().map(record -> readJsonObject((String) record.value()));
     }
 
-    protected String appendConstraintOntoQuery(String userDsl, Map<String, Object> parsedConfig, String constraintValue) {
+    protected String appendConstraintOntoQuery(String userDsl, Map<String, Object> parsedConfig,
+            String constraintValue) {
         parsedConfig.put(MarkLogicSourceConfig.DSL_QUERY, userDsl);
         return new DslQueryHandler(null, parsedConfig).appendConstraintAndOrderByToQuery(constraintValue);
     }
 
-    protected void verifyQueryReturnsExpectedRows(String constraintValue, int expectedRowCount, String stringInFirstRecord, Map<String, Object> parsedConfig) {
+    protected void verifyQueryReturnsExpectedRows(String constraintValue, int expectedRowCount,
+            String stringInFirstRecord, Map<String, Object> parsedConfig) {
         parsedConfig.put(MarkLogicSourceConfig.TOPIC, "Authors");
         List<String> params = new ArrayList<>();
         parsedConfig.keySet().forEach(key -> {
@@ -153,14 +165,16 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
             params.add(parsedConfig.get(key).toString());
         });
 
-        RowManagerSourceTask task = startSourceTask(params.toArray(new String[]{}));
-        task.setConstraintValueStore(new TestConstraintValueStore((String)parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME), constraintValue));
+        RowManagerSourceTask task = startSourceTask(params.toArray(new String[] {}));
+        task.setConstraintValueStore(new TestConstraintValueStore(
+                (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME), constraintValue));
         try {
             List<SourceRecord> newRecords = task.poll();
-            assertNotNull(newRecords, "poll() unexpectedly returned null; params: " + params + "; constraintValue: " + constraintValue);
+            assertNotNull(newRecords,
+                    "poll() unexpectedly returned null; params: " + params + "; constraintValue: " + constraintValue);
             assertEquals(expectedRowCount, newRecords.size());
             assertTrue(((String) newRecords.get(0).value()).contains(stringInFirstRecord),
-                "Did not find " + stringInFirstRecord + " in " + ((String) newRecords.get(0).value()));
+                    "Did not find " + stringInFirstRecord + " in " + ((String) newRecords.get(0).value()));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -172,16 +186,16 @@ public abstract class AbstractIntegrationSourceTest extends AbstractIntegrationT
         loadSingleAuthorRowIntoMarkLogicWithCustomTime("Third", "3", "03:00:00", "Third");
     }
 
-
     protected void verifyRecordKeysAreSetToIDColumn(List<SourceRecord> records) {
         assertEquals("1", records.get(0).key(), "The key should be populated by the ID column, and the records are " +
-            "expected to be ordered by ID ascending, so the first record should have a key of 1");
+                "expected to be ordered by ID ascending, so the first record should have a key of 1");
         assertEquals("5", records.get(14).key(), "The records are expected to be ordered by ID ascending, so the " +
-            "last record should have a key of 5");
+                "last record should have a key of 5");
     }
 
     /**
-     * Supports tests that want to simulate an existing max value for a constraint column.
+     * Supports tests that want to simulate an existing max value for a constraint
+     * column.
      */
     class TestConstraintValueStore extends ConstraintValueStore {
 

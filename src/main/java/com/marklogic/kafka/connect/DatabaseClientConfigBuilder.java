@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.marklogic.client.ext.DatabaseClientConfig;
 import java.util.Map;
 
 /**
- * Defines how a map of properties read in by Kafka are used to build an instance of DatabaseClientConfig.
+ * Defines how a map of properties read in by Kafka are used to build an
+ * instance of DatabaseClientConfig.
  */
 public interface DatabaseClientConfigBuilder {
 

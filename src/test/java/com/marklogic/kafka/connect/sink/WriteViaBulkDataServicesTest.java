@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,42 +33,43 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
     @Test
     void twoBatches() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
-            MarkLogicSinkConfig.BULK_DS_BATCH_SIZE, "3",
+                MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
+                MarkLogicSinkConfig.BULK_DS_BATCH_SIZE, "3",
 
-            // Turning on logging here to get coverage of this code; not possibly to verify the output via assertions
-            MarkLogicSinkConfig.LOGGING_RECORD_HEADERS, "true",
-            MarkLogicSinkConfig.LOGGING_RECORD_KEY, "true"
-        );
+                // Turning on logging here to get coverage of this code; not possibly to verify
+                // the output via assertions
+                MarkLogicSinkConfig.LOGGING_RECORD_HEADERS, "true",
+                MarkLogicSinkConfig.LOGGING_RECORD_KEY, "true");
 
         task.put(Arrays.asList(newSinkRecord("<first/>"), newSinkRecord("<second/>")));
 
         assertCollectionSize("No records should exist yet since the batch size on the API declaration is 3, and " +
-            "only 2 records have been written so far", TEST_COLLECTION, 0);
+                "only 2 records have been written so far", TEST_COLLECTION, 0);
 
         task.put(Arrays.asList(newSinkRecord("<third/>"), newSinkRecord("<fourth/>")));
 
         assertCollectionSize("Because the batch size in the API declaration is 3, the addition of two more records " +
-            "should force the first batch of 3 to be written to ML, and then leave the 4th record sitting in the " +
-            "BulkInputCaller queue", TEST_COLLECTION, 3);
+                "should force the first batch of 3 to be written to ML, and then leave the 4th record sitting in the " +
+                "BulkInputCaller queue", TEST_COLLECTION, 3);
 
         task.flush(null);
 
         assertCollectionSize("All 4 records should have been written, as the flush call will ensure that " +
-            "any records waiting to be written will be written", TEST_COLLECTION, 4);
+                "any records waiting to be written will be written", TEST_COLLECTION, 4);
     }
 
     @Test
     void defaultBatchSize() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI
-        );
+                MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI);
 
         for (int i = 1; i < 100; i++) {
             task.put(Arrays.asList(newSinkRecord("<anything/>")));
         }
-        assertCollectionSize("The default batch size is expected to be 100, so no docs should have been written since " +
-            "we've only put 99", TEST_COLLECTION, 0);
+        assertCollectionSize(
+                "The default batch size is expected to be 100, so no docs should have been written since " +
+                        "we've only put 99",
+                TEST_COLLECTION, 0);
 
         task.put(Arrays.asList(newSinkRecord("<anything/>")));
         assertCollectionSize(TEST_COLLECTION, 100);
@@ -80,16 +81,15 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
     @Test
     void verifyEndpointConstants() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "json-test",
-            MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/json/",
-            MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json",
-            MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
-            MarkLogicSinkConfig.DOCUMENT_MIMETYPE, "application/json",
-            MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, "true",
-            MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update",
-            MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, "some-temporal-collection"
-        );
+                MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI,
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "json-test",
+                MarkLogicSinkConfig.DOCUMENT_URI_PREFIX, "/json/",
+                MarkLogicSinkConfig.DOCUMENT_URI_SUFFIX, ".json",
+                MarkLogicSinkConfig.DOCUMENT_FORMAT, "json",
+                MarkLogicSinkConfig.DOCUMENT_MIMETYPE, "application/json",
+                MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, "true",
+                MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update",
+                MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION, "some-temporal-collection");
 
         final String content = "{\"hello\":\"world\"}";
         putAndFlushRecords(task, newSinkRecord(content));
@@ -97,15 +97,15 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
         assertCollectionSize(TEST_COLLECTION, 1);
         JsonNode doc = readJsonDocument(getUrisInCollection(TEST_COLLECTION, 1).get(0));
         assertEquals(content, doc.get("content").asText(), "The test endpoint just tosses whatever 'input' it receives " +
-            "into a 'content' field; it doesn't bother trying to convert it into real JSON. An endpoint developer is " +
-            "free to do whatever they'd like with the content.");
+                "into a 'content' field; it doesn't bother trying to convert it into real JSON. An endpoint developer is " +
+                "free to do whatever they'd like with the content.");
 
         JsonNode constants = doc.get("endpointConstants");
         assertNotNull(constants, "The test endpoint - bulk-endpoint.sjs - is expected to stuff the endpoint constants " +
-            "passed to it so that a test like this can verify that the appropriate constants are sent. The endpoint " +
-            "doesn't have to do anything with these. They're provided in case an endpoint developer wants to make " +
-            "their endpoint a bit more dynamic by having it driven via ml.document.* properties provided to the " +
-            "connector.");
+                "passed to it so that a test like this can verify that the appropriate constants are sent. The endpoint " +
+                "doesn't have to do anything with these. They're provided in case an endpoint developer wants to make " +
+                "their endpoint a bit more dynamic by having it driven via ml.document.* properties provided to the " +
+                "connector.");
 
         assertEquals("json-test", constants.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS).asText());
         assertEquals("/json/", constants.get(MarkLogicSinkConfig.DOCUMENT_URI_PREFIX).asText());
@@ -113,22 +113,25 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
         assertEquals("json", constants.get(MarkLogicSinkConfig.DOCUMENT_FORMAT).asText());
         assertEquals("application/json", constants.get(MarkLogicSinkConfig.DOCUMENT_MIMETYPE).asText());
         assertEquals("true", constants.get(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC).asText());
-        assertEquals("rest-reader,read,rest-writer,update", constants.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS).asText());
-        assertEquals("some-temporal-collection", constants.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION).asText());
+        assertEquals("rest-reader,read,rest-writer,update",
+                constants.get(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS).asText());
+        assertEquals("some-temporal-collection",
+                constants.get(MarkLogicSinkConfig.DOCUMENT_TEMPORAL_COLLECTION).asText());
 
         assertEquals(8, constants.size(), "Expecting the 8 ml.document.* fields; if new features add more fields to " +
-            "this, that's fine; just update this assertion to match the exact number of expected fields");
+                "this, that's fine; just update this assertion to match the exact number of expected fields");
     }
 
     /**
-     * This could be combined with the test for endpoint constants, as they both have the same scenario of ingesting
-     * a single document. But they're kept separate to make the assertions easier to manage and understand.
+     * This could be combined with the test for endpoint constants, as they both
+     * have the same scenario of ingesting
+     * a single document. But they're kept separate to make the assertions easier to
+     * manage and understand.
      */
     @Test
     void verifyKafkaMetadata() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI
-        );
+                MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI);
 
         final String topic = "topic1";
         final int partition = 1;
@@ -137,7 +140,7 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
         final long offset = 123;
         final Long timestamp = System.currentTimeMillis();
         SinkRecord record = new SinkRecord(topic, partition, null, key, null, content, offset,
-            timestamp, TimestampType.CREATE_TIME);
+                timestamp, TimestampType.CREATE_TIME);
 
         putAndFlushRecords(task, record);
 
@@ -156,14 +159,15 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
     @Test
     void badBulkEndpoint() {
         AbstractSinkTask task = startSinkTask(
-            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, "/example/bad-bulk-endpoint.sjs"
-        );
+                MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, "/example/bad-bulk-endpoint.sjs");
 
         putAndFlushRecords(task, newSinkRecord("content-doesnt-matter"));
 
-        // The error handler is expected to log the error. That can't yet be verified automatically, so run this and
+        // The error handler is expected to log the error. That can't yet be verified
+        // automatically, so run this and
         // inspect the logging manually.
-        assertCollectionSize("The write is expected to have failed, so the collection should be empty", TEST_COLLECTION, 0);
+        assertCollectionSize("The write is expected to have failed, so the collection should be empty", TEST_COLLECTION,
+                0);
     }
 
 }
