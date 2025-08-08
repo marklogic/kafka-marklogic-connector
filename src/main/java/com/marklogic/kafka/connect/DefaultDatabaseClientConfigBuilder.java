@@ -78,7 +78,7 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
      * @param clientConfig
      */
     private void configureSimpleSsl(DatabaseClientConfig clientConfig) {
-        clientConfig.setSslContext(SimpleX509TrustManager.newSSLContext());
+        clientConfig.setSslContext(SimpleX509TrustManager.newSSLContext("TLS"));
         clientConfig.setTrustManager(new SimpleX509TrustManager());
         clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
     }

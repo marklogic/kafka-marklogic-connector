@@ -114,7 +114,7 @@ class BuildDatabaseClientConfigTest {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, false);
         config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
-        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
         config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
         config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, true);
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
@@ -134,7 +134,7 @@ class BuildDatabaseClientConfigTest {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, false);
         config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
-        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
         config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "SOMETHING");
         config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, true);
         config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
@@ -154,7 +154,7 @@ class BuildDatabaseClientConfigTest {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, false);
         config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
-        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLSv1.2");
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
         config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
         config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, false);
 
