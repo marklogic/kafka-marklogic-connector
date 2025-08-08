@@ -80,6 +80,12 @@ dependencies {
   testImplementation "ch.qos.logback:logback-classic:1.5.18"
   testImplementation "org.slf4j:jcl-over-slf4j:2.0.16"
 
+	// Automatic loading of test framework implementation dependencies is deprecated.
+	// https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
+	// Without this, once using JUnit 5.12 or higher, Gradle will not find any tests and report an error of:
+	// org.junit.platform.commons.JUnitException: TestEngine with ID 'junit-jupiter' failed to discover tests
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.13.4"
+
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
   documentation files('README.md')
