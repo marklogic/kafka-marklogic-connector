@@ -47,54 +47,54 @@ public class MarkLogicConfig extends AbstractConfig {
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Host")
         .define(CONNECTION_PORT, Type.INT, ConfigDef.NO_DEFAULT_VALUE, ConfigDef.Range.atLeast(0), Importance.HIGH,
             "Required; the port of a REST API app server to connect to; if using Bulk Data Services, can be a plain HTTP app server",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Port")
-        .define(CONNECTION_BASE_PATH, Type.STRING, null, Importance.MEDIUM,
-            "Base path for all calls to MarkLogic; typically used when a reverse proxy is in front of MarkLogic",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Base Path")
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Port")
+                .define(CONNECTION_BASE_PATH, Type.STRING, null, Importance.MEDIUM,
+                        "Base path for all calls to MarkLogic; typically used when a reverse proxy is in front of MarkLogic",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Base Path")
         .define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, "DIGEST", CONNECTION_SECURITY_CONTEXT_TYPE_RV, Importance.HIGH,
             "Required; the authentication scheme used by the server defined by ml.connection.port; either 'DIGEST', 'BASIC', 'CERTIFICATE', 'KERBEROS', or 'NONE'",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Security Context Type", CONNECTION_SECURITY_CONTEXT_TYPE_RV)
-        .define(CONNECTION_USERNAME, Type.STRING, null, Importance.MEDIUM,
-            "MarkLogic username for 'DIGEST' and 'BASIC' authentication",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Username")
-        .define(CONNECTION_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
-            "MarkLogic password for 'DIGEST' and 'BASIC' authentication",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Password")
-        .define(CONNECTION_DATABASE, Type.STRING, null, Importance.LOW,
-            "Name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this.",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Database")
-        .define(CONNECTION_CERT_FILE, Type.STRING, null, Importance.MEDIUM,
-            "Path to PKCS12 file for 'CERTIFICATE' authentication",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Certificate File")
-        .define(CONNECTION_CERT_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
-            "Password for PKCS12 file for 'CERTIFICATE' authentication",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Certificate Password")
-        .define(CONNECTION_EXTERNAL_NAME, Type.STRING, null, Importance.MEDIUM,
-            "External name for 'KERBEROS' authentication",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
-        .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
-            "API key for connecting to MarkLogic Cloud. Should set port to 443 when connecting to MarkLogic Cloud.",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
-        .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
-            "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Connection Type", CONNECTION_TYPE_RV)
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Security Context Type", CONNECTION_SECURITY_CONTEXT_TYPE_RV)
+                .define(CONNECTION_USERNAME, Type.STRING, null, Importance.MEDIUM,
+                        "MarkLogic username for 'DIGEST' and 'BASIC' authentication",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Username")
+                .define(CONNECTION_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
+                        "MarkLogic password for 'DIGEST' and 'BASIC' authentication",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Password")
+                .define(CONNECTION_DATABASE, Type.STRING, null, Importance.LOW,
+                        "Name of a database to connect to. If your REST API server has a content database matching that of the one that you want to write documents to, you do not need to set this.",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Database")
+                .define(CONNECTION_CERT_FILE, Type.STRING, null, Importance.MEDIUM,
+                        "Path to PKCS12 file for 'CERTIFICATE' authentication",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Certificate File")
+                .define(CONNECTION_CERT_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
+                        "Password for PKCS12 file for 'CERTIFICATE' authentication",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Certificate Password")
+                .define(CONNECTION_EXTERNAL_NAME, Type.STRING, null, Importance.MEDIUM,
+                        "External name for 'KERBEROS' authentication",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
+                .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
+                        "API key for connecting to MarkLogic Cloud. Should set port to 443 when connecting to MarkLogic Cloud.",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
+                .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
+                        "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Connection Type", CONNECTION_TYPE_RV)
         // Boolean fields must have a default value of null; otherwise, Confluent Platform, at least in version 7.2.1,
         // will show a default value of "true"
-        .define(CONNECTION_SIMPLE_SSL, Type.BOOLEAN, null, Importance.LOW,
-            "Set to 'true' for a simple SSL strategy that uses the JVM's default SslContext and X509TrustManager and an 'any' host verification strategy",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Use Simple SSL")
-        .define(ENABLE_CUSTOM_SSL, Type.BOOLEAN, null, Importance.LOW,
-            "Set to 'true' to customize how an SSL connection is created. Only supported if securityContextType is 'BASIC' or 'DIGEST'.",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Enable Custom SSL")
-        .define(TLS_VERSION, Type.STRING, "TLSv1.2", Importance.LOW,
-            "The TLS version to use for custom SSL",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "TLS Version for Custom SSL")
-        .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", SSL_HOST_VERIFIER_RV, Importance.LOW,
-            "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'",
-            GROUP, -1, ConfigDef.Width.SHORT, "SSL Hostname Verifier", SSL_HOST_VERIFIER_RV)
-        .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
-            "Set this to true for 2-way SSL; defaults to 1-way SSL",
-            GROUP, -1, ConfigDef.Width.MEDIUM, "Use 2-way SSL");
+                .define(CONNECTION_SIMPLE_SSL, Type.BOOLEAN, null, Importance.LOW,
+                        "Set to 'true' for a simple SSL strategy that uses the JVM's default SslContext and X509TrustManager and an 'any' host verification strategy",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Use Simple SSL")
+                .define(ENABLE_CUSTOM_SSL, Type.BOOLEAN, null, Importance.LOW,
+                        "Set to 'true' to customize how an SSL connection is created. Only supported if securityContextType is 'BASIC' or 'DIGEST'.",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Enable Custom SSL")
+                .define(TLS_VERSION, Type.STRING, "TLS", Importance.LOW,
+                        "The TLS version to use for custom SSL",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "TLS Version for Custom SSL")
+                .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", SSL_HOST_VERIFIER_RV, Importance.LOW,
+                        "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'",
+                        GROUP, -1, ConfigDef.Width.SHORT, "SSL Hostname Verifier", SSL_HOST_VERIFIER_RV)
+                .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
+                        "Set this to true for 2-way SSL; defaults to 1-way SSL",
+                        GROUP, -1, ConfigDef.Width.MEDIUM, "Use 2-way SSL");
     }
 
     protected MarkLogicConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
