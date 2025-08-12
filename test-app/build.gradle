@@ -42,7 +42,7 @@ task loadMarkLogicEmployeesSourceConnector(type: Exec) {
 task insertAuthors(type: Test) {
   useJUnitPlatform()
   systemProperty "AUTHOR_IDS", authorIds
-  description = "Insert a new author into the kafka-test-content database via a new citations XML document; " +
+  description = "Insert a new author into the data-hub-STAGING database via a new citations XML document; " +
     "use e.g. -PauthorIds=7,8,9 to insert 3 new authors with IDs of 7, 8, and 9"
   include "com/marklogic/kafka/connect/source/debug/InsertAuthorsTest.class"
 }

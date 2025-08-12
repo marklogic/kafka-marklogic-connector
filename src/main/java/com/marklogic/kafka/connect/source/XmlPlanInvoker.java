@@ -1,17 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -20,14 +8,18 @@ import com.marklogic.client.expression.PlanBuilder;
 import com.marklogic.client.io.DOMHandle;
 import com.marklogic.kafka.connect.MarkLogicConnectorException;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -39,11 +31,13 @@ import java.util.Map;
 
 class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
+    private static final Logger logger = LoggerFactory.getLogger(XmlPlanInvoker.class);
+
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
     // While a Transformer is not thread-safe and must therefore be created for each batch - though we could consider
     // a pooling strategy in the future - a TransformerFactory is thread-safe and can thus be reused
-    private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    private static final TransformerFactory transformerFactory = makeNewTransformerFactory();
 
     public XmlPlanInvoker(DatabaseClient client, Map<String, Object> parsedConfig) {
         super(client, parsedConfig);
@@ -89,7 +83,7 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
                 NamedNodeMap attributes = column.getAttributes();
                 // The 'name' attribute is expected to exist; trust but verify
                 if (attributes != null && attributes.getNamedItem("name") != null &&
-                    keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
+                        keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
                     return column.getTextContent();
                 }
             }
@@ -106,4 +100,35 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
             throw new MarkLogicConnectorException("Unable to transform XML to string: " + ex.getMessage(), ex);
         }
     }
+
+    private static TransformerFactory makeNewTransformerFactory() {
+        TransformerFactory factory = TransformerFactory.newInstance();
+        // Avoids Polaris warning related to
+        // https://cwe.mitre.org/data/definitions/611.html .
+        // From
+        // https://stackoverflow.com/questions/32178558/how-to-prevent-xml-external-entity-injection-on-transformerfactory
+        // .
+        try {
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (TransformerConfigurationException e) {
+            logTransformerFactoryWarning(XMLConstants.FEATURE_SECURE_PROCESSING, e.getMessage());
+        }
+        try {
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        } catch (IllegalArgumentException e) {
+            logTransformerFactoryWarning(XMLConstants.ACCESS_EXTERNAL_DTD, e.getMessage());
+        }
+        try {
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        } catch (IllegalArgumentException e) {
+            logTransformerFactoryWarning(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, e.getMessage());
+        }
+        return factory;
+    }
+
+    private static void logTransformerFactoryWarning(String xmlConstant, String errorMessage) {
+        String baseTransformerFactoryWarningMessage = "Unable to set {} on TransformerFactory; cause: {}";
+        logger.warn(baseTransformerFactoryWarningMessage, xmlConstant, errorMessage);
+    }
+
 }

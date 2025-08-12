@@ -15,6 +15,11 @@ services:
     ports:
       - "9092:9092"
       - "9101:9101"
+
+    # The NET_RAW capability allows a process to create raw sockets. Polaris does not like that.
+    # This setting removes the NET_RAW capability from the container.
+    cap_drop:
+      - NET_RAW
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
@@ -43,6 +48,8 @@ services:
       - broker
     ports:
       - "8081:8081"
+    cap_drop:
+      - NET_RAW
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
@@ -57,6 +64,8 @@ services:
       - schema-registry
     ports:
       - "8083:8083"
+    cap_drop:
+      - NET_RAW
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'broker:29092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
@@ -91,6 +100,8 @@ services:
       - ksqldb-server
     ports:
       - "9021:9021"
+    cap_drop:
+      - NET_RAW
     environment:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
       CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: 'connect:8083'
@@ -113,6 +124,8 @@ services:
       - connect
     ports:
       - "8088:8088"
+    cap_drop:
+      - NET_RAW
     environment:
       KSQL_CONFIG_DIR: "/etc/ksql"
       KSQL_BOOTSTRAP_SERVERS: "broker:29092"
@@ -136,6 +149,8 @@ services:
       - ksqldb-server
     entrypoint: /bin/sh
     tty: true
+    cap_drop:
+      - NET_RAW
 
   ksql-datagen:
     image: confluentinc/ksqldb-examples:7.6.1
@@ -153,6 +168,8 @@ services:
                        echo Waiting a few seconds for topic creation to finish... && \
                        sleep 11 && \
                        tail -f /dev/null'"
+    cap_drop:
+      - NET_RAW
     environment:
       KSQL_CONFIG_DIR: "/etc/ksql"
       STREAMS_BOOTSTRAP_SERVERS: broker:29092
@@ -168,6 +185,8 @@ services:
       - 8082:8082
     hostname: rest-proxy
     container_name: rest-proxy
+    cap_drop:
+      - NET_RAW
     environment:
       KAFKA_REST_HOST_NAME: rest-proxy
       KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
@@ -175,9 +194,7 @@ services:
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
 
   marklogic:
-    image: "marklogicdb/marklogic-db:11.2.0-centos-1.1.2"
-    hostname: marklogic
-    container_name: marklogic
+    image: "marklogicdb/marklogic-db:latest-11"
     platform: linux/amd64
     environment:
       - INSTALL_CONVERTERS=true
@@ -190,6 +207,8 @@ services:
       - "8000-8002:8000-8002"
       - "8010-8013:8010-8013"
       - "8018-8019:8018-8019"
+    cap_drop:
+      - NET_RAW
 
   # Copied from https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/install-the-server/#example-docker-compose-configuration .
   sonarqube:
@@ -206,6 +225,8 @@ services:
       - sonarqube_logs:/opt/sonarqube/logs
     ports:
       - "9000:9000"
+    cap_drop:
+      - NET_RAW
 
   postgres:
     image: postgres:15-alpine
@@ -215,6 +236,8 @@ services:
     volumes:
       - postgresql:/var/lib/postgresql
       - postgresql_data:/var/lib/postgresql/data
+    cap_drop:
+      - NET_RAW
 
 volumes:
   sonarqube_data:

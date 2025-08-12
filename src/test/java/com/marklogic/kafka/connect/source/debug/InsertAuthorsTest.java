@@ -1,17 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source.debug;
 
@@ -34,41 +22,44 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Convenience program for inserting a new author into the kafka-test-content database to facilitate testing the
- * source connector on the authors TDE. This reuses the test plumbing so we don't have to collect host/port/etc
- * information, but it adjusts the DatabaseClient config to use port 8018 instead of 8019 so that documents are
- * inserted into the kafka-test-content database instead of kafka-test-test-content.
+ * Convenience program for inserting a new author into the data-hub-STAGING
+ * database to facilitate testing the
+ * source connector on the authors TDE. This reuses the test plumbing so we
+ * don't have to collect host/port/etc
+ * information, but it adjusts the DatabaseClient config to use port 8010
+ * instead of 8011 so that documents are
+ * inserted into the data-hub-STAGING database instead of data-hub-FINAL.
  */
 class InsertAuthorsTest extends AbstractIntegrationTest {
 
     // Only intended for inserting new authors with a user-provided ID. Can easily expand this to make the data more
     // random and/or controlled by the user.
     private final static String CITATIONS_DOC = "<Citations>\n" +
-        "  <Citation>\n" +
-        "    <ID>%%AUTHOR_ID%%</ID>\n" +
-        "    <Article>\n" +
-        "      <Journal>\n" +
-        "        <ISSN>61296-004</ISSN>\n" +
-        "        <JournalIssue>\n" +
-        "          <Volume>44</Volume>\n" +
-        "          <PubDate>\n" +
-        "            <Date>2022-07-13</Date>\n" +
-        "            <Year>2022</Year>\n" +
-        "            <Month>07</Month>\n" +
-        "            <Day>13</Day>\n" +
-        "            <Time>09:00:00</Time>\n" +
-        "          </PubDate>\n" +
-        "        </JournalIssue>\n" +
-        "      </Journal>\n" +
-        "      <AuthorList>\n" +
-        "        <Author>\n" +
-        "          <LastName>LastName%%AUTHOR_ID%%</LastName>\n" +
-        "          <ForeName>ForeName%%AUTHOR_ID%%</ForeName>\n" +
-        "        </Author>\n" +
-        "      </AuthorList>\n" +
-        "    </Article>\n" +
-        "  </Citation>\n" +
-        "</Citations>\n";
+            "  <Citation>\n" +
+            "    <ID>%%AUTHOR_ID%%</ID>\n" +
+            "    <Article>\n" +
+            "      <Journal>\n" +
+            "        <ISSN>61296-004</ISSN>\n" +
+            "        <JournalIssue>\n" +
+            "          <Volume>44</Volume>\n" +
+            "          <PubDate>\n" +
+            "            <Date>2022-07-13</Date>\n" +
+            "            <Year>2022</Year>\n" +
+            "            <Month>07</Month>\n" +
+            "            <Day>13</Day>\n" +
+            "            <Time>09:00:00</Time>\n" +
+            "          </PubDate>\n" +
+            "        </JournalIssue>\n" +
+            "      </Journal>\n" +
+            "      <AuthorList>\n" +
+            "        <Author>\n" +
+            "          <LastName>LastName%%AUTHOR_ID%%</LastName>\n" +
+            "          <ForeName>ForeName%%AUTHOR_ID%%</ForeName>\n" +
+            "        </Author>\n" +
+            "      </AuthorList>\n" +
+            "    </Article>\n" +
+            "  </Citation>\n" +
+            "</Citations>\n";
 
     @Autowired
     SimpleTestConfig testConfig;

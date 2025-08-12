@@ -1,46 +1,16 @@
 MarkLogic® Connector for Kafka
 
-Copyright © 2024 MarkLogic Corporation. All Rights Reserved.
+Copyright © 2019-2025 MarkLogic Corporation. All Rights Reserved.
 
 To the extent required by the applicable open-source license, a complete machine-readable copy of the source code corresponding to such code is available upon request. This offer is valid to anyone in receipt of this information and shall expire three years following the date of the final distribution of this product version by Progress Software Corporation. To obtain such source code, send an email to Legal-thirdpartyreview@progress.com. Please specify the product and version for which you are requesting source code.
 
-Summary
+Third Party Notices
 
 marklogic-data-hub 6.1.1 (Apache-2.0)
 ml-app-deployer 5.0.0 (Apache-2.0)
 jackson-dataformat-csv 2.17.2 (Apache-2.0)
 
 Common Licenses
-
-Apache License 2.0 (Apache-2.0)
-
-Third-Party Components
-
-The following is a list of the third-party components used by MarkLogic® Connector for Kafka v1.10.0 (last updated November 1, 2024):
-
-marklogic-data-hub 6.1.1 (Apache-2.0)
-https://repo1.maven.org/maven2/com/marklogic/marklogic-data-hub/6.1.1/
-For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
-
-ml-app-deployer 5.0.0 (Apache-2.0)
-https://repo1.maven.org/maven2/com/marklogic/ml-app-deployer/5.0.0/
-For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
-
-jackson-dataformat-csv 2.17.2 (Apache-2.0)
-https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-csv/2.17.2/
-For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
-
-Copyright Statements
-Copyright ©2009 FasterXML, LLC
-
-License Text (http://spdx.org/licenses/Apache-2.0)
-Made available under the Apache License 2.0. See Appendix for full text.
-
-Source materials are available for download at: https://github.com/FasterXML/jackson-databind
-
-Common Licenses
-
-This section shows the text of common third-party licenses used by MarkLogic® Connector for Kafka v1.10.0 (last updated November 1, 2024):
 
 Apache License 2.0 (Apache-2.0)
 https://spdx.org/licenses/Apache-2.0.html
