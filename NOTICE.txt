@@ -13,6 +13,28 @@ jackson-dataformat-csv 2.17.2 (Apache-2.0)
 Common Licenses
 
 Apache License 2.0 (Apache-2.0)
+
+Third-Party Components
+
+The following is a list of the third-party components used by the MarkLogic® Connector for Kafka 1.11.0 (last updated August 12, 2025):
+
+marklogic-data-hub 6.1.1 (Apache-2.0)
+https://repo1.maven.org/maven2/com/marklogic/marklogic-data-hub/
+For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
+
+ml-app-deployer 5.0.0 (Apache-2.0)
+https://repo1.maven.org/maven2/com/marklogic/ml-app-deployer/
+For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
+
+jackson-dataformat-csv 2.17.2 (Apache-2.0)
+https://repo1.maven.org/maven2/com/fasterxml/jackson/dataformat/jackson-dataformat-csv/
+For the full text of the Apache-2.0 license, see Apache License 2.0 (Apache-2.0)
+
+Common Licenses
+
+This section shows the text of common third-party licenses used by MarkLogic® Connector for Kafka 1.11.0 (last updated August 12, 2025):
+
+Apache License 2.0 (Apache-2.0)
 https://spdx.org/licenses/Apache-2.0.html
 
 Apache License
