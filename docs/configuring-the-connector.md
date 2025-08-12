@@ -94,7 +94,7 @@ The MarkLogic connector provides two options for configuring the usage of SSL wh
 
 If a custom SSL approach is used, you can use the following properties to configure this approach:
 
-- `ml.connection.customSsl.tlsVersion` = the TLS version to use for constructing an `SSLContext`. Defaults to `TLSv1.2`.
+- `ml.connection.customSsl.tlsVersion` = the TLS version to use for constructing an `SSLContext`. Defaults to `TLS`, permitting the JVM to use the highest version possible.
 - `ml.connection.customSsl.mutualAuth` = `true` to configure mutual, or "2-way", SSL authentication
 
 If `ml.connection.customSsl.mutualAuth` is set to `true`, you must also configure these properties:

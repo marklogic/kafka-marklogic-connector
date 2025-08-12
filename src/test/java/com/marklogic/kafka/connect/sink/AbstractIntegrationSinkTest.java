@@ -1,17 +1,5 @@
 /*
- * Copyright (c) 2023 MarkLogic Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -28,9 +16,12 @@ import java.util.function.BiConsumer;
 import static com.marklogic.kafka.connect.sink.MarkLogicSinkConfig.*;
 
 /**
- * Base class for any test that wishes to connect to the "kafka-test-test-content" app server on port 8019.
- * AbstractSpringMarkLogicTest assumes it can find mlHost/mlTestRestPort/mlUsername/mlPassword properties in
- * gradle.properties and gradle-local.properties. It uses those to construct a DatabaseClient which can be fetched
+ * Base class for any test that wishes to connect to the
+ * "kafka-test-test-content" app server on port 8019.
+ * AbstractSpringMarkLogicTest assumes it can find
+ * mlHost/mlTestRestPort/mlUsername/mlPassword properties in
+ * gradle.properties and gradle-local.properties. It uses those to construct a
+ * DatabaseClient which can be fetched
  * via getDatabaseClient().
  */
 public abstract class AbstractIntegrationSinkTest extends AbstractIntegrationTest {
@@ -39,20 +30,21 @@ public abstract class AbstractIntegrationSinkTest extends AbstractIntegrationTes
     @Autowired
     SimpleTestConfig testConfig;
 
-    private final static long DEFAULT_RETRY_SLEEP_TIME = 250;
-    private final static int DEFAULT_RETRY_ATTEMPTS = 10;
     private Map<String, Object> taskConfig = new HashMap<>();
 
     /**
-     * @param configParamNamesAndValues - Configuration values that need to be set for the test.
-     * @return a MarkLogicSinkTask based on the default connection config and any optional config params provided by
-     * the caller
+     * @param configParamNamesAndValues - Configuration values that need to be set
+     *                                  for the test.
+     * @return a MarkLogicSinkTask based on the default connection config and any
+     *         optional config params provided by
+     *         the caller
      */
     protected AbstractSinkTask startSinkTask(String... configParamNamesAndValues) {
         return startSinkTask(null, configParamNamesAndValues);
     }
 
-    protected AbstractSinkTask startSinkTask(BiConsumer<SinkRecord, Throwable> errorReporterMethod, String... configParamNamesAndValues) {
+    protected AbstractSinkTask startSinkTask(BiConsumer<SinkRecord, Throwable> errorReporterMethod,
+            String... configParamNamesAndValues) {
         Map<String, String> config = newMarkLogicConfig(testConfig);
         config.put(MarkLogicSinkConfig.DOCUMENT_PERMISSIONS, "rest-reader,read,rest-writer,update");
         for (int i = 0; i < configParamNamesAndValues.length; i += 2) {
@@ -60,10 +52,12 @@ public abstract class AbstractIntegrationSinkTest extends AbstractIntegrationTes
         }
         taskConfig.putAll(config);
         if (taskConfig.containsKey(DMSDK_INCLUDE_KAFKA_METADATA)) {
-            taskConfig.put(DMSDK_INCLUDE_KAFKA_METADATA, Boolean.valueOf((String) taskConfig.get(DMSDK_INCLUDE_KAFKA_METADATA)));
+            taskConfig.put(DMSDK_INCLUDE_KAFKA_METADATA,
+                    Boolean.valueOf((String) taskConfig.get(DMSDK_INCLUDE_KAFKA_METADATA)));
         }
         if (taskConfig.containsKey(DOCUMENT_COLLECTIONS_ADD_TOPIC)) {
-            taskConfig.put(DOCUMENT_COLLECTIONS_ADD_TOPIC, Boolean.valueOf((String) taskConfig.get(DOCUMENT_COLLECTIONS_ADD_TOPIC)));
+            taskConfig.put(DOCUMENT_COLLECTIONS_ADD_TOPIC,
+                    Boolean.valueOf((String) taskConfig.get(DOCUMENT_COLLECTIONS_ADD_TOPIC)));
         }
 
         MarkLogicSinkConnector connector = new MarkLogicSinkConnector();
@@ -90,31 +84,6 @@ public abstract class AbstractIntegrationSinkTest extends AbstractIntegrationTes
     protected void putAndFlushRecords(AbstractSinkTask task, SinkRecord... records) {
         task.put(Arrays.asList(records));
         task.flush(new HashMap<>());
-    }
-
-    protected final void retryIfNotSuccessful(Runnable r) {
-        retryIfNotSuccessful(r, DEFAULT_RETRY_SLEEP_TIME, DEFAULT_RETRY_ATTEMPTS);
-    }
-
-    @SuppressWarnings("java:S2925") // We're fine with the sleep call here, due to the nature of testing with kafka-junit
-    protected final void retryIfNotSuccessful(Runnable r, long sleepTime, int attempts) {
-        for (int i = 1; i <= attempts; i++) {
-            logger.info("Trying assertion, attempt " + i + " out of " + attempts);
-            try {
-                r.run();
-                return;
-            } catch (Throwable ex) {
-                if (i == attempts) {
-                    throw ex;
-                }
-                logger.info("Assertion failed: " + ex.getMessage() + "; will sleep for " + sleepTime + " ms and try again");
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    // Ignore, not expected during a test
-                }
-            }
-        }
     }
 
     protected Map<String, Object> getTaskConfig() {
