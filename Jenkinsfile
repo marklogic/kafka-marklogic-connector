@@ -24,7 +24,7 @@ pipeline{
           export JAVA_HOME=$JAVA_HOME_DIR
           export GRADLE_USER_HOME=$WORKSPACE/$GRADLE_DIR
           export PATH=$GRADLE_USER_HOME:$JAVA_HOME/bin:$PATH
-          cd kafka-connector/test-app
+          cd kafka-connector
           ./gradlew hubInit
           ./gradlew mlDeploy -PmlPassword=admin
         '''
