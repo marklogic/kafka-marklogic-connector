@@ -1,2 +1,2 @@
 rootProject.name = 'kafka-connect-marklogic'
-
+include "test-app"

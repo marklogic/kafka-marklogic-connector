@@ -1,2 +1,5 @@
 src/main/hub-internal-config
 src/main/entity-config
+gradle
+gradlew
+gradlew.bat
