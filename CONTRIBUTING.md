@@ -4,8 +4,7 @@ distribution.
 
 ### Requirements:
 * MarkLogic Server 11+
-* Java version 17 is required to use the Gradle tools.
-Additionally, SonarQube requires the use of Java 17. 
+* Java version 17
 
 See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
 for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
@@ -21,7 +20,7 @@ Note that you do not need to install [Gradle](https://gradle.org/) - the "gradle
 appropriate version of Gradle if you do not have it installed already.
 
 ## Virtual Server Preparation
-The project includes a docker-compose file that includes MarkLogic, SonarQube with a Postgres server, and Confluent
+The project includes a docker-compose file in the repository root that includes MarkLogic, SonarQube with a Postgres server, and Confluent
 Platform servers.
 
 ### Confluent Platform
@@ -33,14 +32,14 @@ The Confluent Platform servers in this docker-compose file are based on the Conf
 [Install a Confluent Platform cluster in Docker using a Confluent docker-compose file](https://docs.confluent.io/platform/current/platform-quickstart.html).
 
 ## Docker Cluster Preparation
-To setup the docker cluster, use the docker-compose file in the "test-app" directory to build the Docker cluster with
+To setup the docker cluster, use the docker-compose file in the repository root to build the Docker cluster with
 the command:
 ```
-docker-compose -f docker-compose.yml up -d --build 
+docker-compose up -d --build 
 ```
 When the setup is complete, you should be able to run
 ```
-docker-compose -f docker-compose.yml ps
+docker-compose ps
 ```
 and see results similar to the following.
 ```
@@ -61,14 +60,14 @@ schema-registry                         confluentinc/cp-schema-registry:7.6.1   
 You can now visit several web applications:
 * http://localhost:8000 to access the MarkLogic server.
 * http://localhost:9000 to use the SonarQube server as described in the "Running Sonar Code Analysis"
-section below.
+  section below.
 * http://localhost:9021 to access
-[Confluent's Control Center GUI](https://docs.confluent.io/platform/current/control-center/index.html) application.
-Within Control Center, click on "controlcenter.cluster" to access the configuration for the Kafka cluster.
+  [Confluent's Control Center GUI](https://docs.confluent.io/platform/current/control-center/index.html) application.
+  Within Control Center, click on "controlcenter.cluster" to access the configuration for the Kafka cluster.
 
 ## MarkLogic Preparation
 To prepare the MarkLogic server for automated testing as well as testing with the Confluent Platform, the Data Hub based
-application must be deployed. From the "test-app" directory, follow these steps:
+application must be deployed. From the root directory, follow these steps:
 1. Run `./gradlew hubInit`
 2. Edit gradle-local.properties and set `mlUsername` and `mlPassword`
 3. Run `./gradlew -i mlDeploy`
@@ -102,7 +101,7 @@ To configure the SonarQube service, perform the following steps:
 9. In the "Provide a token" panel, click on "Generate". Copy the token.
 10. Click the "Continue" button.
 11. Update `systemProp.sonar.token=<Replace With Your Sonar Token>` in `gradle-local.properties` in the root of your
-project.
+    project.
 
 To run the SonarQube analysis, run the following Gradle task in the root directory, which will run all the tests with
 code coverage and then generate a quality report with SonarQube:
@@ -218,8 +217,8 @@ contents of the `data-hub-FINAL` database.
 
 ## Debugging the MarkLogic Kafka connector
 
-The main mechanism for debugging an instance of the MarkLogic Kafka connector is by examining logs from the 
-connector. You can access those, along with logging from Kafka Connect and all other connectors, by running the 
+The main mechanism for debugging an instance of the MarkLogic Kafka connector is by examining logs from the
+connector. You can access those, along with logging from Kafka Connect and all other connectors, by running the
 following:
 
     confluent local services connect log -f
@@ -228,7 +227,7 @@ See [the log command docs](https://docs.confluent.io/confluent-cli/current/comma
 for more information.
 
 You can also customize Confluent logging by [adjusting the log4j file for Kafka Connect](https://docs.confluent.io/platform/current/connect/logging.html#viewing-kconnect-logs).
-For example, to prevent some logging from Kafka Connect and from the Java Client DMSDK, add the following to the 
+For example, to prevent some logging from Kafka Connect and from the Java Client DMSDK, add the following to the
 `$CONFLUENT_HOME/etc/kafka/connect-log4j.properties` file:
 
     log4j.logger.org.apache.kafka=WARN
@@ -236,35 +235,35 @@ For example, to prevent some logging from Kafka Connect and from the Java Client
 
 
 # Testing with basic Apache Kafka
-The primary reason to test the MarkLogic Kafka connector via a regular Kafka distribution is that the development 
-cycle is much faster and more reliable - i.e. you can repeatedly redeploy the connector and restart Kafka Connect to 
+The primary reason to test the MarkLogic Kafka connector via a regular Kafka distribution is that the development
+cycle is much faster and more reliable - i.e. you can repeatedly redeploy the connector and restart Kafka Connect to
 test changes, and Kafka Connect will continue to work fine. This is particularly useful when the changes you're testing
 do not require testing the GUI provided by Confluent Control Center.
 
-To get started, these instructions assume that you already have an instance of Apache Kafka installed; the 
-[Kafka Quickstart](https://kafka.apache.org/quickstart) instructions provide an easy way of accomplishing this. Perform 
+To get started, these instructions assume that you already have an instance of Apache Kafka installed; the
+[Kafka Quickstart](https://kafka.apache.org/quickstart) instructions provide an easy way of accomplishing this. Perform
 step 1 of these instructions before proceeding.
 
 Next, configure your Gradle properties to point to your Kafka installation and deploy the connector there:
 
 1. Configure `kafkaHome` in gradle-local.properties - e.g. `kafkaHome=/Users/myusername/kafka_2.13-2.8.1`
 2. Configure `kafkaMlUsername` and `kafkaMlPassword` in gradle-local.properties, setting these to a MarkLogic user that
-   is able to write documents to MarkLogic. These values will be used to populate the 
+   is able to write documents to MarkLogic. These values will be used to populate the
    `ml.connection.username` and `ml.connection.password` connector properties.
 3. Run `./gradlew clean deploy` to build a jar and copy it and the config property files to your Kafka installation
 
 [Step 2 in the Kafka Quickstart guide](https://kafka.apache.org/quickstart) provides the instructions for starting the
-separate Zookeeper and Kafka server processes. You'll need to run these commands from your Kafka installation 
-directory. As of August 2022, those commands are (these seem very unlikely to change and thus are included here for 
+separate Zookeeper and Kafka server processes. You'll need to run these commands from your Kafka installation
+directory. As of August 2022, those commands are (these seem very unlikely to change and thus are included here for
 convenience):
 
     bin/zookeeper-server-start.sh config/zookeeper.properties
 
-and 
+and
 
     bin/kafka-server-start.sh config/server.properties
 
-Next, start the Kafka connector in standalone mode (also from the Kafka home directory). To run the sink connector, 
+Next, start the Kafka connector in standalone mode (also from the Kafka home directory). To run the sink connector,
 use the following command:
 
     bin/connect-standalone.sh config/marklogic-connect-standalone.properties config/marklogic-sink.properties
@@ -278,7 +277,7 @@ You'll see a fair amount of logging from Kafka itself; near the end of the loggi
 `RowManagerSourceTask` to ensure that the connector has started up correctly.
 
 ## Sink Connector Testing
-To test out the sink connector, you can use the following command to enter a CLI that allows you to manually send 
+To test out the sink connector, you can use the following command to enter a CLI that allows you to manually send
 messages to the `marklogic` topic that the connector is configured by default to read from:
 
     bin/kafka-console-producer.sh --broker-list localhost:9092 --topic marklogic
