@@ -1,6 +1,6 @@
 plugins {
   id 'net.saliman.properties' version '1.5.2'
-  id "com.marklogic.ml-data-hub" version "6.0.0"
+  id "com.marklogic.ml-data-hub" version "6.2.1"
 }
 
 // Tasks for working with Confluent Platform running locally.

@@ -4,7 +4,7 @@ distribution.
 
 ### Requirements:
 * MarkLogic Server 11+
-* Java, either version 11 or 17, is required to use the Gradle tools.
+* Java version 17 is required to use the Gradle tools.
 Additionally, SonarQube requires the use of Java 17. 
 
 See [the Confluent compatibility matrix](https://docs.confluent.io/platform/current/installation/versions-interoperability.html#java)
@@ -73,10 +73,14 @@ application must be deployed. From the "test-app" directory, follow these steps:
 2. Edit gradle-local.properties and set `mlUsername` and `mlPassword`
 3. Run `./gradlew -i mlDeploy`
 
+Note: If you change the version of Data Hub Framework used by this project, you should also delete the following directories:
+* 'test-app/src/main/entity-config'
+* 'test-app/src/main/hub-internal-config'
+
 
 ## Automated Testing
 Now that your MarkLogic server is configured and the test-app is deployed, you can run the tests via from the root
-directory. Note that you must be using Java 11 or Java 17 for this command due to the latest version of Gradle.
+directory. Note that you must be using Java 17 for this command due to the latest version of Gradle.
 ```
 ./gradlew test
 ```

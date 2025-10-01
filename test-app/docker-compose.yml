@@ -1,5 +1,4 @@
 ---
-version: '3.8'
 name: marklogic-kafka-confluent
 services:
 
@@ -194,7 +193,7 @@ services:
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
 
   marklogic:
-    image: "marklogicdb/marklogic-db:latest-11"
+    image: "${MARKLOGIC_IMAGE}"
     platform: linux/amd64
     environment:
       - INSTALL_CONVERTERS=true

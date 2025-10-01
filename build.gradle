@@ -58,7 +58,7 @@ dependencies {
 
   // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
   // may work together, but that behavior is not guaranteed.
-  implementation("com.marklogic:marklogic-data-hub:6.1.1") {
+  implementation("com.marklogic:marklogic-data-hub:6.2.1") {
     exclude module: "marklogic-client-api"
     exclude module: "ml-javaclient-util"
     exclude module: "ml-app-deployer"
