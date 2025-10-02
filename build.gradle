@@ -115,23 +115,25 @@ tasks.withType(JavaCompile) {
 
 test {
   useJUnitPlatform()
-}
-
-// Configures jacoco test coverage to be included when "test" is run
-test {
   finalizedBy jacocoTestReport
-}
-jacocoTestReport {
-  dependsOn test
-}
-// Enabling the XML report allows for sonar to grab coverage data from jacoco
-jacocoTestReport {
-  reports {
-    // This isn't working with Gradle 8. Will replace this soon with the sonar instance in docker-compose.
-    // xml.enabled true
+  jacocoTestReport {
+    dependsOn test
+    reports {
+      xml.required = true
+    }
   }
-}
 
+  jacocoTestCoverageVerification {
+    violationRules {
+      rule {
+        limit {
+          minimum = 0.0
+        }
+      }
+    }
+  }
+
+}
 
 shadowJar {
   // Exclude DHF source files
