@@ -1,6 +1,8 @@
 This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
-develop and test the connector, either via a Docker cluster install of Confluent Platform or of the regular Kafka
-distribution.
+develop and test the connector. There are two methods available - automated and manual. Both methods are performed via a
+Docker stack. The automated tests stack creates MarkLogic, Sonar, and Postgres instance for the automated tests. The
+manual tests use Confluent Platform in a different Docker stack to allow testing the connector via Confluent Control
+Center with a MarkLogic instance in the same stack.
 
 ### Requirements:
 * MarkLogic Server 11+
@@ -10,7 +12,7 @@ See [the Confluent compatibility matrix](https://docs.confluent.io/platform/curr
 for more information. After installing your desired version of Java, ensure that the `JAVA_HOME` environment variable
 points to your Java installation.
 
-# Configuring Local Automated and Manual Testing
+# Configuring Local Automated Testing
 
 The test suite for the MarkLogic Kafka connector, found at `src/test`, requires that the test application first be
 deployed to a MarkLogic instance. The recommendation is for this application to be deployed via Docker and
@@ -19,51 +21,17 @@ deployed to a MarkLogic instance. The recommendation is for this application to 
 Note that you do not need to install [Gradle](https://gradle.org/) - the "gradlew" program used below will install the
 appropriate version of Gradle if you do not have it installed already.
 
-## Virtual Server Preparation
-The project includes a docker-compose file in the repository root that includes MarkLogic, SonarQube with a Postgres server, and Confluent
-Platform servers.
-
-### Confluent Platform
-[Confluent Platform](https://docs.confluent.io/platform/current/overview.html) provides an easy mechanism for running
-Kafka locally via a single Docker cluster. A primary benefit of testing with Confluent Platform is to test configuring
-the MarkLogic Kafka connector via the
-[Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) web application.
-The Confluent Platform servers in this docker-compose file are based on the Confluent files and instructions at
-[Install a Confluent Platform cluster in Docker using a Confluent docker-compose file](https://docs.confluent.io/platform/current/platform-quickstart.html).
-
-## Docker Cluster Preparation
-To setup the docker cluster, use the docker-compose file in the repository root to build the Docker cluster with
-the command:
+## Docker Cluster Preparation for Automated Testing
+The automated tests require a MarkLogic server, SonarQube server, and Postgres server. The docker-compose file in the
+repository root includes these services. To prepare for running the automated tests, perform the following steps:
 ```
 docker-compose up -d --build 
 ```
-When the setup is complete, you should be able to run
-```
-docker-compose ps
-```
-and see results similar to the following.
-```
-NAME                                    IMAGE                                             COMMAND                  SERVICE           CREATED          STATUS          PORTS
-broker                                  confluentinc/cp-kafka:7.6.1                       "/etc/confluent/dock…"   broker            14 minutes ago   Up 14 minutes   0.0.0.0:9092->9092/tcp, 0.0.0.0:9101->9101/tcp
-connect                                 cnfldemos/cp-server-connect-datagen:0.6.4-7.6.0   "/etc/confluent/dock…"   connect           14 minutes ago   Up 14 minutes   0.0.0.0:8083->8083/tcp, 9092/tcp
-control-center                          confluentinc/cp-enterprise-control-center:7.6.1   "/etc/confluent/dock…"   control-center    14 minutes ago   Up 14 minutes   0.0.0.0:9021->9021/tcp
-ksql-datagen                            confluentinc/ksqldb-examples:7.6.1                "bash -c 'echo Waiti…"   ksql-datagen      14 minutes ago   Up 14 minutes   
-ksqldb-cli                              confluentinc/cp-ksqldb-cli:7.6.1                  "/bin/sh"                ksqldb-cli        14 minutes ago   Up 14 minutes   
-ksqldb-server                           confluentinc/cp-ksqldb-server:7.6.1               "/etc/confluent/dock…"   ksqldb-server     14 minutes ago   Up 14 minutes   0.0.0.0:8088->8088/tcp
-marklogic                               marklogicdb/marklogic-db:11.2.0-centos-1.1.2      "/tini -- /usr/local…"   marklogic         14 minutes ago   Up 14 minutes   25/tcp, 7997-7999/tcp, 0.0.0.0:8000-8002->8000-8002/tcp, 0.0.0.0:8010-8013->8010-8013/tcp, 8003-8009/tcp, 0.0.0.0:8018-8019->8018-8019/tcp
-marklogic-kafka-confluent-postgres-1    postgres:15-alpine                                "docker-entrypoint.s…"   postgres          14 minutes ago   Up 14 minutes   5432/tcp
-marklogic-kafka-confluent-sonarqube-1   sonarqube:10.3.0-community                        "/opt/sonarqube/dock…"   sonarqube         14 minutes ago   Up 14 minutes   0.0.0.0:9000->9000/tcp
-rest-proxy                              confluentinc/cp-kafka-rest:7.6.1                  "/etc/confluent/dock…"   rest-proxy        14 minutes ago   Up 14 minutes   0.0.0.0:8082->8082/tcp
-schema-registry                         confluentinc/cp-schema-registry:7.6.1             "/etc/confluent/dock…"   schema-registry   14 minutes ago   Up 14 minutes   0.0.0.0:8081->8081/tcp
-```
 
-You can now visit several web applications:
+You can now visit these web applications:
 * http://localhost:8000 to access the MarkLogic server.
 * http://localhost:9000 to use the SonarQube server as described in the "Running Sonar Code Analysis"
   section below.
-* http://localhost:9021 to access
-  [Confluent's Control Center GUI](https://docs.confluent.io/platform/current/control-center/index.html) application.
-  Within Control Center, click on "controlcenter.cluster" to access the configuration for the Kafka cluster.
 
 ## MarkLogic Preparation
 To prepare the MarkLogic server for automated testing as well as testing with the Confluent Platform, the Data Hub based
@@ -100,8 +68,8 @@ To configure the SonarQube service, perform the following steps:
 8. On the "Analysis Method" page, click on "Locally".
 9. In the "Provide a token" panel, click on "Generate". Copy the token.
 10. Click the "Continue" button.
-11. Update `systemProp.sonar.token=<Replace With Your Sonar Token>` in `gradle-local.properties` in the root of your
-    project.
+11. Update `systemProp.sonar.token=<Replace With Your Sonar Token>` in `gradle-local.properties` in the root directory 
+of your project.
 
 To run the SonarQube analysis, run the following Gradle task in the root directory, which will run all the tests with
 code coverage and then generate a quality report with SonarQube:
@@ -125,8 +93,51 @@ without having to re-run the tests.
 For more assistance with Sonar and Gradle, see the
 [Sonar Gradle plugin docs](https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner-for-gradle/).
 
+# Configuring Local Manual Testing
+This project includes a Docker Compose file that creates a Kafka cluster using Confluent Platform along with a
+MarkLogic server. This allows you to test the MarkLogic Kafka connector via the Confluent Control Center web
+application. The instructions below describe how to get started.
 
-## Confluent Platform for Manual Testing
+## Docker Cluster Preparation for Manual Testing
+The docker-compose file in the test-app directory includes these services along with a MarkLogic server.
+```
+docker-compose --env-file ./.env -f test-app/docker-compose.yml up -d --build
+```
+
+When the setup is complete, you should be able to run
+```
+docker-compose --env-file ./.env -f test-app/docker-compose.yml ps
+```
+and see results similar to the following.
+```
+NAME                                    IMAGE                                             COMMAND                  SERVICE           CREATED          STATUS          PORTS
+broker                                  confluentinc/cp-kafka:7.6.1                       "/etc/confluent/dock…"   broker            14 minutes ago   Up 14 minutes   0.0.0.0:9092->9092/tcp, 0.0.0.0:9101->9101/tcp
+connect                                 cnfldemos/cp-server-connect-datagen:0.6.4-7.6.0   "/etc/confluent/dock…"   connect           14 minutes ago   Up 14 minutes   0.0.0.0:8083->8083/tcp, 9092/tcp
+control-center                          confluentinc/cp-enterprise-control-center:7.6.1   "/etc/confluent/dock…"   control-center    14 minutes ago   Up 14 minutes   0.0.0.0:9021->9021/tcp
+ksql-datagen                            confluentinc/ksqldb-examples:7.6.1                "bash -c 'echo Waiti…"   ksql-datagen      14 minutes ago   Up 14 minutes   
+ksqldb-cli                              confluentinc/cp-ksqldb-cli:7.6.1                  "/bin/sh"                ksqldb-cli        14 minutes ago   Up 14 minutes   
+ksqldb-server                           confluentinc/cp-ksqldb-server:7.6.1               "/etc/confluent/dock…"   ksqldb-server     14 minutes ago   Up 14 minutes   0.0.0.0:8088->8088/tcp
+marklogic                               marklogicdb/marklogic-db:11.2.0-centos-1.1.2      "/tini -- /usr/local…"   marklogic         14 minutes ago   Up 14 minutes   25/tcp, 7997-7999/tcp, 0.0.0.0:8000-8002->8000-8002/tcp, 0.0.0.0:8010-8013->8010-8013/tcp, 8003-8009/tcp, 0.0.0.0:8018-8019->8018-8019/tcp
+marklogic-kafka-confluent-postgres-1    postgres:15-alpine                                "docker-entrypoint.s…"   postgres          14 minutes ago   Up 14 minutes   5432/tcp
+marklogic-kafka-confluent-sonarqube-1   sonarqube:10.3.0-community                        "/opt/sonarqube/dock…"   sonarqube         14 minutes ago   Up 14 minutes   0.0.0.0:9000->9000/tcp
+rest-proxy                              confluentinc/cp-kafka-rest:7.6.1                  "/etc/confluent/dock…"   rest-proxy        14 minutes ago   Up 14 minutes   0.0.0.0:8082->8082/tcp
+schema-registry                         confluentinc/cp-schema-registry:7.6.1             "/etc/confluent/dock…"   schema-registry   14 minutes ago   Up 14 minutes   0.0.0.0:8081->8081/tcp
+```
+
+You can now visit several web applications:
+* http://localhost:8000 to access the MarkLogic server.
+* http://localhost:9021 to access
+  [Confluent's Control Center GUI](https://docs.confluent.io/platform/current/control-center/index.html) application.
+  Within Control Center, click on "controlcenter.cluster" to access the configuration for the Kafka cluster.
+
+### Confluent Platform for Manual Testing
+[Confluent Platform](https://docs.confluent.io/platform/current/overview.html) provides an easy mechanism for running
+Kafka locally via a single Docker cluster. A primary benefit of testing with Confluent Platform is to test configuring
+the MarkLogic Kafka connector via the
+[Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) web application.
+The Confluent Platform servers in this docker-compose file are based on the Confluent files and instructions at
+[Install a Confluent Platform cluster in Docker using a Confluent docker-compose file](https://docs.confluent.io/platform/current/platform-quickstart.html).
+
 
 ### Building and Sharing the Connector with the Docker Container
 Using gradle in the root directory, build the connector archive and copy it to a directory shared with the Confluent
@@ -134,7 +145,7 @@ Platform Docker cluster built in the that section, using this gradle command in 
 ```
 ./gradlew copyConnectorToDockerVolume
 ```
-**You MUST restart the "connect" server in the Docker "confluent-platform-example" cluster.**
+**You MUST restart the "connect" server in the Docker "manual-tests-marklogic-kafka-confluent" cluster.**
 
 Now, verify the connector has loaded properly.
 1. Click on "Connect" in the left sidebar.
