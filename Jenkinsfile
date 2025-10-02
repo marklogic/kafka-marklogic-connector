@@ -42,7 +42,7 @@ pipeline{
   stages{
     stage('test-ML12'){
       steps{
-        runtests("ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com/marklogic/marklogic-server-ubi-rootless:12.1.nightly-ubi-rootless")
+        runtests("ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com/marklogic/marklogic-server-ubi:latest-12")
       }
       post{
         always{
