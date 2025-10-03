@@ -27,8 +27,8 @@ plugins {
 }
 
 java {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -44,12 +44,19 @@ configurations {
       // Force v4.5.0 of commons-collections4 to avoid CVEs in v4.4.0 from transitive dependecies:
       // CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924) and
       // CVE-2020-15250 (https://www.cve.org/CVERecord?id=CVE-2020-15250)
-      force "org.apache.commons:commons-collections4:4.5.0"
-
-      // Force v3.18 of commons-lang3 to avoid CVE-2025-48924
-      // (https://www.cve.org/CVERecord?id=CVE-2025-48924), without also
-      // upgrading ml-app-deployer to 6.0.0, which we are not ready to do yet.
-      force 'org.apache.commons:commons-lang3:3.18.0'
+      eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-collections4') {
+          details.useVersion '4.5.0'
+        }
+        if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
+          details.useVersion '3.18.0'
+        }
+        if (details.requested.group == 'org.springframework') {
+          if (['spring-core', 'spring-context', 'spring-beans', 'spring-aop', 'spring-expression', 'spring-web', 'spring-jcl'].contains(details.requested.name)) {
+            details.useVersion '6.2.11'
+          }
+        }
+      }
     }
   }
 }
