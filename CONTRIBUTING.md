@@ -1,6 +1,6 @@
 This guide describes how to develop and contribute pull requests to this connector. The focus is currently on how to
 develop and test the connector. There are two methods available - automated and manual. Both methods are performed via a
-Docker stack. The automated tests stack creates MarkLogic, Sonar, and Postgres instance for the automated tests. The
+Docker stack. The automated tests stack creates a MarkLogic instance for the automated tests. The
 manual tests use Confluent Platform in a different Docker stack to allow testing the connector via Confluent Control
 Center with a MarkLogic instance in the same stack.
 
@@ -22,22 +22,19 @@ Note that you do not need to install [Gradle](https://gradle.org/) - the "gradle
 appropriate version of Gradle if you do not have it installed already.
 
 ## Docker Cluster Preparation for Automated Testing
-The automated tests require a MarkLogic server, SonarQube server, and Postgres server. The docker-compose file in the
-repository root includes these services. To prepare for running the automated tests, perform the following steps:
+The automated tests require a MarkLogic server. The docker-compose file in the repository root includes these services.
+To prepare for running the automated tests, perform the following steps:
 ```
 docker-compose up -d --build 
 ```
 
-You can now visit these web applications:
+You can now visit this web applications:
 * http://localhost:8000 to access the MarkLogic server.
-* http://localhost:9000 to use the SonarQube server as described in the "Running Sonar Code Analysis"
-  section below.
 
 ## MarkLogic Preparation
 To prepare the MarkLogic server for automated testing as well as testing with the Confluent Platform, the Data Hub based
 application must be deployed. From the root directory, follow these steps:
 1. Run `./gradlew hubInit`
-2. Edit gradle-local.properties and set `mlUsername` and `mlPassword`
 3. Run `./gradlew -i mlDeploy`
 
 Note: If you change the version of Data Hub Framework used by this project, you should also delete the following directories:
@@ -54,44 +51,11 @@ directory. Note that you must be using Java 17 for this command due to the lates
 Alternatively, you can import this project into an IDE such as IntelliJ and run each of the tests found under
 `src/test/java`.
 
-## Running Sonar Code Analysis
+## Generating code quality reports with SonarQube
 
-To configure the SonarQube service, perform the following steps:
+Please see our [internal Wiki page](https://progresssoftware.atlassian.net/wiki/spaces/PM/pages/1763541097/Developer+Experience+SonarQube)
+for information on setting up SonarQube if you have not yet already.
 
-1. Go to http://localhost:9000 .
-2. Login as admin/admin. SonarQube will ask you to change this password; you can choose whatever you want ("password" works).
-3. Click on "Create a local project".
-4. Enter "marklogic-kafka-connector" for the Project Display Name; use that as the Project Key as well.
-5. Enter "master" as the main branch name.
-6. Click on "Next".
-7. Click on "Use the global setting" and then "Create project".
-8. On the "Analysis Method" page, click on "Locally".
-9. In the "Provide a token" panel, click on "Generate". Copy the token.
-10. Click the "Continue" button.
-11. Update `systemProp.sonar.token=<Replace With Your Sonar Token>` in `gradle-local.properties` in the root directory 
-of your project.
-
-To run the SonarQube analysis, run the following Gradle task in the root directory, which will run all the tests with
-code coverage and then generate a quality report with SonarQube:
-
-    ./gradlew test sonar
-
-If you do not update `systemProp.sonar.token` in your `gradle.properties` file, you can specify the token via the
-following:
-
-    ./gradlew test sonar -Dsonar.token=paste your token here
-
-When that completes, you can find the results at http://localhost:9000/dashboard?id=marklogic-kafka-connector
-
-Click on that link. If it's the first time you've run the report, you'll see all issues. If you've run the report
-before, then SonarQube will show "New Code" by default. That's handy, as you can use that to quickly see any issues
-you've introduced on the feature branch you're working on. You can then click on "Overall Code" to see all issues.
-
-Note that if you only need results on code smells and vulnerabilities, you can repeatedly run "./gradlew sonar"
-without having to re-run the tests.
-
-For more assistance with Sonar and Gradle, see the
-[Sonar Gradle plugin docs](https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner-for-gradle/).
 
 # Configuring Local Manual Testing
 This project includes a Docker Compose file that creates a Kafka cluster using Confluent Platform along with a
@@ -101,27 +65,30 @@ application. The instructions below describe how to get started.
 ## Docker Cluster Preparation for Manual Testing
 The docker-compose file in the test-app directory includes these services along with a MarkLogic server.
 ```
-docker-compose --env-file ./.env -f test-app/docker-compose.yml up -d --build
+docker-compose --env-file test-app/.env -f test-app/docker-compose.yml up -d --build
 ```
 
 When the setup is complete, you should be able to run
 ```
-docker-compose --env-file ./.env -f test-app/docker-compose.yml ps
+docker-compose --env-file test-app/.env -f test-app/docker-compose.yml ps
 ```
 and see results similar to the following.
 ```
-NAME                                    IMAGE                                             COMMAND                  SERVICE           CREATED          STATUS          PORTS
-broker                                  confluentinc/cp-kafka:7.6.1                       "/etc/confluent/dock…"   broker            14 minutes ago   Up 14 minutes   0.0.0.0:9092->9092/tcp, 0.0.0.0:9101->9101/tcp
-connect                                 cnfldemos/cp-server-connect-datagen:0.6.4-7.6.0   "/etc/confluent/dock…"   connect           14 minutes ago   Up 14 minutes   0.0.0.0:8083->8083/tcp, 9092/tcp
-control-center                          confluentinc/cp-enterprise-control-center:7.6.1   "/etc/confluent/dock…"   control-center    14 minutes ago   Up 14 minutes   0.0.0.0:9021->9021/tcp
-ksql-datagen                            confluentinc/ksqldb-examples:7.6.1                "bash -c 'echo Waiti…"   ksql-datagen      14 minutes ago   Up 14 minutes   
-ksqldb-cli                              confluentinc/cp-ksqldb-cli:7.6.1                  "/bin/sh"                ksqldb-cli        14 minutes ago   Up 14 minutes   
-ksqldb-server                           confluentinc/cp-ksqldb-server:7.6.1               "/etc/confluent/dock…"   ksqldb-server     14 minutes ago   Up 14 minutes   0.0.0.0:8088->8088/tcp
-marklogic                               marklogicdb/marklogic-db:11.2.0-centos-1.1.2      "/tini -- /usr/local…"   marklogic         14 minutes ago   Up 14 minutes   25/tcp, 7997-7999/tcp, 0.0.0.0:8000-8002->8000-8002/tcp, 0.0.0.0:8010-8013->8010-8013/tcp, 8003-8009/tcp, 0.0.0.0:8018-8019->8018-8019/tcp
-marklogic-kafka-confluent-postgres-1    postgres:15-alpine                                "docker-entrypoint.s…"   postgres          14 minutes ago   Up 14 minutes   5432/tcp
-marklogic-kafka-confluent-sonarqube-1   sonarqube:10.3.0-community                        "/opt/sonarqube/dock…"   sonarqube         14 minutes ago   Up 14 minutes   0.0.0.0:9000->9000/tcp
-rest-proxy                              confluentinc/cp-kafka-rest:7.6.1                  "/etc/confluent/dock…"   rest-proxy        14 minutes ago   Up 14 minutes   0.0.0.0:8082->8082/tcp
-schema-registry                         confluentinc/cp-schema-registry:7.6.1             "/etc/confluent/dock…"   schema-registry   14 minutes ago   Up 14 minutes   0.0.0.0:8081->8081/tcp
+NAME                                                 IMAGE                                                                                                      COMMAND                  SERVICE             CREATED          STATUS          PORTS
+alertmanager                                         confluentinc/cp-enterprise-alertmanager:2.2.0                                                              "alertmanager-start"     alertmanager        51 seconds ago   Up 50 seconds   0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp
+broker                                               confluentinc/cp-server:8.0.0                                                                               "/etc/confluent/dock…"   broker              51 seconds ago   Up 50 seconds   0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp, 0.0.0.0:9101->9101/tcp, [::]:9101->9101/tcp
+connect                                              cnfldemos/cp-server-connect-datagen:0.6.7-8.0.0                                                            "/etc/confluent/dock…"   connect             51 seconds ago   Up 49 seconds   0.0.0.0:8083->8083/tcp, [::]:8083->8083/tcp
+control-center                                       confluentinc/cp-enterprise-control-center-next-gen:2.2.0                                                   "/etc/confluent/dock…"   control-center      51 seconds ago   Up 49 seconds   0.0.0.0:9021->9021/tcp, [::]:9021->9021/tcp
+flink-jobmanager                                     cnfldemos/flink-kafka:1.19.1-scala_2.12-java17                                                             "/docker-entrypoint.…"   flink-jobmanager    51 seconds ago   Up 50 seconds   0.0.0.0:9081->9081/tcp, [::]:9081->9081/tcp
+flink-sql-client                                     cnfldemos/flink-sql-client-kafka:1.19.1-scala_2.12-java17                                                  "/docker-entrypoint.…"   flink-sql-client    51 seconds ago   Up 50 seconds   6123/tcp, 8081/tcp
+flink-taskmanager                                    cnfldemos/flink-kafka:1.19.1-scala_2.12-java17                                                             "/docker-entrypoint.…"   flink-taskmanager   51 seconds ago   Up 50 seconds   6123/tcp, 8081/tcp
+ksql-datagen                                         confluentinc/ksqldb-examples:8.0.0                                                                         "bash -c 'echo Waiti…"   ksql-datagen        51 seconds ago   Up 49 seconds   
+ksqldb-cli                                           confluentinc/cp-ksqldb-cli:8.0.0                                                                           "/bin/sh"                ksqldb-cli          51 seconds ago   Up 49 seconds   
+ksqldb-server                                        confluentinc/cp-ksqldb-server:8.0.0                                                                        "/etc/confluent/dock…"   ksqldb-server       51 seconds ago   Up 49 seconds   0.0.0.0:8088->8088/tcp, [::]:8088->8088/tcp
+manual-tests-marklogic-kafka-confluent-marklogic-1   ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com/marklogic/marklogic-server-ubi:latest-12   "/tini -- /usr/local…"   marklogic           51 seconds ago   Up 50 seconds   0.0.0.0:8000-8002->8000-8002/tcp, [::]:8000-8002->8000-8002/tcp, 0.0.0.0:8010-8013->8010-8013/tcp, [::]:8010-8013->8010-8013/tcp, 0.0.0.0:8018-8019->8018-8019/tcp, [::]:8018-8019->8018-8019/tcp
+prometheus                                           confluentinc/cp-enterprise-prometheus:2.2.0                                                                "prometheus-start"       prometheus          51 seconds ago   Up 50 seconds   0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
+rest-proxy                                           confluentinc/cp-kafka-rest:8.0.0                                                                           "/etc/confluent/dock…"   rest-proxy          51 seconds ago   Up 49 seconds   0.0.0.0:8082->8082/tcp, [::]:8082->8082/tcp
+schema-registry                                      confluentinc/cp-schema-registry:8.0.0                                                                      "/etc/confluent/dock…"   schema-registry     51 seconds ago   Up 50 seconds   0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
 ```
 
 You can now visit several web applications:
@@ -137,6 +104,15 @@ the MarkLogic Kafka connector via the
 [Confluent Control Center](https://docs.confluent.io/platform/current/control-center/index.html) web application.
 The Confluent Platform servers in this docker-compose file are based on the Confluent files and instructions at
 [Install a Confluent Platform cluster in Docker using a Confluent docker-compose file](https://docs.confluent.io/platform/current/platform-quickstart.html).
+
+
+### MarkLogic Preparation
+Please ensure you've followed the instructions for "MarkLogic Preparation" in the "Configuring Local Automated Testing"
+sectuib above for deploying a Data Hub test application.
+
+Note: If you change the version of Data Hub Framework used by this project, you should also delete the following directories:
+* 'test-app/src/main/entity-config'
+* 'test-app/src/main/hub-internal-config'
 
 
 ### Building and Sharing the Connector with the Docker Container
@@ -187,7 +163,7 @@ In the Control Center GUI, you can verify the MarkLogic Kafka connector instance
 3. Click on the "marklogic-purchases-sink" connector
 
 You can then verify that data is being written to MarkLogic by using MarkLogic's qconsole application to inspect the
-contents of the `data-hub-FINAL` database.
+contents of the `data-hub-FINAL` database. There should be documents with URIs that start with `/purchase/*`.
 
 ### Load a MarkLogic Kafka source connector instance
 You can also load an instance of the MarkLogic Kafka source connector that will read rows from the `demo/purchases`
