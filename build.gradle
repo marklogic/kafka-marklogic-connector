@@ -27,8 +27,8 @@ plugins {
 }
 
 java {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -81,7 +81,18 @@ dependencies {
     exclude module: "logback-classic"
   }
 
-  testImplementation 'com.marklogic:marklogic-junit5:1.5.0'
+  testImplementation('com.marklogic:marklogic-junit5:1.5.0') {
+    // Use the Java Client declared above.
+    exclude module: "marklogic-client-api"
+
+    // Use the Spring dependencies from ml-app-deployer 6 to avoid vulnerabilities in Spring 5.
+    exclude group: "org.springframework"
+  }
+
+  // Add back all required Spring 6 modules for tests, since junit5 and test code need more than just spring-test
+  testImplementation "org.springframework:spring-test:6.2.11"
+  testImplementation "org.springframework:spring-context:6.2.11"
+  testImplementation "org.springframework:spring-beans:6.2.11"
 
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation kafkaConnectRuntime
