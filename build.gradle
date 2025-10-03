@@ -27,9 +27,14 @@ plugins {
 }
 
 java {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
+
+
 
 repositories {
   mavenCentral()
@@ -46,42 +51,43 @@ configurations {
       // CVE-2020-15250 (https://www.cve.org/CVERecord?id=CVE-2020-15250)
       force "org.apache.commons:commons-collections4:4.5.0"
 
-      // Force v3.18 of commons-lang3 to avoid CVE-2025-48924
-      // (https://www.cve.org/CVERecord?id=CVE-2025-48924), without also
-      // upgrading ml-app-deployer to 6.0.0, which we are not ready to do yet.
-      force 'org.apache.commons:commons-lang3:3.18.0'
+      // Force v3.19 of commons-lang3 to avoid CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924), which
+      // is caused by the use of avro-compiler v1.12.0 with older dependencies including commons-lang3 v3.12.0.
+      force 'org.apache.commons:commons-lang3:3.19.0'
     }
   }
 }
 
 ext {
-  kafkaVersion = "3.9.1"
+  kafkaVersion = "4.1.0"
 }
 
 dependencies {
   def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly kafkaConnectRuntime
-  compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:5.0.0"
+  // Force DHF to use the latest version of ml-gradle, which minimizes security vulnerabilities
+  implementation "com.marklogic:ml-gradle:6.0.1"
 
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.17.2"
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.19.0"
 
   // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
   // may work together, but that behavior is not guaranteed.
   implementation("com.marklogic:marklogic-data-hub:6.2.1") {
-    exclude module: "marklogic-client-api"
-    exclude module: "ml-javaclient-util"
-    exclude module: "ml-app-deployer"
-
-    // No need for mlcp-util, it's only used in 'legacy' DHF 4 jobs
-    exclude module: "mlcp-util"
-    // Excluding because it causes Kafka Connect to complain mightily if included
-    exclude module: "logback-classic"
+    exclude module: "ml-gradle"
   }
 
-  testImplementation 'com.marklogic:marklogic-junit5:1.5.0'
+  testImplementation('com.marklogic:marklogic-junit5:1.5.0') {
+    // Use the Java Client declared above.
+    exclude module: "marklogic-client-api"
+
+    // Use the Spring dependencies from ml-app-deployer 6 to avoid vulnerabilities in Spring 5.
+    exclude group: "org.springframework"
+  }
+
+  // Add back all required Spring 6 modules for tests, since junit5 and test code need more than just spring-test
+  testImplementation "org.springframework:spring-test:6.2.11"
+  testImplementation "org.springframework:spring-context:6.2.11"
 
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation kafkaConnectRuntime
@@ -223,5 +229,5 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
 task copyConnectorToDockerVolume(type: Copy, dependsOn: connectorArchive, group: confluentTestingGroup) {
   description = "Copies the connector's archive directory to the Docker volume shared with the Connect server"
   from "build/connectorArchive"
-  into "test-app/docker/confluent-marklogic-components"
+  into "./docker/confluent-marklogic-components"
 }
