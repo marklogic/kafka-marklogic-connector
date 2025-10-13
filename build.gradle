@@ -44,7 +44,7 @@ configurations {
   documentation
   assets
 
-  configurations.all {
+  configureEach {
     resolutionStrategy {
       // Force v4.5.0 of commons-collections4 to avoid CVEs in v4.4.0 from transitive dependecies:
       // CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924) and
@@ -67,7 +67,7 @@ configurations {
 
         // Force v4.2.6.Final of netty-all to avoid CVE-2025-58057
         // (https://www.cve.org/CVERecord?id=CVE-2025-58057), which is a transitive
-        // dependency of marklogic-data-hub:6.2.1      
+        // dependency of marklogic-data-hub:6.2.1
         if (details.requested.group.equals("io.netty") && details.requested.version.startsWith("4")) {
           details.useVersion "4.2.6.Final"
           details.because "Bumping from 4.1.0 (what marklogic-data-hub:6.2.1 depends on) to 4.2.6.Final to eliminate CVEs."
@@ -114,14 +114,14 @@ dependencies {
   testImplementation "org.apache.avro:avro-compiler:1.12.0"
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.5.18"
-  testImplementation "org.slf4j:jcl-over-slf4j:2.0.16"
+  testImplementation "ch.qos.logback:logback-classic:1.5.19"
+  testImplementation "org.slf4j:jcl-over-slf4j:2.0.17"
 
 	// Automatic loading of test framework implementation dependencies is deprecated.
 	// https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
 	// Without this, once using JUnit 5.12 or higher, Gradle will not find any tests and report an error of:
 	// org.junit.platform.commons.JUnitException: TestEngine with ID 'junit-jupiter' failed to discover tests
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.13.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.14.0"
 
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
@@ -180,7 +180,8 @@ ext {
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-task connectorArchive_CopyManifestToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyManifestToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project manifest into the root folder"
   from '.'
   include 'manifest.json'
@@ -188,26 +189,31 @@ task connectorArchive_CopyManifestToBuildDirectory(type: Copy, group: confluentA
   filter(ReplaceTokens, tokens: [CONFLUENT_USER: componentOwner, VERSION: version])
 }
 
-task connectorArchive_CopyAssetsToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyAssetsToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project assets into the assets folder"
   from configurations.assets
   into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
 }
 
-task connectorArchive_CopyEtcToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyEtcToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project support files into the etc folder"
   from 'config'
   include '*'
   into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
 }
 
-task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyDocumentationToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project documentation into the doc folder"
   from configurations.documentation
   into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
 }
 
-task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: confluentArchiveGroup, dependsOn: jar) {
+tasks.register("connectorArchive_CopyDependenciesToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
+  dependsOn jar
   description = "Copy the dependency jars into the lib folder"
   from jar
   // Confluent already includes the Jackson dependencies that this connector depends on. If the connector includes any
@@ -224,18 +230,21 @@ task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: conflu
   into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
-task connectorArchive_BuildDirectory(group: confluentArchiveGroup) {
+tasks.register("connectorArchive_BuildDirectory") {
+  group = confluentArchiveGroup
   description = "Build the directory that will be used to create the Kafka Connector Archive"
-  dependsOn = [
+  dependsOn(
     connectorArchive_CopyManifestToBuildDirectory,
     connectorArchive_CopyDependenciesToBuildDirectory,
     connectorArchive_CopyDocumentationToBuildDirectory,
     connectorArchive_CopyEtcToBuildDirectory,
     connectorArchive_CopyAssetsToBuildDirectory
-  ]
+  )
 }
 
-task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, group: confluentArchiveGroup) {
+tasks.register("connectorArchive", Zip) {
+  group = confluentArchiveGroup
+  dependsOn connectorArchive_BuildDirectory
   description = 'Build a Connector Hub for the Confluent Connector Hub'
   from "${baseArchiveBuildDir}"
   include '**/*'
@@ -245,7 +254,9 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
 
 // Tasks for using the connector with Confluent Platform on Docker
 
-task copyConnectorToDockerVolume(type: Copy, dependsOn: connectorArchive, group: confluentTestingGroup) {
+tasks.register("copyConnectorToDockerVolume", Copy) {
+  group = confluentTestingGroup
+  dependsOn connectorArchive
   description = "Copies the connector's archive directory to the Docker volume shared with the Connect server"
   from "build/connectorArchive"
   into "./docker/confluent-marklogic-components"
