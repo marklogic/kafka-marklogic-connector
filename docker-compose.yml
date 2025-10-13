@@ -1,5 +1,5 @@
 ---
-name: docker-tests-marklogic-kafka-confluent
+name: docker-tests-marklogic-kafka
 services:
   marklogic:
     image: "${MARKLOGIC_IMAGE}"

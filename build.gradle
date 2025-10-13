@@ -17,7 +17,7 @@ plugins {
 
   // Only used for testing
   id 'jacoco'
-  id "org.sonarqube" version "5.1.0.4882"
+  id "org.sonarqube" version "6.3.1.5724"
 
   // Used to generate Avro classes. This will write classes to build/generated-test-avro-java and also add that folder
   // as a source root. Since this is commented out by default, the generated Avro test class has been added to
@@ -34,10 +34,11 @@ java {
   targetCompatibility = JavaVersion.VERSION_17
 }
 
-
-
 repositories {
   mavenCentral()
+  maven {
+    url = "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-maven-snapshots/"
+  }
 }
 
 configurations {
@@ -46,11 +47,6 @@ configurations {
 
   configureEach {
     resolutionStrategy {
-      // Force v4.5.0 of commons-collections4 to avoid CVEs in v4.4.0 from transitive dependecies:
-      // CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924) and
-      // CVE-2020-15250 (https://www.cve.org/CVERecord?id=CVE-2020-15250)
-      force "org.apache.commons:commons-collections4:4.5.0"
-
       // Force v3.19 of commons-lang3 to avoid CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924), which
       // is caused by the use of avro-compiler v1.12.0 with older dependencies including commons-lang3 v3.12.0.
       force 'org.apache.commons:commons-lang3:3.19.0'
@@ -86,7 +82,7 @@ dependencies {
   compileOnly kafkaConnectRuntime
 
   // Force DHF to use the latest version of ml-gradle, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-gradle:6.0.1"
+  implementation "com.marklogic:ml-gradle:6.1-SNAPSHOT"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.19.0"
 

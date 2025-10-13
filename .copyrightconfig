@@ -1,7 +1,7 @@
 # COPYRIGHT VALIDATION CONFIG
 # ---------------------------------
 # Required start year (keep fixed; end year auto-updates in check output)
-startyear: 2023
+startyear: 2019
 
 # Optional exclusions list (comma-separated). Leave commented if none.
 # Rules:
