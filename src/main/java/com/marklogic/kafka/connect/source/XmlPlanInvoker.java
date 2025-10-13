@@ -17,11 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.XMLConstants;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
@@ -31,7 +27,7 @@ import java.util.Map;
 
 class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
-    private static final Logger logger = LoggerFactory.getLogger(XmlPlanInvoker.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(XmlPlanInvoker.class);
 
     private static final String TABLE_NS_URI = "http://marklogic.com/table";
 
@@ -83,7 +79,7 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
                 NamedNodeMap attributes = column.getAttributes();
                 // The 'name' attribute is expected to exist; trust but verify
                 if (attributes != null && attributes.getNamedItem("name") != null &&
-                        keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
+                    keyColumn.equals(attributes.getNamedItem("name").getTextContent())) {
                     return column.getTextContent();
                 }
             }
@@ -128,7 +124,7 @@ class XmlPlanInvoker extends AbstractPlanInvoker implements PlanInvoker {
 
     private static void logTransformerFactoryWarning(String xmlConstant, String errorMessage) {
         String baseTransformerFactoryWarningMessage = "Unable to set {} on TransformerFactory; cause: {}";
-        logger.warn(baseTransformerFactoryWarningMessage, xmlConstant, errorMessage);
+        staticLogger.warn(baseTransformerFactoryWarningMessage, xmlConstant, errorMessage);
     }
 
 }
