@@ -84,7 +84,7 @@ dependencies {
   // Force DHF to use the latest version of ml-gradle, which minimizes security vulnerabilities
   implementation "com.marklogic:ml-gradle:6.1-SNAPSHOT"
 
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.19.0"
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
 
   // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
   // may work together, but that behavior is not guaranteed.
