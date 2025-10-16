@@ -53,6 +53,9 @@ configurations {
       // is caused by the use of avro-compiler v1.12.0 with older dependencies including commons-lang3 v3.12.0.
       force 'org.apache.commons:commons-lang3:3.19.0'
 
+      // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
+      force "com.marklogic:ml-gradle:6.1.0"
+
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         // Force v12.1.1 of jetty-http to avoid CVE-2025-5115
         // (https://nvd.nist.gov/vuln/detail/CVE-2025-5115), which is a transitive
@@ -83,16 +86,9 @@ dependencies {
   def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly kafkaConnectRuntime
 
-  // Force DHF to use the latest version of ml-gradle, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-gradle:6.1.0"
+  implementation "com.marklogic:marklogic-data-hub:6.2.1"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
-
-  // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
-  // may work together, but that behavior is not guaranteed.
-  implementation("com.marklogic:marklogic-data-hub:6.2.1") {
-    exclude module: "ml-gradle"
-  }
 
   testImplementation 'com.marklogic:marklogic-junit5:2.0-SNAPSHOT'
 
