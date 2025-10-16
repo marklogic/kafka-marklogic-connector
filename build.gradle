@@ -36,6 +36,8 @@ java {
 
 repositories {
   mavenCentral()
+
+  // Needed for marklogic-junit5 snapshot
   maven {
     url = "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-maven-snapshots/"
   }
@@ -82,7 +84,7 @@ dependencies {
   compileOnly kafkaConnectRuntime
 
   // Force DHF to use the latest version of ml-gradle, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-gradle:6.1-SNAPSHOT"
+  implementation "com.marklogic:ml-gradle:6.1.0"
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
 
@@ -92,17 +94,7 @@ dependencies {
     exclude module: "ml-gradle"
   }
 
-  testImplementation('com.marklogic:marklogic-junit5:1.5.0') {
-    // Use the Java Client declared above.
-    exclude module: "marklogic-client-api"
-
-    // Use the Spring dependencies from ml-app-deployer 6 to avoid vulnerabilities in Spring 5.
-    exclude group: "org.springframework"
-  }
-
-  // Add back all required Spring 6 modules for tests, since junit5 and test code need more than just spring-test
-  testImplementation "org.springframework:spring-test:6.2.11"
-  testImplementation "org.springframework:spring-context:6.2.11"
+  testImplementation 'com.marklogic:marklogic-junit5:2.0-SNAPSHOT'
 
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation kafkaConnectRuntime
