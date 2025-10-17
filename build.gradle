@@ -57,21 +57,14 @@ configurations {
       force "com.marklogic:ml-gradle:6.1.0"
 
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        // Force v12.1.1 of jetty-http to avoid CVE-2025-5115
-        // (https://nvd.nist.gov/vuln/detail/CVE-2025-5115), which is a transitive
-        // dependency of Kafka connect-runtime:4.1.0
-        // Need to ensure this inclusdes all jetty modules, such as "org.eclipse.jetty.ee10"
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
           details.useVersion "12.1.1"
-          details.because "Bumping from 12.0.22 (what Kafka connect-runtime:4.1.0 depends on) to 12.1.1 to eliminate CVEs."
+          details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
         }
 
-        // Force v4.2.6.Final of netty-all to avoid CVE-2025-58057
-        // (https://www.cve.org/CVERecord?id=CVE-2025-58057), which is a transitive
-        // dependency of marklogic-data-hub:6.2.1
         if (details.requested.group.equals("io.netty") && details.requested.version.startsWith("4")) {
-          details.useVersion "4.2.6.Final"
-          details.because "Bumping from 4.1.0 (what marklogic-data-hub:6.2.1 depends on) to 4.2.6.Final to eliminate CVEs."
+          details.useVersion "4.2.7.Final"
+          details.because "Eliminating CVEs on earlier patch versions. io.netty is brought in by marklogic-data-hub. "
         }
       }
     }
