@@ -1,0 +1,19 @@
+---
+name: docker-tests-marklogic-kafka
+services:
+  marklogic:
+    image: "${MARKLOGIC_IMAGE}"
+    platform: linux/amd64
+    environment:
+      - INSTALL_CONVERTERS=true
+      - MARKLOGIC_INIT=true
+      - MARKLOGIC_ADMIN_USERNAME=admin
+      - MARKLOGIC_ADMIN_PASSWORD=admin
+    volumes:
+      - ${MARKLOGIC_LOGS_VOLUME}:/var/opt/MarkLogic/Logs
+    ports:
+      - "8000-8002:8000-8002"
+      - "8010-8013:8010-8013"
+      - "8018-8019:8018-8019"
+    cap_drop:
+      - NET_RAW

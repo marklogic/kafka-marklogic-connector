@@ -1,11 +1,23 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    // Add jaxen to buildscript classpath to prevent NoClassDefFoundError when shadow plugin interferes with
+    // ml-data-hub plugin execution. It is not yet known why the shadow plugin causes this problem or why it's
+    // specific to the jaxen library, but this resolves the problem.
+    classpath 'jaxen:jaxen:2.0.0'
+  }
+}
+
 plugins {
   id 'java'
   id 'net.saliman.properties' version '1.5.2'
-  id 'com.gradleup.shadow' version '8.3.4'
+  id 'com.gradleup.shadow' version '9.2.2'
 
   // Only used for testing
   id 'jacoco'
-  id "org.sonarqube" version "5.1.0.4882"
+  id "org.sonarqube" version "6.3.1.5724"
 
   // Used to generate Avro classes. This will write classes to build/generated-test-avro-java and also add that folder
   // as a source root. Since this is commented out by default, the generated Avro test class has been added to
@@ -15,61 +27,63 @@ plugins {
 }
 
 java {
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
   mavenCentral()
+
+  // Needed for marklogic-junit5 snapshot
+  maven {
+    url = "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-maven-snapshots/"
+  }
 }
 
 configurations {
   documentation
   assets
 
-  configurations.all {
+  configureEach {
     resolutionStrategy {
-      // Force v4.5.0 of commons-collections4 to avoid CVEs in v4.4.0 from transitive dependecies:
-      // CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924) and
-      // CVE-2020-15250 (https://www.cve.org/CVERecord?id=CVE-2020-15250)
-      force "org.apache.commons:commons-collections4:4.5.0"
+      // Force v3.19 of commons-lang3 to avoid CVE-2025-48924 (https://www.cve.org/CVERecord?id=CVE-2025-48924), which
+      // is caused by the use of avro-compiler v1.12.0 with older dependencies including commons-lang3 v3.12.0.
+      force 'org.apache.commons:commons-lang3:3.19.0'
 
-      // Force v3.18 of commons-lang3 to avoid CVE-2025-48924
-      // (https://www.cve.org/CVERecord?id=CVE-2025-48924), without also
-      // upgrading ml-app-deployer to 6.0.0, which we are not ready to do yet.
-      force 'org.apache.commons:commons-lang3:3.18.0'
+      // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
+      force "com.marklogic:ml-gradle:6.1.0"
+
+      resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
+          details.useVersion "12.1.1"
+          details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
+        }
+
+        if (details.requested.group.equals("io.netty") && details.requested.version.startsWith("4")) {
+          details.useVersion "4.2.7.Final"
+          details.because "Eliminating CVEs on earlier patch versions. io.netty is brought in by marklogic-data-hub. "
+        }
+      }
     }
   }
 }
 
 ext {
-  kafkaVersion = "3.9.1"
+  kafkaVersion = "4.1.0"
 }
 
 dependencies {
   def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly kafkaConnectRuntime
-  compileOnly "org.slf4j:slf4j-api:1.7.36"
 
-  // Force DHF to use the latest version of ml-app-deployer, which minimizes security vulnerabilities
-  implementation "com.marklogic:ml-app-deployer:5.0.0"
+  implementation "com.marklogic:marklogic-data-hub:6.2.1"
 
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.17.2"
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
 
-  // Note that in general, the version of the DHF jar must match that of the deployed DHF instance. Different versions
-  // may work together, but that behavior is not guaranteed.
-  implementation("com.marklogic:marklogic-data-hub:6.1.1") {
-    exclude module: "marklogic-client-api"
-    exclude module: "ml-javaclient-util"
-    exclude module: "ml-app-deployer"
-
-    // No need for mlcp-util, it's only used in 'legacy' DHF 4 jobs
-    exclude module: "mlcp-util"
-    // Excluding because it causes Kafka Connect to complain mightily if included
-    exclude module: "logback-classic"
-  }
-
-  testImplementation 'com.marklogic:marklogic-junit5:1.5.0'
+  testImplementation 'com.marklogic:marklogic-junit5:2.0-SNAPSHOT'
 
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation kafkaConnectRuntime
@@ -77,14 +91,14 @@ dependencies {
   testImplementation "org.apache.avro:avro-compiler:1.12.0"
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.5.18"
-  testImplementation "org.slf4j:jcl-over-slf4j:2.0.16"
+  testImplementation "ch.qos.logback:logback-classic:1.5.19"
+  testImplementation "org.slf4j:jcl-over-slf4j:2.0.17"
 
 	// Automatic loading of test framework implementation dependencies is deprecated.
 	// https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
 	// Without this, once using JUnit 5.12 or higher, Gradle will not find any tests and report an error of:
 	// org.junit.platform.commons.JUnitException: TestEngine with ID 'junit-jupiter' failed to discover tests
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.13.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.14.0"
 
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
@@ -103,23 +117,25 @@ tasks.withType(JavaCompile) {
 
 test {
   useJUnitPlatform()
-}
-
-// Configures jacoco test coverage to be included when "test" is run
-test {
   finalizedBy jacocoTestReport
-}
-jacocoTestReport {
-  dependsOn test
-}
-// Enabling the XML report allows for sonar to grab coverage data from jacoco
-jacocoTestReport {
-  reports {
-    // This isn't working with Gradle 8. Will replace this soon with the sonar instance in docker-compose.
-    // xml.enabled true
+  jacocoTestReport {
+    dependsOn test
+    reports {
+      xml.required = true
+    }
   }
-}
 
+  jacocoTestCoverageVerification {
+    violationRules {
+      rule {
+        limit {
+          minimum = 0.0
+        }
+      }
+    }
+  }
+
+}
 
 shadowJar {
   // Exclude DHF source files
@@ -141,7 +157,8 @@ ext {
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-task connectorArchive_CopyManifestToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyManifestToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project manifest into the root folder"
   from '.'
   include 'manifest.json'
@@ -149,26 +166,31 @@ task connectorArchive_CopyManifestToBuildDirectory(type: Copy, group: confluentA
   filter(ReplaceTokens, tokens: [CONFLUENT_USER: componentOwner, VERSION: version])
 }
 
-task connectorArchive_CopyAssetsToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyAssetsToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project assets into the assets folder"
   from configurations.assets
   into "${baseArchiveBuildDir}/${baseArchiveName}/assets"
 }
 
-task connectorArchive_CopyEtcToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyEtcToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project support files into the etc folder"
   from 'config'
   include '*'
   into "${baseArchiveBuildDir}/${baseArchiveName}/etc"
 }
 
-task connectorArchive_CopyDocumentationToBuildDirectory(type: Copy, group: confluentArchiveGroup) {
+tasks.register("connectorArchive_CopyDocumentationToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
   description = "Copy the project documentation into the doc folder"
   from configurations.documentation
   into "${baseArchiveBuildDir}/${baseArchiveName}/doc"
 }
 
-task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: confluentArchiveGroup, dependsOn: jar) {
+tasks.register("connectorArchive_CopyDependenciesToBuildDirectory", Copy) {
+  group = confluentArchiveGroup
+  dependsOn jar
   description = "Copy the dependency jars into the lib folder"
   from jar
   // Confluent already includes the Jackson dependencies that this connector depends on. If the connector includes any
@@ -185,18 +207,21 @@ task connectorArchive_CopyDependenciesToBuildDirectory(type: Copy, group: conflu
   into "${baseArchiveBuildDir}/${baseArchiveName}/lib"
 }
 
-task connectorArchive_BuildDirectory(group: confluentArchiveGroup) {
+tasks.register("connectorArchive_BuildDirectory") {
+  group = confluentArchiveGroup
   description = "Build the directory that will be used to create the Kafka Connector Archive"
-  dependsOn = [
+  dependsOn(
     connectorArchive_CopyManifestToBuildDirectory,
     connectorArchive_CopyDependenciesToBuildDirectory,
     connectorArchive_CopyDocumentationToBuildDirectory,
     connectorArchive_CopyEtcToBuildDirectory,
     connectorArchive_CopyAssetsToBuildDirectory
-  ]
+  )
 }
 
-task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, group: confluentArchiveGroup) {
+tasks.register("connectorArchive", Zip) {
+  group = confluentArchiveGroup
+  dependsOn connectorArchive_BuildDirectory
   description = 'Build a Connector Hub for the Confluent Connector Hub'
   from "${baseArchiveBuildDir}"
   include '**/*'
@@ -206,8 +231,10 @@ task connectorArchive(type: Zip, dependsOn: connectorArchive_BuildDirectory, gro
 
 // Tasks for using the connector with Confluent Platform on Docker
 
-task copyConnectorToDockerVolume(type: Copy, dependsOn: connectorArchive, group: confluentTestingGroup) {
+tasks.register("copyConnectorToDockerVolume", Copy) {
+  group = confluentTestingGroup
+  dependsOn connectorArchive
   description = "Copies the connector's archive directory to the Docker volume shared with the Connect server"
   from "build/connectorArchive"
-  into "test-app/docker/confluent-marklogic-components"
+  into "./docker/confluent-marklogic-components"
 }
