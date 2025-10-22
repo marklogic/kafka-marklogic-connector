@@ -35,7 +35,7 @@ public class MarkLogicConfig extends AbstractConfig {
     public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
     public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
 
-    private static final CustomRecommenderAndValidator CONNECTION_SECURITY_CONTEXT_TYPE_RV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "NONE");
+    private static final CustomRecommenderAndValidator CONNECTION_SECURITY_CONTEXT_TYPE_RV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "CLOUD", "NONE");
     private static final CustomRecommenderAndValidator CONNECTION_TYPE_RV = new CustomRecommenderAndValidator("DIRECT", "GATEWAY", "");
     private static final CustomRecommenderAndValidator SSL_HOST_VERIFIER_RV = new CustomRecommenderAndValidator("ANY", "COMMON", "STRICT");
 
@@ -73,7 +73,7 @@ public class MarkLogicConfig extends AbstractConfig {
                         "External name for 'KERBEROS' authentication",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
                 .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
-                        "API key for connecting to MarkLogic Cloud. Should set port to 443 when connecting to MarkLogic Cloud.",
+                        "API key for connecting to Progress Data Cloud. Should set port to 443 when connecting to Progress Data Cloud.",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
                 .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
                         "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",

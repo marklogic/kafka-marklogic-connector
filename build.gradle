@@ -66,6 +66,11 @@ configurations {
           details.useVersion "4.2.7.Final"
           details.because "Eliminating CVEs on earlier patch versions. io.netty is brought in by marklogic-data-hub. "
         }
+
+        if (details.requested.group.equals("org.springframework") && details.requested.version.startsWith("6.2.")) {
+          details.useVersion "6.2.12"
+          details.because "Forcing latest Spring version in marklogic-data-hub to minimize CVEs."
+        }
       }
     }
   }
