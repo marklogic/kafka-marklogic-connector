@@ -182,7 +182,7 @@ class BuildDatabaseClientConfigTest {
         securityContextConfig.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "IncorrectValue");
         ConfigException ex = assertThrows(ConfigException.class, () -> MarkLogicSinkConfig.CONFIG_DEF.parse(securityContextConfig),
             "Should throw ConfigException when an invalid authentication type is provided.");
-        assertEquals("Invalid value: IncorrectValue; must be one of: [DIGEST, BASIC, CERTIFICATE, KERBEROS, NONE]", ex.getMessage());
+        assertEquals("Invalid value: IncorrectValue; must be one of: [DIGEST, BASIC, CERTIFICATE, KERBEROS, CLOUD, NONE]", ex.getMessage());
     }
 
     @Test

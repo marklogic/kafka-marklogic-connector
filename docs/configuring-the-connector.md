@@ -47,8 +47,8 @@ Regardless of the required authentication strategy, you must configure the follo
 - `ml.connection.port` = the port of the MarkLogic app server you wish to connect to
 - `ml.connection.securityContextType` = the authentication strategy required by the MarkLogic app server; defaults to DIGEST
 
-The choices for `ml.connection.securityContextType` are DIGEST, BASIC, CERTIFICATE, KERBEROS, and NONE. The additional
-properties required for each are described in the following sections.
+The choices for `ml.connection.securityContextType` are `DIGEST`, `BASIC`, `CERTIFICATE`, `KERBEROS`, `CLOUD`, and 
+`NONE`. The additional properties required for each are described in the following sections.
 
 ### Configuring digest and basic authentication
 
@@ -57,20 +57,22 @@ Both digest and basic authentication require the following properties to be conf
 - `ml.connection.username` = the name of the MarkLogic user to authenticate as
 - `ml.connection.password` = the password of the MarkLogic user
 
-### Configuring MarkLogic Cloud authentication
+### Configuring Progress Data Cloud authentication
 
 Cloud authentication requires the following properties to be configured:
 
-- `ml.connection.basePath` = the base path in your MarkLogic Cloud instance that points to the REST API server you
+- `ml.connection.securityContextType=CLOUD`
+- `ml.connection.basePath` = the base path in your Progress Data Cloud instance that points to the REST API server you
   wish to connect to
-- `ml.connection.cloudApiKey` = the API key for authenticating with your MarkLogic Cloud instance
+- `ml.connection.cloudApiKey` = the API key for authenticating with your Progress Data Cloud instance
 
-You should also set `ml.connection.port` to 443 for connecting to MarkLogic Cloud.
+You should also set `ml.connection.port` to 443 for connecting to Progress Data Cloud.
 
 ### Configuring certificate authentication
 
 Certificate authentication requires the following properties to be configured:
 
+- `ml.connection.securityContextType=CERTIFICATE`
 - `ml.connection.certFile` = path to a PKCS12 certificate file
 - `ml.connection.certPassword` = password for the PKCS12 certificate file
 
@@ -78,6 +80,7 @@ Certificate authentication requires the following properties to be configured:
 
 Kerberos authentication requires the following property to be configured:
 
+- `ml.connection.securityContextType=KERBEROS`
 - `ml.connection.externalName` = the name of the principal to be used in Kerberos authentication
 
 ### Configuring no authentication
