@@ -62,13 +62,8 @@ configurations {
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
         }
 
-        if (details.requested.group.equals("io.netty") && details.requested.version.startsWith("4")) {
-          details.useVersion "4.2.7.Final"
-          details.because "Eliminating CVEs on earlier patch versions. io.netty is brought in by marklogic-data-hub. "
-        }
-
         if (details.requested.group.equals("org.springframework") && details.requested.version.startsWith("6.2.")) {
-          details.useVersion "6.2.12"
+          details.useVersion "6.2.15"
           details.because "Forcing latest Spring version in marklogic-data-hub to minimize CVEs."
         }
       }
@@ -77,14 +72,18 @@ configurations {
 }
 
 ext {
-  kafkaVersion = "4.1.0"
+  kafkaVersion = "4.1.1"
 }
 
 dependencies {
   def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly kafkaConnectRuntime
 
-  implementation "com.marklogic:marklogic-data-hub:6.2.1"
+  implementation ("com.marklogic:marklogic-data-hub:6.2.1") {
+    // The DH dependency mistakenly defines io.netty dependencies as "implementation" instead of "testImplementation".
+    // They can therefore safely be excluded, thus removing CVEs associated with io.netty libraries.
+    exclude group: "io.netty"
+  }
 
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
 
@@ -93,17 +92,17 @@ dependencies {
   testImplementation "org.apache.kafka:connect-json:${kafkaVersion}"
   testImplementation kafkaConnectRuntime
 
-  testImplementation "org.apache.avro:avro-compiler:1.12.0"
+  testImplementation "org.apache.avro:avro-compiler:1.12.1"
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.5.19"
+  testImplementation "ch.qos.logback:logback-classic:1.5.23"
   testImplementation "org.slf4j:jcl-over-slf4j:2.0.17"
 
 	// Automatic loading of test framework implementation dependencies is deprecated.
 	// https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
 	// Without this, once using JUnit 5.12 or higher, Gradle will not find any tests and report an error of:
 	// org.junit.platform.commons.JUnitException: TestEngine with ID 'junit-jupiter' failed to discover tests
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.14.0"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:6.0.1"
 
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
