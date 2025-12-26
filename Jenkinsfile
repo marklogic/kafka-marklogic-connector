@@ -9,7 +9,7 @@ def runtests(String marklogicVersion) {
     sudo /usr/local/sbin/mladmin cleandata
     cd kafka-connector
     MARKLOGIC_LOGS_VOLUME=/tmp MARKLOGIC_IMAGE='''+marklogicVersion+''' docker-compose up -d --build
-    sleep 60s;
+    sleep 120s;
   '''
   sh label:'deploy project', script: '''#!/bin/bash
     export JAVA_HOME=$JAVA17_HOME_DIR
