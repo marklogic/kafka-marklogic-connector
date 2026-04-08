@@ -1,9 +1,12 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
-name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+# Started with: https://github.com/actions/starter-workflows/blob/main/pages/jekyll.yml .
+# Have to use a custom Jekyll workflow as the default GitHub Jekyll workflow does not whitelist the
+# "jekyll-tabs" plugin that lets us show code tabs in the documentation.
+
+name: Deploy Jekyll site to Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -25,17 +28,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Ruby and install Gemfile bundles
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.4' # Matches GH Pages; keep explicit to match .ruby-version and make CI intent clear
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: ./docs
+          cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./docs/
-          destination: ./_site
+        working-directory: ./docs
+        # Outputs to the './_site' directory by default
+        run: bundle exec jekyll build --verbose --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
       - name: Upload artifact
+        # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./docs/_site"
 
-  # Deployment job
   deploy:
     environment:
       name: github-pages
