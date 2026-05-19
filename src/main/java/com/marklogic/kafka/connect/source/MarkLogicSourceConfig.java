@@ -109,20 +109,21 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
 
     /**
      * Validator for constraint column names to prevent NoSQL/DSL injection attacks (CWE-89/CWE-943).
-     * Ensures column names match a strict allowlist pattern: alphanumeric, underscore, dot, and hyphen characters only.
-     * Maximum length is 128 characters to prevent potential buffer overflow issues.
+     * Ensures column names match a strict allowlist pattern that supports valid MarkLogic Optic identifiers,
+     * including namespaced/QName-style names containing a colon, plus alphanumeric, underscore, dot, and hyphen characters.
+     * Maximum length is 128 characters to prevent excessively long values.
      */
     public static class ConstraintColumnNameValidator implements ConfigDef.Validator {
-        private static final String COLUMN_NAME_PATTERN = "^[a-zA-Z0-9_.-]{1,128}$";
+        private static final String COLUMN_NAME_PATTERN = "^[a-zA-Z0-9_.:-]{1,128}$";
 
         public void ensureValid(String name, Object value) {
             if (StringUtils.hasText((String) value)) {
                 String columnName = (String) value;
                 if (!columnName.matches(COLUMN_NAME_PATTERN)) {
                     throw new ConfigException(format(
-                        "Invalid constraint column name '%s'. Column names must be alphanumeric (a-zA-Z0-9), " +
-                        "underscore (_), dot (.), or hyphen (-), and between 1-128 characters long. " +
-                        "This validation prevents DSL injection attacks.",
+                        "Invalid constraint column name '%s'. Column names must contain only alphanumeric (a-zA-Z0-9), " +
+                        "underscore (_), dot (.), hyphen (-), or colon (:) characters, and be between 1-128 characters long. " +
+                        "This validation prevents DSL injection attacks while allowing valid MarkLogic Optic column identifiers.",
                         columnName));
                 }
             }

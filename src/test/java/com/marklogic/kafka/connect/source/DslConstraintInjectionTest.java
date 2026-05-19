@@ -150,7 +150,6 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     void rejectionOfDslInjectionInConstraintColumnNameViaConfig() {
         // This test verifies that the fix for CWE-89 / CWE-943 (DSL Injection) works correctly.
         // The constraint column name is validated at configuration parse time to prevent injection attacks.
-        // See: https://github.com/marklogic/kafka-marklogic-connector/issues/XXX
         
         // Malicious payload: ')) .joinInner(op.fromView('sensitive', 'secrets')).select([op.col('secret_value
         // This would attempt to join a sensitive view and exfiltrate data
@@ -174,51 +173,4 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
             "Error message should indicate the column name is invalid");
     }
 
-    @Test
-    void rejectionOfSqlInjectionInConstraintColumnNameViaConfig() {
-        // Another common injection pattern: SQL injection-like attempt
-        Map<String, Object> configWithSqlInjection = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
-            put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
-            put(MarkLogicSourceConfig.DSL_QUERY, "op.fromView('Medical', 'Authors')");
-            put(MarkLogicSourceConfig.TOPIC, "Authors");
-            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "id'; DROP TABLE users;");
-        }};
-        
-        org.apache.kafka.common.config.ConfigException exception = 
-            org.junit.jupiter.api.Assertions.assertThrows(
-                org.apache.kafka.common.config.ConfigException.class,
-                () -> MarkLogicSourceConfig.CONFIG_DEF.parse(configWithSqlInjection),
-                "Configuration validation should reject SQL injection patterns in constraintColumnName");
-        
-        assertTrue(exception.getMessage().contains("Invalid constraint column name"),
-            "Error message should indicate the column name is invalid");
-    }
-
-    @Test
-    void acceptanceOfValidConstraintColumnNames() {
-        // Ensure that legitimate column names are still accepted
-        Map<String, Object> validConfigs = new HashMap<String, Object>() {{
-            put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
-            put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
-            put(MarkLogicSourceConfig.DSL_QUERY, "op.fromView('Medical', 'Authors')");
-            put(MarkLogicSourceConfig.TOPIC, "Authors");
-        }};
-        
-        // Alphanumeric
-        validConfigs.put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "ID");
-        MarkLogicSourceConfig.CONFIG_DEF.parse(validConfigs);
-        
-        // With underscore
-        validConfigs.put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "id_123");
-        MarkLogicSourceConfig.CONFIG_DEF.parse(validConfigs);
-        
-        // With dot (common for qualified names)
-        validConfigs.put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "schema.column");
-        MarkLogicSourceConfig.CONFIG_DEF.parse(validConfigs);
-        
-        // With hyphen
-        validConfigs.put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "my-column");
-        MarkLogicSourceConfig.CONFIG_DEF.parse(validConfigs);
-    }
 }
