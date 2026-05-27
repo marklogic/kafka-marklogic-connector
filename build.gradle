@@ -85,7 +85,7 @@ dependencies {
     exclude group: "io.netty"
   }
 
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0"
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.21.3"
 
   testImplementation 'com.marklogic:marklogic-junit5:2.0-SNAPSHOT'
 
