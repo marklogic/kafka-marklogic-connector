@@ -72,7 +72,7 @@ configurations {
 }
 
 ext {
-  kafkaVersion = "4.1.1"
+  kafkaVersion = "4.3.0"
 }
 
 dependencies {
