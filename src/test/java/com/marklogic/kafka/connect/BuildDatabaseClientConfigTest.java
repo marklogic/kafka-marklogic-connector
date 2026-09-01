@@ -1,8 +1,12 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
@@ -12,6 +16,7 @@ import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.config.types.Password;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.HashMap;
@@ -21,6 +26,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BuildDatabaseClientConfigTest {
 
@@ -125,6 +131,23 @@ class BuildDatabaseClientConfigTest {
         assertNotNull(clientConfig.getSslContext());
         assertEquals(DatabaseClientFactory.SSLHostnameVerifier.STRICT, clientConfig.getSslHostnameVerifier());
         assertNotNull(clientConfig.getTrustManager());
+    }
+
+    @Test
+    void basicAuthenticationAndMutualSSLWithLowercaseHostVerifier() {
+        File file = new File("src/test/resources/srportal.p12");
+        String absolutePath = file.getAbsolutePath();
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+        config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, false);
+        config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
+        config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "strict");
+        config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, true);
+        config.put(MarkLogicSinkConfig.CONNECTION_CERT_FILE, absolutePath);
+        config.put(MarkLogicSinkConfig.CONNECTION_CERT_PASSWORD, new Password("abc"));
+
+        DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+        assertEquals(DatabaseClientFactory.SSLHostnameVerifier.STRICT, clientConfig.getSslHostnameVerifier());
     }
 
     @Test
@@ -322,6 +345,45 @@ class BuildDatabaseClientConfigTest {
             assertThrows(ConfigException.class, () -> {
                 MarkLogicSinkConfig.CONFIG_DEF.parse(missingSingleValueConfig);
             });
+        }
+    }
+
+    @Test
+    void simpleSslLogsWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+            config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("simpleSsl")),
+                "Expected a WARN log mentioning simpleSsl");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
+
+    @Test
+    void hostNameVerifierAnyLogsWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+            config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+            config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
+            config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "ANY");
+            config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, false);
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("ANY")),
+                "Expected a WARN log mentioning ANY hostname verification");
+        } finally {
+            logger.detachAppender(listAppender);
         }
     }
 }
