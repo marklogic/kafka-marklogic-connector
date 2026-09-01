@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect;
 
@@ -89,8 +89,8 @@ public class MarkLogicConfig extends AbstractConfig {
                 .define(TLS_VERSION, Type.STRING, "TLS", Importance.LOW,
                         "The TLS version to use for custom SSL",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "TLS Version for Custom SSL")
-                .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", SSL_HOST_VERIFIER_RV, Importance.LOW,
-                        "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'",
+                .define(SSL_HOST_VERIFIER, Type.STRING, "STRICT", SSL_HOST_VERIFIER_RV, Importance.LOW,
+                        "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'. Defaults to 'STRICT'; set to 'ANY' only for development/testing as it disables hostname verification.",
                         GROUP, -1, ConfigDef.Width.SHORT, "SSL Hostname Verifier", SSL_HOST_VERIFIER_RV)
                 .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
                         "Set this to true for 2-way SSL; defaults to 1-way SSL",
