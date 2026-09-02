@@ -72,7 +72,7 @@ public class MarkLogicConfig extends AbstractConfig {
                 .define(CONNECTION_EXTERNAL_NAME, Type.STRING, null, Importance.MEDIUM,
                         "External name for 'KERBEROS' authentication",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
-                .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
+                .define(CONNECTION_CLOUD_API_KEY, Type.PASSWORD, null, Importance.MEDIUM,
                         "API key for connecting to Progress Data Cloud. Should set port to 443 when connecting to Progress Data Cloud.",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
                 .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
