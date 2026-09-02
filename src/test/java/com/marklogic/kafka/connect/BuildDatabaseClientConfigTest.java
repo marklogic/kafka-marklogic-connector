@@ -383,6 +383,79 @@ class BuildDatabaseClientConfigTest {
     }
 
     @Test
+    void basicAuthenticationWithoutSslLogsWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("transmitted in cleartext")),
+                "Expected a WARN log for BASIC authentication without SSL");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
+
+    @Test
+    void basicAuthenticationWithSimpleSslDoesNotLogCleartextWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+            config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .noneMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("transmitted in cleartext")),
+                "Did not expect a BASIC authentication cleartext warning with simpleSsl");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
+
+    @Test
+    void basicAuthenticationWithCustomSslDoesNotLogCleartextWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
+            config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+            config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
+            config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "STRICT");
+            config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, false);
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .noneMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("transmitted in cleartext")),
+                "Did not expect a BASIC authentication cleartext warning with custom SSL");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
+
+    @Test
+    void digestAuthenticationWithoutSslDoesNotLogCleartextWarning() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+        try {
+            config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+            builder.buildDatabaseClientConfig(config);
+            assertTrue(listAppender.list.stream()
+                .noneMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("transmitted in cleartext")),
+                "Did not expect a cleartext warning for DIGEST authentication");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
+
+    @Test
     void hostNameVerifierAnyLogsWarning() {
         Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
         ListAppender<ILoggingEvent> listAppender = new ListAppender<>();

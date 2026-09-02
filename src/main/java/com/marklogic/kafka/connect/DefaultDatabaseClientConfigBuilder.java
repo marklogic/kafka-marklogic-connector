@@ -56,13 +56,19 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
         clientConfig.setExternalName((String) parsedConfig.get(MarkLogicConfig.CONNECTION_EXTERNAL_NAME));
 
-        if (ConfigUtil.getBoolean(MarkLogicConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
+        boolean customSslEnabled = ConfigUtil.getBoolean(MarkLogicConfig.ENABLE_CUSTOM_SSL, parsedConfig);
+        boolean simpleSslEnabled = ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig);
+        if (customSslEnabled) {
             clientConfig.setTrustManager(new SimpleX509TrustManager());
             configureCustomSslContext(clientConfig, parsedConfig);
             configureHostNameVerifier(clientConfig, parsedConfig);
         }
-        if (ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
+        if (simpleSslEnabled) {
             configureSimpleSsl(clientConfig);
+        }
+        if (SecurityContextType.BASIC.equals(clientConfig.getSecurityContextType()) && !customSslEnabled && !simpleSslEnabled) {
+            logger.warn("securityContextType is BASIC without SSL enabled; MarkLogic credentials " +
+                "will be transmitted in cleartext. Enable simpleSsl or customSsl for production use.");
         }
 
         Password cloudApiKey = (Password) parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY);
