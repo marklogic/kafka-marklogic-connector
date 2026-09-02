@@ -30,8 +30,14 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicConfig.CONNECTION_PORT));
         clientConfig.setBasePath((String) parsedConfig.get(MarkLogicConfig.CONNECTION_BASE_PATH));
 
-        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
-        clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase(java.util.Locale.ROOT);
+        if ("NONE".equals(securityContextType)) {
+            clientConfig.setSecurityContextType(null);
+            logger.info("No authentication is configured; ensure you are connecting to a MarkLogic app server " +
+                "configured for application-level authentication.");
+        } else {
+            clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+        }
 
         String database = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_DATABASE);
         if (StringUtils.hasText(database)) {
