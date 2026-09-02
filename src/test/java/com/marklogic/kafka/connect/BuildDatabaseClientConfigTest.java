@@ -12,6 +12,7 @@ import com.marklogic.client.DatabaseClientFactory;
 import com.marklogic.client.ext.DatabaseClientConfig;
 import com.marklogic.client.ext.SecurityContextType;
 import com.marklogic.kafka.connect.sink.MarkLogicSinkConfig;
+import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.config.types.Password;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -80,13 +82,27 @@ class BuildDatabaseClientConfigTest {
     @Test
     void cloudAuthentication() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "cloud");
-        config.put(MarkLogicSinkConfig.CONNECTION_CLOUD_API_KEY, "my-key");
+        config.put(MarkLogicSinkConfig.CONNECTION_CLOUD_API_KEY, new Password("my-key"));
         config.put(MarkLogicSinkConfig.CONNECTION_BASE_PATH, "/my/path");
 
         DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
         assertEquals(SecurityContextType.CLOUD, clientConfig.getSecurityContextType());
         assertEquals("my-key", clientConfig.getCloudApiKey());
         assertEquals("/my/path", clientConfig.getBasePath());
+    }
+
+    @Test
+    void cloudApiKeyConfigDefIsPasswordType() {
+        assertEquals(ConfigDef.Type.PASSWORD, MarkLogicSinkConfig.CONFIG_DEF.configKeys()
+            .get(MarkLogicSinkConfig.CONNECTION_CLOUD_API_KEY).type);
+    }
+
+    @Test
+    void cloudApiKeyIsNullWhenNotConfigured() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "cloud");
+
+        DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+        assertNull(clientConfig.getCloudApiKey());
     }
 
     @Test

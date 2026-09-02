@@ -65,7 +65,10 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
             configureSimpleSsl(clientConfig);
         }
 
-        clientConfig.setCloudApiKey((String)parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY));
+        Password cloudApiKey = (Password) parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY);
+        if (cloudApiKey != null) {
+            clientConfig.setCloudApiKey(cloudApiKey.value());
+        }
 
         return clientConfig;
     }
