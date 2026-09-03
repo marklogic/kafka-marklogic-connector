@@ -118,6 +118,47 @@ class BuildDatabaseClientConfigTest {
     }
 
     @Test
+    void noneAuthenticationLogsInfo() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "none");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        logger.addAppender(appender);
+        appender.start();
+
+        try {
+            DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+
+            assertNull(clientConfig.getSecurityContextType());
+            assertEquals(1, appender.list.size());
+            assertEquals(Level.INFO, appender.list.get(0).getLevel());
+            assertEquals("No authentication is configured; ensure you are connecting to a MarkLogic app server " +
+                "configured for application-level authentication.", appender.list.get(0).getMessage());
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    void digestAuthenticationDoesNotLogAuthenticationWarning() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultDatabaseClientConfigBuilder.class);
+        logger.addAppender(appender);
+        appender.start();
+
+        try {
+            DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+
+            assertEquals(SecurityContextType.DIGEST, clientConfig.getSecurityContextType());
+            assertEquals(0, appender.list.size());
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
     void basicAuthenticationAndSimpleSsl() {
         config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "basic");
         config.put(MarkLogicSinkConfig.CONNECTION_SIMPLE_SSL, true);
