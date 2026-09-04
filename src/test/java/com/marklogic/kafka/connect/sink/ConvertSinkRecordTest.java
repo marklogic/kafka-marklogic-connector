@@ -297,6 +297,29 @@ class ConvertSinkRecordTest {
         assertNull(values.get("kafka-offset"));
     }
 
+    @Test
+    void sanitizeKafkaHeaders() {
+        Map<String, Object> kafkaConfig = new HashMap<>();
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_HEADERS, true);
+        converter = new DefaultSinkRecordConverter(kafkaConfig);
+
+        String longKey = "a".repeat(300);
+        String longValue = "b".repeat(1100);
+        List<Header> headers = new ArrayList<>();
+        headers.add(new TestHeaders("x-correlation-id", "valid"));
+        headers.add(new TestHeaders("<script>; DROP\u0000", "injection"));
+        headers.add(new TestHeaders(longKey, longValue));
+
+        DocumentWriteOperation op = converter.convert(new SinkRecord("topic1", 5, null, "key",
+            null, "some-value", 2, System.currentTimeMillis(), TimestampType.CREATE_TIME, headers));
+
+        DocumentMetadataHandle.DocumentMetadataValues values =
+            ((DocumentMetadataHandle) op.getMetadata()).getMetadataValues();
+        assertEquals("valid", values.get("x-correlation-id"));
+        assertEquals("injection", values.get("scriptDROP"));
+        assertEquals(1024, values.get(longKey.substring(0, 256)).length());
+    }
+
     static class TestHeaders implements Header {
         private final String key;
         private final String value;

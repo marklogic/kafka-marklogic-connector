@@ -30,6 +30,8 @@ import java.util.Map;
  */
 public class DefaultSinkRecordConverter implements SinkRecordConverter {
 
+    private static final int MAX_KAFKA_HEADER_KEY_LENGTH = 256;
+    private static final int MAX_KAFKA_HEADER_VALUE_LENGTH = 1024;
     private static final Converter JSON_CONVERTER;
 
     static {
@@ -93,11 +95,34 @@ public class DefaultSinkRecordConverter implements SinkRecordConverter {
             addKafkaMetadataToDocumentMetadata(sinkRecord, values);
             if (this.includeKafkaHeaders) {
                 sinkRecord.headers().forEach(
-                    header -> values.add(kafkaHeadersPrefix + header.key(), header.value().toString())
+                    header -> {
+                        String sanitizedKey = sanitizeKafkaHeaderKey(header.key());
+                        if (!sanitizedKey.isEmpty()) {
+                            String value = String.valueOf(header.value());
+                            values.add(kafkaHeadersPrefix + sanitizedKey,
+                                value.substring(0, Math.min(value.length(), MAX_KAFKA_HEADER_VALUE_LENGTH)));
+                        }
+                    }
                 );
             }
         }
         return metadata;
+    }
+
+    private String sanitizeKafkaHeaderKey(String key) {
+        if (key == null) {
+            return "";
+        }
+        StringBuilder sanitizedKey = new StringBuilder(Math.min(key.length(), MAX_KAFKA_HEADER_KEY_LENGTH));
+        for (int i = 0; i < key.length() && sanitizedKey.length() < MAX_KAFKA_HEADER_KEY_LENGTH; i++) {
+            char character = key.charAt(i);
+            if ((character >= 'a' && character <= 'z') ||
+                (character >= 'A' && character <= 'Z') ||
+                (character >= '0' && character <= '9') || character == '_' || character == '-' || character == '.') {
+                sanitizedKey.append(character);
+            }
+        }
+        return sanitizedKey.toString();
     }
 
     private void addKafkaMetadataToDocumentMetadata(SinkRecord sinkRecord, DocumentMetadataHandle.DocumentMetadataValues values) {
