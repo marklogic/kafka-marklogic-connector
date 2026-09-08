@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -26,7 +26,11 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     private final String constraintColumnName;
     private final Integer rowLimit;
 
+    // Pristine, as-configured query; never mutated so it can be safely re-copied on every newPlan() call.
     private final JsonNode currentSerializedQuery;
+
+    // Working copy for the current poll cycle, mutated by newPlan() and getMaxConstraintColumnValue().
+    private JsonNode workingQuery;
 
     public SerializedQueryHandler(DatabaseClient databaseClient, Map<String, Object> parsedConfig) {
         this.databaseClient = databaseClient;
@@ -37,18 +41,26 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             throw new MarkLogicConnectorException(
                 String.format("Unable to read serialized query; cause: %s", e.getMessage()), e);
         }
+        this.workingQuery = this.currentSerializedQuery.deepCopy();
         this.constraintColumnName = (String) parsedConfig.get(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME);
         rowLimit = (Integer) parsedConfig.get(MarkLogicSourceConfig.ROW_LIMIT);
     }
 
     @Override
     public PlanBuilder.Plan newPlan(String previousMaxConstraintColumnValue) {
-        appendConstraintAndOrderByToQuery(currentSerializedQuery, previousMaxConstraintColumnValue);
+        JsonNode query = buildQueryForPlan(previousMaxConstraintColumnValue);
+        logger.debug("Serialized query: {}", query);
+        return databaseClient.newRowManager().newRawPlanDefinition(new JacksonHandle(query));
+    }
+
+    // No DatabaseClient dependency, so this can be unit tested directly without a live connection.
+    protected JsonNode buildQueryForPlan(String previousMaxConstraintColumnValue) {
+        workingQuery = currentSerializedQuery.deepCopy();
+        appendConstraintAndOrderByToQuery(workingQuery, previousMaxConstraintColumnValue);
         if (rowLimit > 0) {
-            appendLimitToQuery(currentSerializedQuery);
+            appendLimitToQuery(workingQuery);
         }
-        logger.debug("Serialized query: {}", currentSerializedQuery);
-        return databaseClient.newRowManager().newRawPlanDefinition(new JacksonHandle(currentSerializedQuery));
+        return workingQuery;
     }
 
     protected void appendLimitToQuery(JsonNode currentSerializedQuery) {
@@ -78,16 +90,16 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
             serverTimestamp, maxValueQuery.toString());
     }
 
-    private JsonNode buildMaxValueSerializedQuery() {
+    protected JsonNode buildMaxValueSerializedQuery() {
         ObjectNode orderByDescendingNode = buildOrderByNode(false);
         ObjectNode limitOneNode = buildLimitNode(1);
         ObjectNode constraintColumnNode = buildMaxValueQueryConstraintNode();
 
-        ArrayNode rootArgsArray = (ArrayNode) currentSerializedQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
+        ArrayNode rootArgsArray = (ArrayNode) workingQuery.get(OPTIC_PLAN_ROOT_NODE).get("args");
         rootArgsArray.add(orderByDescendingNode);
         rootArgsArray.add(limitOneNode);
         rootArgsArray.add(constraintColumnNode);
-        return currentSerializedQuery;
+        return workingQuery;
     }
 
     private ObjectNode buildMaxValueQueryConstraintNode() {
@@ -150,6 +162,6 @@ public class SerializedQueryHandler extends LoggingObject implements QueryHandle
     }
 
     public String getCurrentQuery() {
-        return currentSerializedQuery.toString();
+        return workingQuery.toString();
     }
 }
