@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -11,8 +11,12 @@ import com.marklogic.client.io.BytesHandle;
 import com.marklogic.client.io.DocumentMetadataHandle;
 import com.marklogic.client.io.Format;
 import com.marklogic.client.io.StringHandle;
+import com.marklogic.kafka.connect.sink.idstrategy.IdStrategy;
+import com.marklogic.kafka.connect.source.DocumentWriteOperationBuilder;
 import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.jupiter.api.Test;
@@ -20,9 +24,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -65,6 +72,19 @@ class ConvertSinkRecordTest {
     }
 
     @Test
+    void addsTopicToCollectionsWhenConfigured() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS_ADD_TOPIC, true);
+        config.put(MarkLogicSinkConfig.DOCUMENT_COLLECTIONS, "configured");
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(config).convert(newSinkRecord("content"));
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        assertTrue(metadata.getCollections().contains("configured"));
+        assertTrue(metadata.getCollections().contains("test-topic"));
+    }
+
+    @Test
     void noPropertiesSet() {
         Map<String, Object> kafkaConfig = new HashMap<>();
         converter = new DefaultSinkRecordConverter(kafkaConfig);
@@ -97,17 +117,14 @@ class ConvertSinkRecordTest {
 
     @Test
     void uriWithDefaultStrategy() {
-        Map<String, Object> kafkaConfig = new HashMap<>();
-        converter = new DefaultSinkRecordConverter(kafkaConfig);
+        converter = new DefaultSinkRecordConverter(new HashMap<>());
 
-        DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
+        String firstUri = converter.convert(newSinkRecord("doesn't matter")).getUri();
+        String secondUri = converter.convert(newSinkRecord("doesn't matter")).getUri();
 
-        assertNotNull(op.getUri());
-        assertEquals(36, op.getUri().length());
-
-        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
-        assertTrue(metadata.getCollections().isEmpty());
-        assertTrue(metadata.getPermissions().isEmpty());
+        assertDoesNotThrow(() -> UUID.fromString(firstUri));
+        assertNotEquals(firstUri, secondUri,
+            "The default strategy must generate a new UUID per record so records don't overwrite each other");
     }
 
     @Test
@@ -164,6 +181,28 @@ class ConvertSinkRecordTest {
     }
 
     @Test
+    void jsonPathUsesUuidWhenContentIsInvalidJson() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.ID_STRATEGY, "JSONPATH");
+        config.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/id");
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(config).convert(newSinkRecord("{invalid"));
+
+        assertTrue(op.getUri().matches("[0-9a-fA-F-]{36}"));
+    }
+
+    @Test
+    void hashedJsonPathsUsesUuidWhenContentIsInvalidJson() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.ID_STRATEGY, "HASH");
+        config.put(MarkLogicSinkConfig.ID_STRATEGY_PATH, "/id");
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(config).convert(newSinkRecord("{invalid"));
+
+        assertTrue(op.getUri().matches("[0-9a-fA-F-]{36}"));
+    }
+
+    @Test
     void uriWithHashedJsonPaths() throws IOException {
         JsonNode doc1 = new ObjectMapper().readTree("{\"f1\":\"100\",\"f2\":\"200\"}");
         Map<String, Object> kafkaConfig = new HashMap<>();
@@ -174,7 +213,8 @@ class ConvertSinkRecordTest {
         DocumentWriteOperation op = converter.convert(newSinkRecord(doc1));
 
         assertNotNull(op.getUri());
-        assertEquals(128, op.getUri().length(), "Length should be 128 since SHA-512 is used");
+        assertEquals("3702198ae154d22d8e390f21a73f53a0446ae067410a3a227d0ad2ab9e4a5144a6d3a1909c5badfbe1277a78840b63b567c43977971e35198bf068054f0b8816",
+            op.getUri(), "Expected SHA-512 of the selected values in configured path order");
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         assertTrue(metadata.getCollections().isEmpty());
@@ -190,7 +230,8 @@ class ConvertSinkRecordTest {
         DocumentWriteOperation op = converter.convert(newSinkRecord("doesn't matter"));
 
         assertNotNull(op.getUri());
-        assertEquals(128, op.getUri().length(), "Length should be 128 since SHA-512 is used");
+        assertEquals("c343ed3c34e6c2c9dbc9f7e3e60416fbb026bf965bdd60e08c08af7127ba7126a35a758d7afaac85b768f5ed01798db657fc69d172e95474f82e980238f1bd41",
+            op.getUri(), "Expected SHA-512 of topic, partition, and offset");
 
         DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
         assertTrue(metadata.getCollections().isEmpty());
@@ -205,6 +246,66 @@ class ConvertSinkRecordTest {
 
         BytesHandle content = (BytesHandle) op.getContent();
         assertEquals("hello world".getBytes().length, content.get().length);
+    }
+
+    @Test
+    void binaryContentUsesConfiguredFormatAndMimeType() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(MarkLogicSinkConfig.DOCUMENT_FORMAT, "binary");
+        config.put(MarkLogicSinkConfig.DOCUMENT_MIMETYPE, "application/octet-stream");
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(config).convert(newSinkRecord(new byte[]{1, 2, 3}));
+
+        BytesHandle content = (BytesHandle) op.getContent();
+        assertEquals(Format.BINARY, content.getFormat());
+        assertEquals("application/octet-stream", content.getMimetype());
+        assertEquals(3, content.get().length);
+    }
+
+    @Test
+    void mapContentIsSerializedAsJson() {
+        Map<String, Object> value = new HashMap<>();
+        value.put("name", "Kafka");
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(new HashMap<>()).convert(newSinkRecord(value));
+
+        BytesHandle content = (BytesHandle) op.getContent();
+        assertEquals("{\"name\":\"Kafka\"}", new String(content.get()));
+    }
+
+    @Test
+    void structContentIsSerializedAsJson() {
+        Schema schema = SchemaBuilder.struct().name("test.Record")
+            .field("name", Schema.STRING_SCHEMA)
+            .build();
+        Struct value = new Struct(schema).put("name", "Kafka");
+        SinkRecord record = new SinkRecord("topic1", 0, null, null, schema, value, 0L);
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(new HashMap<>()).convert(record);
+
+        BytesHandle content = (BytesHandle) op.getContent();
+        assertEquals("{\"name\":\"Kafka\"}", new String(content.get()));
+    }
+
+    @Test
+    void schemaBackedNonStructContentIsPreservedAsString() {
+        SinkRecord record = new SinkRecord("topic1", 0, null, null, Schema.STRING_SCHEMA, "plain text", 0L);
+
+        DocumentWriteOperation op = new DefaultSinkRecordConverter(new HashMap<>()).convert(record);
+
+        assertEquals("plain text", ((StringHandle) op.getContent()).get());
+    }
+
+    @Test
+    void nullRecordAndNullValueAreRejected() {
+        converter = new DefaultSinkRecordConverter(new HashMap<>());
+
+        assertEquals("Sink record must not be null and must have a value",
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> converter.convert(null)).getMessage());
+        assertEquals("Sink record must not be null and must have a value",
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> converter.convert(newSinkRecord(null))).getMessage());
     }
 
     @Test
@@ -230,6 +331,25 @@ class ConvertSinkRecordTest {
         assertEquals(5, values.keySet().size(), "Only expecting the above 5 keys; bump this expected" +
             " number up in the future if we add metadata that should exist regardless of the setting for including " +
             "Kafka metadata");
+    }
+
+    @Test
+    void includeKafkaMetadataWhenOptionalFieldsAreNull() {
+        Map<String, Object> kafkaConfig = new HashMap<>();
+        kafkaConfig.put(MarkLogicSinkConfig.DMSDK_INCLUDE_KAFKA_METADATA, true);
+        converter = new DefaultSinkRecordConverter(kafkaConfig);
+
+        SinkRecord record = new SinkRecord("topic1", 1, null, null, null, "some-value", 2L, null,
+            TimestampType.NO_TIMESTAMP_TYPE);
+        DocumentWriteOperation op = converter.convert(record);
+
+        DocumentMetadataHandle metadata = (DocumentMetadataHandle) op.getMetadata();
+        DocumentMetadataHandle.DocumentMetadataValues values = metadata.getMetadataValues();
+        assertEquals("topic1", values.get("kafka-topic"));
+        assertEquals("2", values.get("kafka-offset"));
+        assertNull(values.get("kafka-key"));
+        assertEquals("1", values.get("kafka-partition"));
+        assertNull(values.get("kafka-timestamp"));
     }
 
     @Test
@@ -331,7 +451,28 @@ class ConvertSinkRecordTest {
         }
     }
 
+    @Test
+    void usesAnInjectedDocumentWriteOperationBuilder() {
+        converter = new DefaultSinkRecordConverter(new HashMap<>());
+        DocumentWriteOperationBuilder builder = new DocumentWriteOperationBuilder()
+            .withUriPrefix("/injected/")
+            .withUriSuffix(".json");
+        converter.setDocumentWriteOperationBuilder(builder);
+
+        DocumentWriteOperation op = converter.convert(newSinkRecord("content"));
+
+        assertSame(builder, converter.getDocumentWriteOperationBuilder());
+        assertTrue(op.getUri().startsWith("/injected/"));
+        assertTrue(op.getUri().endsWith(".json"));
+    }
+
     private SinkRecord newSinkRecord(Object value) {
         return new SinkRecord("test-topic", 1, null, null, null, value, 0);
+    }
+
+    @Test
+    void defaultIdStrategyGeneratesUuid() {
+        String generated = new IdStrategy() {}.generateId(null, "topic", 0, 0L);
+        assertTrue(generated.matches("[0-9a-fA-F-]{36}"));
     }
 }

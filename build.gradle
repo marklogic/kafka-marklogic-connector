@@ -137,11 +137,20 @@ test {
     }
   }
 
+  // Not wired into "check", so this never fails the build; run it explicitly to check coverage against the floor.
   jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
     violationRules {
       rule {
         limit {
-          minimum = 0.0
+          counter = 'LINE'
+          value = 'COVEREDRATIO'
+          minimum = 0.90
+        }
+        limit {
+          counter = 'BRANCH'
+          value = 'COVEREDRATIO'
+          minimum = 0.88
         }
       }
     }
