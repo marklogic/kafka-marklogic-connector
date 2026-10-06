@@ -8,6 +8,10 @@ buildscript {
     // specific to the jaxen library, but this resolves the problem.
     classpath 'jaxen:jaxen:2.0.0'
   }
+  configurations.classpath {
+    // Pulled in transitively by the SonarQube plugin (1.78.1); forced to 1.85 to eliminate known CVEs.
+    resolutionStrategy.force 'org.bouncycastle:bcprov-jdk18on:1.85'
+  }
 }
 
 plugins {
@@ -55,6 +59,9 @@ configurations {
 
       // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
       force "com.marklogic:ml-gradle:6.1.0"
+
+      // Transitive via marklogic-data-hub/ml-gradle; forced to 1.85 to eliminate known CVEs in older versions.
+      force 'org.bouncycastle:bcprov-jdk18on:1.85'
 
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
