@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -26,5 +26,16 @@ class CreateTasksTest extends AbstractIntegrationSourceTest {
                 "valid. That is - 2+ tasks with the same Optic query and config will produce 2+ copies of every row, " +
                 "and it will also encounter race conditions if the constraint column config is stored in MarkLogic. " +
                 "This restriction can be relaxed in the future if users identify valid scenarios for having 2+ tasks.");
+    }
+
+    @Test
+    void taskCountOne() {
+        Map<String, String> config = newMarkLogicConfig(testConfig);
+        config.put(MarkLogicSourceConfig.DSL_QUERY, AUTHORS_OPTIC_DSL);
+        MarkLogicSourceConnector connector = new MarkLogicSourceConnector();
+        connector.start(config);
+
+        List configs = connector.taskConfigs(1);
+        assertEquals(1, configs.size());
     }
 }

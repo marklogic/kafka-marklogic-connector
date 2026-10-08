@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -48,6 +48,19 @@ class BuildServerTransformTest {
         assertEquals(2, t.keySet().size());
         assertEquals("value1", t.get("param1").get(0));
         assertEquals("value2", t.get("param2").get(0));
+    }
+
+    @Test
+    void paramsAreIgnoredWhenNoDelimiterIsConfigured() {
+        config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM, "noDelimiter");
+        config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS, "param1,value1");
+        config.put(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER, "");
+
+        ServerTransform t = task.buildServerTransform(config).get();
+
+        assertEquals("noDelimiter", t.getName());
+        assertTrue(t.keySet().isEmpty(),
+            "Without a delimiter the params cannot be parsed, so a warning is logged and they are skipped");
     }
 
     @Test
