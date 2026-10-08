@@ -8,6 +8,14 @@ buildscript {
     // specific to the jaxen library, but this resolves the problem.
     classpath 'jaxen:jaxen:2.0.0'
   }
+  configurations.classpath {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+      if (details.requested.group.equals("org.jetbrains.kotlin")) {
+        details.useVersion "2.4.20"
+        details.because "Eliminating CVE-2026-53914 in Kotlin."
+      }
+    }
+  }
 }
 
 plugins {
@@ -57,6 +65,11 @@ configurations {
       force "com.marklogic:ml-gradle:6.1.0"
 
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group.equals("org.jetbrains.kotlin")) {
+          details.useVersion "2.4.20"
+          details.because "Eliminating CVE-2026-53914 in Kotlin, which is a transitive dependency of OkHttp."
+        }
+
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
           details.useVersion "12.1.1"
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
