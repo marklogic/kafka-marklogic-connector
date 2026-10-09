@@ -8,20 +8,16 @@ buildscript {
     // specific to the jaxen library, but this resolves the problem.
     classpath 'jaxen:jaxen:2.0.6'
   }
-  configurations.classpath {
-    // Pulled in transitively by the SonarQube plugin (1.78.1); forced to 1.85 to eliminate known CVEs.
-    resolutionStrategy.force 'org.bouncycastle:bcprov-jdk18on:1.85'
-  }
 }
 
 plugins {
   id 'java'
-  id 'net.saliman.properties' version '1.5.2'
-  id 'com.gradleup.shadow' version '9.2.2'
+  id 'net.saliman.properties' version '1.6.0'
+  id 'com.gradleup.shadow' version '9.4.3'
 
   // Only used for testing
   id 'jacoco'
-  id "org.sonarqube" version "6.3.1.5724"
+  id "org.sonarqube" version "7.5.0.8588"
 
   // Used to generate Avro classes. This will write classes to build/generated-test-avro-java and also add that folder
   // as a source root. Since this is commented out by default, the generated Avro test class has been added to
@@ -56,17 +52,14 @@ configurations {
       // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
       force "com.marklogic:ml-gradle:6.1.0"
 
-      // Transitive via marklogic-data-hub/ml-gradle; forced to 1.85 to eliminate known CVEs in older versions.
-      force 'org.bouncycastle:bcprov-jdk18on:1.85'
-
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
-          details.useVersion "12.1.1"
+          details.useVersion "12.1.14"
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
         }
 
         if (details.requested.group.equals("org.springframework") && details.requested.version.startsWith("6.2.")) {
-          details.useVersion "6.2.15"
+          details.useVersion "6.2.19"
           details.because "Forcing latest Spring version in marklogic-data-hub to minimize CVEs."
         }
       }
@@ -99,8 +92,8 @@ dependencies {
   testImplementation "org.apache.avro:avro-compiler:1.12.2"
 
   // Forcing logback to be used for test logging
-  testImplementation "ch.qos.logback:logback-classic:1.5.23"
-  testImplementation "org.slf4j:jcl-over-slf4j:2.0.17"
+  testImplementation "ch.qos.logback:logback-classic:1.5.38"
+  testImplementation "org.slf4j:jcl-over-slf4j:2.0.20"
 
 	// Automatic loading of test framework implementation dependencies is deprecated.
 	// https://docs.gradle.org/current/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
