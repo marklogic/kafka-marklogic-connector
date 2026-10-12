@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -139,6 +139,27 @@ class WriteViaBulkDataServicesTest extends AbstractIntegrationSinkTest {
         assertEquals(offset, metadata.get("offset").asLong());
         assertEquals(partition, metadata.get("partition").asInt());
         assertEquals(timestamp, metadata.get("timestamp").asLong());
+    }
+
+    @Test
+    void byteContentAndNullableKafkaMetadata() {
+        AbstractSinkTask task = startSinkTask(
+            MarkLogicSinkConfig.BULK_DS_ENDPOINT_URI, TEST_BULK_ENDPOINT_URI
+        );
+        String content = "bytes sent to bulk endpoint";
+        SinkRecord record = new SinkRecord("topic1", 1, null, null, null, content.getBytes(), 123L);
+
+        putAndFlushRecords(task, record);
+
+        String uri = getUrisInCollection(TEST_COLLECTION, 1).get(0);
+        JsonNode doc = readJsonDocument(uri);
+        assertEquals(content, doc.get("content").asText());
+        JsonNode metadata = doc.get("kafkaMetadata");
+        assertEquals("topic1", metadata.get("topic").asText());
+        assertEquals(123L, metadata.get("offset").asLong());
+        assertEquals(1, metadata.get("partition").asInt());
+        assertEquals(false, metadata.has("key"));
+        assertEquals(false, metadata.has("timestamp"));
     }
 
     @Test

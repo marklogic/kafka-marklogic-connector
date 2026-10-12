@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BuildRunFlowListenerTest {
 
@@ -43,4 +44,13 @@ class BuildRunFlowListenerTest {
         assertNull(listener.getSteps());
     }
 
+
+    @Test
+    void configuresFlowResponseLoggingWhenEnabled() {
+        config.put(MarkLogicSinkConfig.DATAHUB_FLOW_LOG_RESPONSE, true);
+
+        RunFlowWriteBatchListener listener = task.buildRunFlowListener("myFlow", config, new DatabaseClientConfig());
+
+        assertTrue(listener.isLogResponse());
+    }
 }

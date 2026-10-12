@@ -208,6 +208,45 @@ class BuildDatabaseClientConfigTest {
     }
 
     @Test
+    void customSslSupportsCommonHostnameVerification() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+        config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "TLS");
+        config.put(MarkLogicSinkConfig.SSL_HOST_VERIFIER, "COMMON");
+        config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, false);
+
+        DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+
+        assertEquals(DatabaseClientFactory.SSLHostnameVerifier.COMMON, clientConfig.getSslHostnameVerifier());
+        assertNotNull(clientConfig.getSslContext());
+    }
+
+    @Test
+    void customSslDoesNotBuildTlsContextForCloudAuthentication() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "cloud");
+        config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+
+        DatabaseClientConfig clientConfig = builder.buildDatabaseClientConfig(config);
+
+        assertNull(clientConfig.getSslContext());
+        assertNotNull(clientConfig.getTrustManager());
+        assertEquals(DatabaseClientFactory.SSLHostnameVerifier.ANY, clientConfig.getSslHostnameVerifier());
+    }
+
+    @Test
+    void invalidCustomTlsVersionIsReportedAsConnectorException() {
+        config.put(MarkLogicSinkConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "digest");
+        config.put(MarkLogicSinkConfig.ENABLE_CUSTOM_SSL, true);
+        config.put(MarkLogicSinkConfig.TLS_VERSION, "not-a-tls-version");
+        config.put(MarkLogicSinkConfig.SSL_MUTUAL_AUTH, false);
+
+        MarkLogicConnectorException error = assertThrows(MarkLogicConnectorException.class,
+            () -> builder.buildDatabaseClientConfig(config));
+
+        assertTrue(error.getMessage().startsWith("Unable to configure custom SSL connection:"));
+    }
+
+    @Test
     void basicAuthenticationAndMutualSSLWithInvalidHost() {
         File file = new File("src/test/resources/srportal.p12");
         String absolutePath = file.getAbsolutePath();
