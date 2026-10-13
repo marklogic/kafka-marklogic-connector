@@ -10,6 +10,11 @@ buildscript {
   }
   configurations.classpath {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+       if (details.requested.group.equals("org.apache.httpcomponents.client5")) {
+        details.useVersion "5.6.3"
+        details.because "Eliminating CVE-2026-64607 in Apache HttpClient 5."
+      }
+      
       if (details.requested.group.equals("org.jetbrains.kotlin")) {
         details.useVersion "2.4.20"
         details.because "Eliminating CVE-2026-53914 in Kotlin."
@@ -61,6 +66,11 @@ configurations {
       force "com.marklogic:ml-gradle:6.1.0"
 
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group.equals("org.apache.httpcomponents.client5")) {
+          details.useVersion "5.6.3"
+          details.because "Eliminating CVE-2026-64607 in Apache HttpClient 5."
+        }
+
         if (details.requested.group.equals("org.jetbrains.kotlin")) {
           details.useVersion "2.4.20"
           details.because "Eliminating CVE-2026-53914 in Kotlin, which is a transitive dependency of OkHttp."
