@@ -94,8 +94,8 @@ dependencies {
     exclude group: "io.netty"
   }
 
-  // Pinned to 2.21.x to match the jackson-databind version bundled with Kafka, which the connector archive excludes Jackson from.
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.21.7"
+  // Pinned to 2.22.x to match the jackson-databind version bundled with Kafka, which the connector archive excludes Jackson from.
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.22.3"
 
   testImplementation 'com.marklogic:marklogic-junit5:2.0.0'
 
