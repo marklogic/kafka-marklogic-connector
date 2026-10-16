@@ -11,6 +11,7 @@ import com.marklogic.hub.flow.FlowInputs;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,8 +46,11 @@ class RunFlowWriteBatchListenerTest {
         assertEquals("job123-100", inputs.getJobId());
 
         Map<String, Object> options = inputs.getOptions();
-        assertEquals("cts.documentQuery(['uri1','uri2','uri3'])", options.get("sourceQuery"),
-            "The source query is expected to constrain on each of the documents in the WriteBatch");
+        assertEquals(RunFlowWriteBatchListener.SOURCE_QUERY, options.get("sourceQuery"),
+            "The source query must be a constant expression that reads the URIs from an external variable, so that no " +
+                "record-derived content is interpolated into the JavaScript that DHF evaluates");
+        assertEquals(Arrays.asList("uri1", "uri2", "uri3"), options.get("uris"),
+            "The URIs are passed as data via the 'uris' option instead of being inlined into the source query");
     }
 
     @Test
@@ -73,16 +77,46 @@ class RunFlowWriteBatchListenerTest {
     }
 
     @Test
-    void buildSourceQueryForEmptyAndSingleItemBatches() {
+    void uriContainingJavaScriptBreakoutPayload() {
         RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener("myFlow", null, null);
 
-        WriteBatchImpl emptyBatch = new WriteBatchImpl().withItems(new WriteEvent[]{});
-        assertEquals("cts.documentQuery([])", listener.buildSourceQuery(emptyBatch));
+        MockWriteBatcher mockWriteBatcher = new MockWriteBatcher();
+        mockWriteBatcher.jobId = "job123";
 
-        WriteBatchImpl oneItemBatch = new WriteBatchImpl().withItems(new WriteEvent[]{
-            new WriteEventImpl().withTargetUri("/one.json")
-        });
-        assertEquals("cts.documentQuery(['/one.json'])", listener.buildSourceQuery(oneItemBatch));
+        String maliciousUri = "x']); xdmp.log('INJECTED'); cts.documentQuery(['y";
+        String complexUri = "/data/file with \"quotes\" and 'apostrophes' and ; semicolons.json";
+
+        WriteBatchImpl batch = new WriteBatchImpl()
+            .withJobBatchNumber(1)
+            .withBatcher(mockWriteBatcher)
+            .withItems(new WriteEvent[]{
+                new WriteEventImpl().withTargetUri(maliciousUri),
+                new WriteEventImpl().withTargetUri(complexUri)
+            });
+
+        Map<String, Object> options = listener.buildFlowInputs(batch).getOptions();
+
+        assertEquals(RunFlowWriteBatchListener.SOURCE_QUERY, options.get("sourceQuery"),
+            "A URI that attempts to break out of a JavaScript string literal must not affect the source query");
+        assertEquals(Arrays.asList(maliciousUri, complexUri), options.get("uris"),
+            "The URIs are passed verbatim as data, so no escaping of quotes or semicolons is required");
     }
 
+    @Test
+    void emptyBatch() {
+        RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener("myFlow", null, null);
+
+        MockWriteBatcher mockWriteBatcher = new MockWriteBatcher();
+        mockWriteBatcher.jobId = "job123";
+
+        WriteBatchImpl batch = new WriteBatchImpl()
+            .withJobBatchNumber(1)
+            .withBatcher(mockWriteBatcher)
+            .withItems(new WriteEvent[]{});
+
+        Map<String, Object> options = listener.buildFlowInputs(batch).getOptions();
+
+        assertEquals(RunFlowWriteBatchListener.SOURCE_QUERY, options.get("sourceQuery"));
+        assertEquals(Collections.emptyList(), options.get("uris"));
+    }
 }
