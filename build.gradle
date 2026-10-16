@@ -60,6 +60,9 @@ configurations {
       // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
       force "com.marklogic:ml-gradle:6.1.0"
 
+      // Forcing marklogic-data-hub to use the latest MarkLogic Java Client, which it brings in transitively as 8.0.0.
+      force "com.marklogic:marklogic-client-api:8.2.0"
+
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group.equals("org.jetbrains.kotlin")) {
           details.useVersion "2.4.20"
