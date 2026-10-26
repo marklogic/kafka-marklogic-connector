@@ -63,6 +63,11 @@ configurations {
           details.because "Eliminating CVE-2026-53914 in Kotlin, which is a transitive dependency of OkHttp."
         }
 
+        if (details.requested.group.equals("org.springframework") && details.requested.version.startsWith("6.2.")) {
+          details.useVersion "6.2.19"
+          details.because "The DH 6.2.2 Gradle metadata only constrains Spring to 6.2.19 for runtime variants; ml-app-deployer still requests 6.2.11 on the compile classpaths."
+        }
+
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
           details.useVersion "12.1.14"
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
