@@ -57,9 +57,6 @@ configurations {
 
   configureEach {
     resolutionStrategy {
-      // Forcing marklogic-data-hub to use the latest version of ml-gradle, which minimizes security vulnerabilities.
-      force "com.marklogic:ml-gradle:6.1.0"
-
       resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group.equals("org.jetbrains.kotlin")) {
           details.useVersion "2.4.20"
@@ -69,11 +66,6 @@ configurations {
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
           details.useVersion "12.1.14"
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
-        }
-
-        if (details.requested.group.equals("org.springframework") && details.requested.version.startsWith("6.2.")) {
-          details.useVersion "6.2.19"
-          details.because "Forcing latest Spring version in marklogic-data-hub to minimize CVEs."
         }
       }
     }
@@ -88,7 +80,7 @@ dependencies {
   def kafkaConnectRuntime = "org.apache.kafka:connect-runtime:${kafkaVersion}"
   compileOnly kafkaConnectRuntime
 
-  implementation ("com.marklogic:marklogic-data-hub:6.2.1") {
+  implementation ("com.marklogic:marklogic-data-hub:6.2.2") {
     // The DH dependency mistakenly defines io.netty dependencies as "implementation" instead of "testImplementation".
     // They can therefore safely be excluded, thus removing CVEs associated with io.netty libraries.
     exclude group: "io.netty"
