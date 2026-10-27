@@ -1,12 +1,17 @@
 buildscript {
   configurations.classpath {
-    // Pulled in transitively by the Data Hub plugin via Netty (1.80); forced to 1.86 to eliminate known CVEs.
-    resolutionStrategy.force 'org.bouncycastle:bcprov-jdk18on:1.86'
-
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
       if (details.requested.group.equals("org.jetbrains.kotlin")) {
         details.useVersion "2.4.20"
         details.because "Eliminating CVE-2026-53914 in Kotlin."
+      }
+      if (details.requested.group.startsWith("com.fasterxml.jackson") && !details.requested.name.equals("jackson-annotations")) {
+        details.useVersion "2.22.4"
+        details.because "Aligns all Jackson modules on the patched 2.22.4 release; jackson-annotations is excluded because it has no 2.22.4 patch release."
+      }
+      if (details.requested.group.equals("org.apache.httpcomponents.client5") && details.requested.name.equals("httpclient5")) {
+        details.useVersion "5.6.4"
+        details.because "The ml-data-hub plugin brings in httpclient5 5.4.4, which has known vulnerabilities."
       }
     }
   }
@@ -14,7 +19,7 @@ buildscript {
 
 plugins {
   id 'net.saliman.properties' version '1.6.0'
-  id "com.marklogic.ml-data-hub" version "6.2.1"
+  id "com.marklogic.ml-data-hub" version "6.2.2"
 }
 
 // Tasks for working with Confluent Platform running locally.
