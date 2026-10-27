@@ -68,6 +68,16 @@ configurations {
           details.because "The DH 6.2.2 Gradle metadata only constrains Spring to 6.2.19 for runtime variants; ml-app-deployer still requests 6.2.11 on the compile classpaths."
         }
 
+        if (details.requested.group.equals("org.apache.httpcomponents.client5") && details.requested.name.equals("httpclient5")) {
+          details.useVersion "5.6.4"
+          details.because "DH 6.2.2 brings in httpclient5 5.4.4, which has known vulnerabilities."
+        }
+
+        if (details.requested.group.startsWith("com.fasterxml.jackson") && details.requested.version != null && details.requested.version.startsWith("2.22.")) {
+          details.useVersion "2.22.4"
+          details.because "Keeps all Jackson modules aligned on the patched 2.22.4 release."
+        }
+
         if (details.requested.group.startsWith("org.eclipse.jetty") && details.requested.version.startsWith("12")) {
           details.useVersion "12.1.14"
           details.because "Eliminating CVEs on earlier versions. This is a compileOnly dependency of Kafka Connect and has no impact on our connector."
@@ -91,8 +101,8 @@ dependencies {
     exclude group: "io.netty"
   }
 
-  // Pinned to 2.22.x to match the jackson-databind version bundled with Kafka, which the connector archive excludes Jackson from.
-  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.22.3"
+  // Pinned to 2.22.4 to match the jackson-databind version bundled with Kafka, which the connector archive excludes Jackson from.
+  implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.22.4"
 
   testImplementation 'com.marklogic:marklogic-junit5:2.0.0'
 
