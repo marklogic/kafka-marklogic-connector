@@ -9,7 +9,7 @@
     ],
     "licenseListVersion": "3.28"
   },
-  "name": "kafka-marklogic-connector",
+  "name": "MarkLogic Kafka connector",
   "dataLicense": "CC0-1.0",
   "hasExtractedLicensingInfos": [
     {
@@ -1676,7 +1676,7 @@
       "filesAnalyzed": false,
       "licenseConcluded": "(Apache-2.0)",
       "licenseDeclared": "(Apache-2.0)",
-      "name": "kafka-marklogic-connector",
+      "name": "MarkLogic Kafka connector",
       "originator": "Organization: Progress MarkLogic",
       "supplier": "Organization: Progress MarkLogic",
       "versionInfo": "develop"
