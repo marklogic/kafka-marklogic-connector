@@ -9,7 +9,7 @@
     ],
     "licenseListVersion": "3.28"
   },
-  "name": "MarkLogic-DevExp-kafka-develop",
+  "name": "kafka-marklogic-connector",
   "dataLicense": "CC0-1.0",
   "hasExtractedLicensingInfos": [
     {
@@ -1676,9 +1676,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "(Apache-2.0)",
       "licenseDeclared": "(Apache-2.0)",
-      "name": "MarkLogic-DevExp-kafka",
-      "originator": "Organization: MarkLogic-DevExp-kafka",
-      "supplier": "Organization: MarkLogic-DevExp-kafka",
+      "name": "kafka-marklogic-connector",
+      "originator": "Organization: Progress MarkLogic",
+      "supplier": "Organization: Progress MarkLogic",
       "versionInfo": "develop"
     },
     {
