@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -7,6 +7,7 @@ import com.marklogic.client.MarkLogicIOException;
 import com.marklogic.client.document.JSONDocumentManager;
 import com.marklogic.client.document.XMLDocumentManager;
 import com.marklogic.client.io.DocumentMetadataHandle;
+import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.io.StringHandle;
 import com.marklogic.junit5.PermissionsTester;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -89,6 +91,22 @@ class StoreConstraintValueInMarkLogicTest extends AbstractIntegrationSourceTest 
         List<SourceRecord> newRecords = task.poll();
 
         assertNull(newRecords, "No records are returned because 'invalid-value' causes Optic to crash.");
+    }
+
+    @Test
+    void storesConstraintStateWithoutOptionalPermissionsOrCollections() {
+        String uri = "/kafka/constraint-state-no-metadata-" + UUID.randomUUID() + ".json";
+        MarkLogicConstraintValueStore store = new MarkLogicConstraintValueStore(
+            getDatabaseClient(), uri, constraintColumnName, new HashMap<>());
+
+        store.storeConstraintState("42", 3);
+
+        DocumentMetadataHandle metadata = new DocumentMetadataHandle();
+        JacksonHandle content = new JacksonHandle();
+        getDatabaseClient().newJSONDocumentManager().read(uri, metadata, content);
+        assertTrue(metadata.getPermissions().isEmpty());
+        assertTrue(metadata.getCollections().isEmpty());
+        assertEquals("42", content.get().get("marklogicKafkaConstraintLastValue").asText());
     }
 
     @Test

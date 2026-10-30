@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect;
 
@@ -30,8 +30,14 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
         clientConfig.setPort((Integer) parsedConfig.get(MarkLogicConfig.CONNECTION_PORT));
         clientConfig.setBasePath((String) parsedConfig.get(MarkLogicConfig.CONNECTION_BASE_PATH));
 
-        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase();
-        clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+        String securityContextType = ((String) parsedConfig.get(MarkLogicConfig.CONNECTION_SECURITY_CONTEXT_TYPE)).toUpperCase(java.util.Locale.ROOT);
+        if ("NONE".equals(securityContextType)) {
+            clientConfig.setSecurityContextType(null);
+            logger.info("No authentication is configured; ensure you are connecting to a MarkLogic app server " +
+                "configured for application-level authentication.");
+        } else {
+            clientConfig.setSecurityContextType(SecurityContextType.valueOf(securityContextType));
+        }
 
         String database = (String) parsedConfig.get(MarkLogicConfig.CONNECTION_DATABASE);
         if (StringUtils.hasText(database)) {
@@ -56,28 +62,39 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
         clientConfig.setExternalName((String) parsedConfig.get(MarkLogicConfig.CONNECTION_EXTERNAL_NAME));
 
-        if (ConfigUtil.getBoolean(MarkLogicConfig.ENABLE_CUSTOM_SSL, parsedConfig)) {
+        boolean customSslEnabled = ConfigUtil.getBoolean(MarkLogicConfig.ENABLE_CUSTOM_SSL, parsedConfig);
+        boolean simpleSslEnabled = ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig);
+        if (customSslEnabled) {
             clientConfig.setTrustManager(new SimpleX509TrustManager());
             configureCustomSslContext(clientConfig, parsedConfig);
             configureHostNameVerifier(clientConfig, parsedConfig);
         }
-        if (ConfigUtil.getBoolean(MarkLogicConfig.CONNECTION_SIMPLE_SSL, parsedConfig)) {
+        if (simpleSslEnabled) {
             configureSimpleSsl(clientConfig);
         }
+        if (SecurityContextType.BASIC.equals(clientConfig.getSecurityContextType()) && !customSslEnabled && !simpleSslEnabled) {
+            logger.warn("securityContextType is BASIC without SSL enabled; MarkLogic credentials " +
+                "will be transmitted in cleartext. Enable simpleSsl or customSsl for production use.");
+        }
 
-        clientConfig.setCloudApiKey((String)parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY));
+        Password cloudApiKey = (Password) parsedConfig.get(MarkLogicConfig.CONNECTION_CLOUD_API_KEY);
+        if (cloudApiKey != null) {
+            clientConfig.setCloudApiKey(cloudApiKey.value());
+        }
 
         return clientConfig;
     }
 
     /**
-     * This provides a "simple" SSL configuration in that it uses the JVM's default SSLContext and
-     * a "trust everything" hostname verifier. No default TrustManager is configured because in the absence of one,
-     * the JVM's cacerts file will be used.
+     * This provides a "simple" SSL configuration that installs a trust-all TrustManager and a
+     * "trust everything" hostname verifier, disabling certificate and hostname validation entirely.
+     * This must not be used in production.
      *
      * @param clientConfig
      */
     private void configureSimpleSsl(DatabaseClientConfig clientConfig) {
+        logger.warn("simpleSsl is enabled, which disables certificate validation and uses a trust-all " +
+            "TrustManager. This setting must not be used in production.");
         clientConfig.setSslContext(SimpleX509TrustManager.newSSLContext("TLS"));
         clientConfig.setTrustManager(new SimpleX509TrustManager());
         clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
@@ -85,18 +102,23 @@ public class DefaultDatabaseClientConfigBuilder extends LoggingObject implements
 
     /**
      * This function configures the Host Name verifier based on the configuration.
-     * ANY, STRICT and COMMON are the possible values, ANY being default.
+     * ANY, STRICT and COMMON are the possible values, STRICT being default.
      *
      * @param clientConfig
      */
     private void configureHostNameVerifier(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {
         String sslHostNameVerifier = (String) parsedConfig.get(MarkLogicConfig.SSL_HOST_VERIFIER);
-        if ("COMMON".equals(sslHostNameVerifier))
+        // ConfigDef validation is case-insensitive (see CustomRecommenderAndValidator), so match it here too
+        String normalizedVerifier = sslHostNameVerifier != null ? sslHostNameVerifier.toUpperCase() : null;
+        if ("COMMON".equals(normalizedVerifier))
             clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.COMMON);
-        else if ("STRICT".equals(sslHostNameVerifier))
+        else if ("STRICT".equals(normalizedVerifier))
             clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.STRICT);
-        else
+        else {
+            logger.warn("SSL hostname verification is set to ANY, which does not verify the server's hostname. " +
+                "Use STRICT for production deployments.");
             clientConfig.setSslHostnameVerifier(DatabaseClientFactory.SSLHostnameVerifier.ANY);
+        }
     }
 
     private void configureCustomSslContext(DatabaseClientConfig clientConfig, Map<String, Object> parsedConfig) {

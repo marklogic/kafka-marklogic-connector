@@ -10,6 +10,7 @@ docker/marklogic
 bin
 .vscode
 *.class
+.codesight/
 
 .classpath
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect;
 
@@ -35,7 +35,7 @@ public class MarkLogicConfig extends AbstractConfig {
     public static final String SSL_HOST_VERIFIER = "ml.connection.customSsl.hostNameVerifier";
     public static final String SSL_MUTUAL_AUTH = "ml.connection.customSsl.mutualAuth";
 
-    private static final CustomRecommenderAndValidator CONNECTION_SECURITY_CONTEXT_TYPE_RV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "NONE");
+    private static final CustomRecommenderAndValidator CONNECTION_SECURITY_CONTEXT_TYPE_RV = new CustomRecommenderAndValidator("DIGEST", "BASIC", "CERTIFICATE", "KERBEROS", "CLOUD", "NONE");
     private static final CustomRecommenderAndValidator CONNECTION_TYPE_RV = new CustomRecommenderAndValidator("DIRECT", "GATEWAY", "");
     private static final CustomRecommenderAndValidator SSL_HOST_VERIFIER_RV = new CustomRecommenderAndValidator("ANY", "COMMON", "STRICT");
 
@@ -72,8 +72,8 @@ public class MarkLogicConfig extends AbstractConfig {
                 .define(CONNECTION_EXTERNAL_NAME, Type.STRING, null, Importance.MEDIUM,
                         "External name for 'KERBEROS' authentication",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Kerberos External Name")
-                .define(CONNECTION_CLOUD_API_KEY, Type.STRING, null, Importance.MEDIUM,
-                        "API key for connecting to MarkLogic Cloud. Should set port to 443 when connecting to MarkLogic Cloud.",
+                .define(CONNECTION_CLOUD_API_KEY, Type.PASSWORD, null, Importance.MEDIUM,
+                        "API key for connecting to Progress Data Cloud. Should set port to 443 when connecting to Progress Data Cloud.",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "Cloud API Key")
                 .define(CONNECTION_TYPE, Type.STRING, "", CONNECTION_TYPE_RV, Importance.MEDIUM,
                         "Set to 'GATEWAY' when the host identified by ml.connection.host is a load balancer. See https://docs.marklogic.com/guide/java/data-movement#id_26583 for more information.",
@@ -89,8 +89,8 @@ public class MarkLogicConfig extends AbstractConfig {
                 .define(TLS_VERSION, Type.STRING, "TLS", Importance.LOW,
                         "The TLS version to use for custom SSL",
                         GROUP, -1, ConfigDef.Width.MEDIUM, "TLS Version for Custom SSL")
-                .define(SSL_HOST_VERIFIER, Type.STRING, "ANY", SSL_HOST_VERIFIER_RV, Importance.LOW,
-                        "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'",
+                .define(SSL_HOST_VERIFIER, Type.STRING, "STRICT", SSL_HOST_VERIFIER_RV, Importance.LOW,
+                        "The host verification strategy for custom SSL; either 'ANY', 'COMMON', or 'STRICT'. Defaults to 'STRICT'; set to 'ANY' only for development/testing as it disables hostname verification.",
                         GROUP, -1, ConfigDef.Width.SHORT, "SSL Hostname Verifier", SSL_HOST_VERIFIER_RV)
                 .define(SSL_MUTUAL_AUTH, Type.BOOLEAN, null, Importance.LOW,
                         "Set this to true for 2-way SSL; defaults to 1-way SSL",
