@@ -117,6 +117,7 @@ dependencies {
   documentation files('LICENSE.txt')
   documentation files('NOTICE.txt')
   documentation files('README.md')
+  documentation files('sbom.spdx.json')
 
   assets files('MarkLogic_logo.png')
   assets files('apache_logo.png')
