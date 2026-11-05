@@ -24,15 +24,15 @@
     }
   ],
 
-  "logo": "assets/MarkLogic_logo.png",
+  "logo": "assets/Progress_logo.png",
 
   "name": "kafka-marklogic-connector",
 
   "owner": {
-    "logo": "assets/MarkLogic_logo.jpg",
-    "name": "MarkLogic Corporation",
+    "logo": "assets/Progress_logo.png",
+    "name": "Progress Software Corporation",
     "type": "organization",
-    "url": "https://www.marklogic.com/",
+    "url": "https://www.progress.com/",
     "username": "@CONFLUENT_USER@"
   },
 
@@ -42,10 +42,10 @@
   ],
 
   "support": {
-    "logo": "assets/MarkLogic_logo.jpg",
-    "provider_name": "MarkLogic Corporation",
-    "summary": "For technical support information, please see https://docs.marklogic.com/11.0/guide/release-notes/en/technical-support.html and http://help.marklogic.com.",
-    "url": "https://www.marklogic.com/"
+    "logo": "assets/Progress_logo.png",
+    "provider_name": "Progress Software Corporation",
+    "summary": "For technical support information, please see https://www.progress.com/support/ and https://www.progress.com/marklogic",
+    "url": "https://www.progress.com/support/"
   },
 
   "tags": [
@@ -54,7 +54,7 @@
     "analytics"
   ],
 
-  "title": "MarkLogic Kafka Connector",
+  "title": "Progress MarkLogic Kafka Connector",
 
   "version": "@VERSION@"
 }
