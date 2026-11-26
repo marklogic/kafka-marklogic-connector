@@ -31,7 +31,7 @@ jobs:
       - name: Setup Ruby and install Gemfile bundles
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.4' # Matches GH Pages; keep explicit to match .ruby-version and make CI intent clear
+          ruby-version: '3.3' # Use the latest available 3.3 patch release on the runner
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           working-directory: ./docs
           cache-version: 0 # Increment this number if you need to re-download cached gems
