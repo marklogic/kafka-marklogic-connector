@@ -1,3 +1,4 @@
+// Test: Build configuration for the Kafka-MarkLogic connector project
 buildscript {
   repositories {
     mavenCentral()
