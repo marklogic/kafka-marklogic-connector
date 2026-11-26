@@ -1,8 +1,9 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
+import com.marklogic.client.ProgressDataCloudException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
 
@@ -44,6 +43,23 @@ class ReadRowsViaOpticDslTest extends AbstractIntegrationSourceTest {
         List<SourceRecord> records = task.poll();
         verifyQueryReturnsFifteenAuthors(records, JSON_RESULT);
         verifyRecordKeysAreSetToIDColumn(records);
+    }
+
+    @Test
+    void cloudAuth() {
+        ProgressDataCloudException ex = assertThrows(ProgressDataCloudException.class, () -> startSourceTask(
+            MarkLogicSourceConfig.CONNECTION_SECURITY_CONTEXT_TYPE, "cloud",
+            MarkLogicSourceConfig.CONNECTION_CLOUD_API_KEY, "abc123",
+            MarkLogicSourceConfig.DSL_QUERY, AUTHORS_ORDERED_BY_ID_OPTIC_DSL,
+            MarkLogicSourceConfig.TOPIC, AUTHORS_TOPIC,
+            MarkLogicSourceConfig.KEY_COLUMN, "Medical.Authors.ID"
+        ));
+
+        String message = ex.getMessage();
+        assertTrue(message.contains("Unable to call token endpoint"),
+            "We expect this test to fail because it can't talk to PDC, and that's fine. What this verifies " +
+                "is that the user can configure the connector to talk to PDC - i.e. 'cloud' is accepted as a " +
+                "security context type. Actual error: " + message);
     }
 
     @Test

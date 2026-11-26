@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.sink;
 
@@ -15,6 +15,7 @@ import com.marklogic.hub.flow.FlowRunner;
 import com.marklogic.hub.flow.RunFlowResponse;
 import com.marklogic.hub.flow.impl.FlowRunnerImpl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,12 @@ import java.util.Map;
  * This class is not specific to Kafka and theoretically could be moved to DHF.
  */
 public class RunFlowWriteBatchListener extends LoggingObject implements WriteBatchListener {
+
+    /**
+     * Constant expression; the URIs are passed separately as the "uris" step option so that no document URI is ever
+     * interpolated into the JavaScript that DHF evaluates via xdmp.eval.
+     */
+    static final String SOURCE_QUERY = "cts.documentQuery(external.options.uris)";
 
     private String flowName;
     private List<String> steps;
@@ -89,23 +96,19 @@ public class RunFlowWriteBatchListener extends LoggingObject implements WriteBat
         inputs.setJobId(batch.getBatcher().getJobId() + "-" + batch.getJobBatchNumber());
 
         Map<String, Object> options = new HashMap<>();
-        options.put("sourceQuery", buildSourceQuery(batch));
+        options.put("uris", buildUris(batch));
+        options.put("sourceQuery", SOURCE_QUERY);
         inputs.setOptions(options);
 
         return inputs;
     }
 
-    protected String buildSourceQuery(WriteBatch batch) {
-        StringBuilder sb = new StringBuilder("cts.documentQuery([");
-        boolean firstOne = true;
+    private List<String> buildUris(WriteBatch batch) {
+        List<String> uris = new ArrayList<>();
         for (WriteEvent event : batch.getItems()) {
-            if (!firstOne) {
-                sb.append(",");
-            }
-            sb.append(String.format("'%s'", event.getTargetUri()));
-            firstOne = false;
+            uris.add(event.getTargetUri());
         }
-        return sb.append("])").toString();
+        return uris;
     }
 
     public void setLogResponse(boolean logResponse) {

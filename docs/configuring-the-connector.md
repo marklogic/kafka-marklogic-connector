@@ -47,8 +47,8 @@ Regardless of the required authentication strategy, you must configure the follo
 - `ml.connection.port` = the port of the MarkLogic app server you wish to connect to
 - `ml.connection.securityContextType` = the authentication strategy required by the MarkLogic app server; defaults to DIGEST
 
-The choices for `ml.connection.securityContextType` are DIGEST, BASIC, CERTIFICATE, KERBEROS, and NONE. The additional
-properties required for each are described in the following sections.
+The choices for `ml.connection.securityContextType` are `DIGEST`, `BASIC`, `CERTIFICATE`, `KERBEROS`, `CLOUD`, and 
+`NONE`. The additional properties required for each are described in the following sections.
 
 ### Configuring digest and basic authentication
 
@@ -59,18 +59,31 @@ Both digest and basic authentication require the following properties to be conf
 
 ### Configuring Progress Data Cloud authentication
 
-Progress Data Cloud authentication requires the following properties to be configured:
+Authenticating with Progress Data Cloud (PDC) requires the following properties to be configured:
 
-- `ml.connection.basePath` = the base path in your Progress Data Cloud instance that points to the REST API server you
-  wish to connect to
-- `ml.connection.cloudApiKey` = the API key for authenticating with your Progress Data Cloud instance
+- `ml.connection.host` = your PDC host name - e.g. `myservice.data.progress.cloud`
+- `ml.connection.securityContextType=CLOUD`
+- `ml.connection.port=443`
+- `ml.connection.basePath` = the base path in your PDC instance that points to the REST API server you wish to connect to
+- `ml.connection.cloudApiKey` = the API key for authenticating with your PDC instance
 
-You should also set `ml.connection.port` to 443 for connecting to Progress Data Cloud.
+For the `ml.connection.basePath` property - this should equal an "integration endpoint" that you have configured in your PDC instance. 
+The value will be similar to e.g. `/ml/ml12/default/your-chosen-name`. 
+Please see the 
+[PDC documentation](https://docs.progress.com/bundle/progress-data-cloud-use/page/topics/access-your-services/marklogic/expose-an-app-server.html) for more information. 
+
+In addition, because the connector depends on a [MarkLogic REST API server](https://docs.progress.com/bundle/marklogic-server-develop-rest-api-12/page/topics/intro.html), 
+you may wish to use [the ml-gradle Gradle plugin](https://github.com/marklogic/ml-gradle/wiki/Getting-started) to define and deploy 
+an application to your PDC tenancy consisting of a REST API app server. If you do, consult the 
+[ml-gradle docs](https://github.com/marklogic/ml-gradle/wiki/Progress-Data-Cloud-support) on configuring your project to deploy 
+to a PDC tenancy. 
+
 
 ### Configuring certificate authentication
 
 Certificate authentication requires the following properties to be configured:
 
+- `ml.connection.securityContextType=CERTIFICATE`
 - `ml.connection.certFile` = path to a PKCS12 certificate file
 - `ml.connection.certPassword` = password for the PKCS12 certificate file
 
@@ -78,6 +91,7 @@ Certificate authentication requires the following properties to be configured:
 
 Kerberos authentication requires the following property to be configured:
 
+- `ml.connection.securityContextType=KERBEROS`
 - `ml.connection.externalName` = the name of the principal to be used in Kerberos authentication
 
 ### Configuring no authentication

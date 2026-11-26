@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
     private static final String CONSTRAINT_COLUMN = "ID";
@@ -144,4 +145,32 @@ class DslConstraintInjectionTest extends AbstractIntegrationSourceTest {
         verifyQueryReturnsExpectedRows(null, 3, "First", parsedConfig);
         verifyQueryReturnsExpectedRows(CONSTRAINT_VALUE, 1, "Third", parsedConfig);
     }
+
+    @Test
+    void rejectionOfDslInjectionInConstraintColumnNameViaConfig() {
+        // This test verifies that the fix for CWE-89 / CWE-943 (DSL Injection) works correctly.
+        // The constraint column name is validated at configuration parse time to prevent injection attacks.
+        
+        // Malicious payload: ')) .joinInner(op.fromView('sensitive', 'secrets')).select([op.col('secret_value
+        // This would attempt to join a sensitive view and exfiltrate data
+        Map<String, Object> configWithInjectionAttempt = new HashMap<String, Object>() {{
+            put(MarkLogicSourceConfig.CONNECTION_HOST, "localhost");
+            put(MarkLogicSourceConfig.CONNECTION_PORT, "8000");
+            put(MarkLogicSourceConfig.DSL_QUERY, "op.fromView('Medical', 'Authors')");
+            put(MarkLogicSourceConfig.TOPIC, "Authors");
+            put(MarkLogicSourceConfig.CONSTRAINT_COLUMN_NAME, "')) .joinInner(op.fromView('sensitive', 'secrets')).select([op.col('secret_value");
+        }};
+        
+        // Config parsing should throw an exception when the injection attempt is detected
+        org.apache.kafka.common.config.ConfigException exception = 
+            org.junit.jupiter.api.Assertions.assertThrows(
+                org.apache.kafka.common.config.ConfigException.class,
+                () -> MarkLogicSourceConfig.CONFIG_DEF.parse(configWithInjectionAttempt),
+                "Configuration validation should reject DSL injection attempts in constraintColumnName");
+        
+        // Verify the error message is helpful
+        assertTrue(exception.getMessage().contains("Invalid constraint column name"), 
+            "Error message should indicate the column name is invalid");
+    }
+
 }

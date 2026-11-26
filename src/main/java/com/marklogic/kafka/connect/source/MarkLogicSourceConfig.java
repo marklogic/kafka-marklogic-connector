@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+ * Copyright (c) 2019-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
  */
 package com.marklogic.kafka.connect.source;
 
@@ -74,7 +74,7 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                 "Set to true for column types to be included in the value of each source record; has no effect if the output " +
                     "format is CSV",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Include Column Types")
-            .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, Importance.HIGH,
+            .define(CONSTRAINT_COLUMN_NAME, Type.STRING, null, new ConstraintColumnNameValidator(), Importance.HIGH,
                 "The name of the column which should be used to constrain the Optic query; typically used when only " +
                     "new or modified data should be returned.",
                 GROUP, -1, ConfigDef.Width.MEDIUM, "Constraint Column Name")
@@ -102,6 +102,29 @@ public class MarkLogicSourceConfig extends MarkLogicConfig {
                     metadata.getPermissions().addFromDelimitedString((String) value);
                 } catch (IllegalArgumentException ex) {
                     throw new ConfigException(ex.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Validator for constraint column names to prevent NoSQL/DSL injection attacks (CWE-89/CWE-943).
+     * Ensures column names match a strict allowlist pattern that supports valid MarkLogic Optic identifiers,
+     * including namespaced/QName-style names containing a colon, plus alphanumeric, underscore, dot, and hyphen characters.
+     * Maximum length is 128 characters to prevent excessively long values.
+     */
+    public static class ConstraintColumnNameValidator implements ConfigDef.Validator {
+        private static final String COLUMN_NAME_PATTERN = "^[a-zA-Z0-9_.:-]{1,128}$";
+
+        public void ensureValid(String name, Object value) {
+            if (StringUtils.hasText((String) value)) {
+                String columnName = (String) value;
+                if (!columnName.matches(COLUMN_NAME_PATTERN)) {
+                    throw new ConfigException(format(
+                        "Invalid constraint column name '%s'. Column names must contain only alphanumeric (a-zA-Z0-9), " +
+                        "underscore (_), dot (.), hyphen (-), or colon (:) characters, and be between 1-128 characters long. " +
+                        "This validation prevents DSL injection attacks while allowing valid MarkLogic Optic column identifiers.",
+                        columnName));
                 }
             }
         }
